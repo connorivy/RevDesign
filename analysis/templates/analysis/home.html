@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE HTML>
 <!--
 	Editorial by HTML5 UP
@@ -9,7 +10,7 @@
 		<title>Elements - Editorial by HTML5 UP</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-		<link rel="stylesheet" href="assets/css/main.css" />
+		<link rel="stylesheet" href= "{% static 'css/main.css' %}" />
 	</head>
 	<body class="is-preload">
 
@@ -22,7 +23,7 @@
 
 							<!-- Header -->
 								<header id="header">
-									<a href="index.html" class="logo"><strong>Editorial</strong> by HTML5 UP</a>
+									<a href="home.html" class="logo"><strong>Editorial</strong> by HTML5 UP</a>
 									<ul class="icons">
 										<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
 										<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
@@ -390,26 +391,26 @@
 													<h3>Image</h3>
 
 													<h4>Fit</h4>
-													<span class="image fit"><img src="images/pic11.jpg" alt="" /></span>
+													<span class="image fit"><img src="{% static 'images/pic11.jpg' %}" alt="" /></span>
 													<div class="box alt">
 														<div class="row gtr-50 gtr-uniform">
-															<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic01.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic02.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic03.jpg' %}" alt="" /></span></div>
 															<!-- Break -->
-															<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic03.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic01.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic02.jpg' %}" alt="" /></span></div>
 															<!-- Break -->
-															<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
-															<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic02.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic03.jpg' %}" alt="" /></span></div>
+															<div class="col-4"><span class="image fit"><img src="{% static 'images/pic01.jpg' %}" alt="" /></span></div>
 														</div>
 													</div>
 
 													<h4>Left &amp; Right</h4>
-													<p><span class="image left"><img src="images/pic01.jpg" alt="" /></span>Lorem ipsum dolor sit accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
-													<p><span class="image right"><img src="images/pic02.jpg" alt="" /></span>Lorem ipsum dolor sit accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
+													<p><span class="image left"><img src="{% static 'images/pic01.jpg' %}" alt="" /></span>Lorem ipsum dolor sit accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
+													<p><span class="image right"><img src="{% static 'images/pic02.jpg' %}" alt="" /></span>Lorem ipsum dolor sit accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
 
 												<!-- Box -->
 													<h3>Box</h3>
@@ -455,7 +456,7 @@ print 'It took ' + i + ' iterations to sort the deck.';
 										<h2>Menu</h2>
 									</header>
 									<ul>
-										<li><a href="index.html">Homepage</a></li>
+										<li><a href="home.html">Homepage</a></li>
 										<li><a href="generic.html">Generic</a></li>
 										<li><a href="elements.html">Elements</a></li>
 										<li>
@@ -491,15 +492,15 @@ print 'It took ' + i + ' iterations to sort the deck.';
 									</header>
 									<div class="mini-posts">
 										<article>
-											<a href="#" class="image"><img src="images/pic07.jpg" alt="" /></a>
+											<a href="#" class="image"><img src="{% static 'images/pic07.jpg' %}" alt="" /></a>
 											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
 										</article>
 										<article>
-											<a href="#" class="image"><img src="images/pic08.jpg" alt="" /></a>
+											<a href="#" class="image"><img src="{% static 'images/pic08.jpg' %}" alt="" /></a>
 											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
 										</article>
 										<article>
-											<a href="#" class="image"><img src="images/pic09.jpg" alt="" /></a>
+											<a href="#" class="image"><img src="{% static 'images/pic09.jpg' %}" alt="" /></a>
 											<p>Aenean ornare velit lacus, ac varius enim lorem ullamcorper dolore aliquam.</p>
 										</article>
 									</div>
@@ -533,11 +534,11 @@ print 'It took ' + i + ' iterations to sort the deck.';
 			</div>
 
 		<!-- Scripts -->
-			<script src="assets/js/jquery.min.js"></script>
-			<script src="assets/js/browser.min.js"></script>
-			<script src="assets/js/breakpoints.min.js"></script>
-			<script src="assets/js/util.js"></script>
-			<script src="assets/js/main.js"></script>
+			<script src="{% static 'js/jquery.min.js' %}"></script>
+			<script src="{% static 'js/browser.min.js' %}"></script>
+			<script src="{% static 'js/breakpoints.min.js' %}"></script>
+			<script src="{% static 'js/util.js' %}"></script>
+			<script src="{% static 'js/main.js' %}"></script>
 
 	</body>
 </html>
