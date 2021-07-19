@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,8 +6,94 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href= "{% static 'css/main.css' %}" />
 </head>
 <body>
-    <h1>Model</h1>
-</body>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
+    <script>
+    
+        var scene = new THREE.Scene();
+
+        var camera = new THREE.PerspectiveCamera(
+            75, //field of view
+            window.innerWidth / window.innerHeight, //aspect ratio
+            0.1, // near plane
+            1000 // far plane
+        );
+        camera.position.set( 0, 0, 100 );
+        camera.lookAt( 0, 0, 0 );
+        // camera.position.z = 5; 
+
+        //create a blue LineBasicMaterial
+        var material = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+
+        // create line points
+        var points = [];
+        points.push( new THREE.Vector3( - 10, 0, 0 ) );
+        points.push( new THREE.Vector3( 0, 10, 0 ) );
+        points.push( new THREE.Vector3( 10, 0, 0 ) );
+        var geometry = new THREE.BufferGeometry().setFromPoints( points );
+
+        var line = new THREE.Line( geometry, material );
+        scene.add(line)
+
+        var renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setClearColor("#e5e5e5");
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        document.body.appendChild(renderer.domElement); //create canvas element with renderer settings
+
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight
+
+            camera.updateProjectionMatrix();
+        })
+
+        // create raycaster to max the object do something when clicked
+        var raycaster = new THREE.Raycaster();
+        var mouse = new THREE.Vector2();
+
+        // get 3D object
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        var material = new THREE.MeshLambertMaterial({color: 0xFFCC00});
+        var mesh = new THREE.Mesh(geometry, material);
+
+        // mesh.position.x = 2;
+
+        scene.add(mesh);
+
+        var light = new THREE.PointLight(0xFFFFFF, 1, 500);
+        light.position.set(10,0,25);
+        scene.add(light);
+
+        // refresh renderer all the time
+        var render = function() {
+            requestAnimationFrame(render);
+            renderer.render(scene, camera);
+        }
+
+        function onMouseMove(event) {
+            event.preventDefault();
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = (event.clientY / window.innerHeight) * 2 - 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            var intersects = raycaster.intersectObjects(scene.children, true);
+            for (var i = 0; i < intersects.length; i++) {
+                intersects[i].object.material.color.set(0xff000)
+                this.tl = new TimelineMax();
+                this.tl.to(intersects[i].object.scale, 1, {x:2, ease: Expo.easeout})
+            }
+        }
+
+        render();
+
+        window.addEventListener('mousemove', onMouseMove);
+    </script>
+</body> 
 </html>
