@@ -74,13 +74,20 @@ WSGI_APPLICATION = 'revdesign.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+from pymongo.mongo_client import MongoClient
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'djongo',
+        'NAME': 'Cluster0',
+        'CLIENT': {
+           'host': 'mongodb+srv://connorivy:OarvgTkWYXYfek@cluster0.aykow.mongodb.net/Cluster0?retryWrites=true&w=majority',
+        },
+        'USER': 'connorivy',
+        'PASSWORD': 'OarvgTkWYXYfek',
     }
 }
+MongoClient.HOST = 'mongodb+srv://connorivy:OarvgTkWYXYfek@cluster0.aykow.mongodb.net/'
 
 
 # Password validation
@@ -121,9 +128,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# If you want the static files to be in the main directory
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static",
+# ]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
