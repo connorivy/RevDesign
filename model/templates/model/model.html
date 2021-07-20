@@ -1,107 +1,135 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <link rel="stylesheet" href= "{% static 'css/main.css' %}" />
-</head>
-<body>
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/2.1.2/TweenMax.min.js"></script>
-    <script>
-    
-        const scene = new THREE.Scene();
+	<head>
+		<title>three.js webgl - map controls</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href= "{% static 'css/main.css' %}">
+		<style>
+			body {
+				background-color: #ccc;
+				color: #000;
+			}
 
-        var renderer = new THREE.WebGLRenderer({antialias: true});
+			a {
+				color: #f00;
+			}
+		</style>
+	</head>
 
-        var camera = new THREE.PerspectiveCamera(
-            75, //field of view
-            window.innerWidth / window.innerHeight, //aspect ratio
-            0.1, // near plane
-            1000 // far plane
-        );
+	<body>
+		<script type="module">
+			import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
+			import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
+			import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
 
-        const controls = new OrbitControls(camera, renderer.domElement);
+			let camera, controls, scene, renderer;
 
-        camera.position.set( 0, 0, 100 );
-        camera.lookAt( 0, 0, 0 );
+			init();
+			//render(); // remove when using next line for animation loop (requestAnimationFrame)
+			animate();
 
-        //create a blue LineBasicMaterial
-        var material = new THREE.LineMaterial( { 
-            color: 0x0000ff, 
-            linewidth: 5,
-        } );
+			function init() {
 
-        // create line points
-        var points = [];
-        points.push( new THREE.Vector3( - 10, 0, 0 ) );
-        points.push( new THREE.Vector3( 0, 10, 0 ) );
-        points.push( new THREE.Vector3( 10, 0, 0 ) );
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xcccccc );
+				scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
 
-        var geometry = new THREE.BufferGeometry().setFromPoints( points );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				document.body.appendChild( renderer.domElement );
 
-        var line = new THREE.Line( geometry, material );
-        scene.add(line)
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.set( 400, 200, 0 );
+
+				// controls
+
+				controls = new MapControls( camera, renderer.domElement );
+
+				//controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+
+				controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+				controls.dampingFactor = 0.05;
+
+				controls.screenSpacePanning = false;
+
+				controls.minDistance = 100;
+				controls.maxDistance = 500;
+
+				controls.maxPolarAngle = Math.PI / 2;
+
+				// world
+
+				const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+				geometry.translate( 0, 0.5, 0 );
+				const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+
+				for ( let i = 0; i < 500; i ++ ) {
+
+					const mesh = new THREE.Mesh( geometry, material );
+					mesh.position.x = Math.random() * 1600 - 800;
+					mesh.position.y = 0;
+					mesh.position.z = Math.random() * 1600 - 800;
+					mesh.scale.x = 20;
+					mesh.scale.y = Math.random() * 80 + 10;
+					mesh.scale.z = 20;
+					mesh.updateMatrix();
+					mesh.matrixAutoUpdate = false;
+					scene.add( mesh );
+
+				}
+
+				// lights
+
+				const dirLight1 = new THREE.DirectionalLight( 0xffffff );
+				dirLight1.position.set( 1, 1, 1 );
+				scene.add( dirLight1 );
+
+				const dirLight2 = new THREE.DirectionalLight( 0x002288 );
+				dirLight2.position.set( - 1, - 1, - 1 );
+				scene.add( dirLight2 );
+
+				const ambientLight = new THREE.AmbientLight( 0x222222 );
+				scene.add( ambientLight );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize );
 
 
-        renderer.setClearColor("#e5e5e5");
-        renderer.setSize(window.innerWidth, window.innerHeight);
+				const gui = new GUI();
+				gui.add( controls, 'screenSpacePanning' );
 
-        document.body.appendChild(renderer.domElement); //create canvas element with renderer settings
+			}
 
-        window.addEventListener('resize', () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight
+			function onWindowResize() {
 
-            camera.updateProjectionMatrix();
-        })
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-        // create raycaster to max the object do something when clicked
-        var raycaster = new THREE.Raycaster();
-        var mouse = new THREE.Vector2();
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-        // get 3D object
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
-        var material = new THREE.MeshLambertMaterial({color: 0xFFCC00});
-        var mesh = new THREE.Mesh(geometry, material);
+			}
 
-        // mesh.position.x = 2;
+			function animate() {
 
-        scene.add(mesh);
+				requestAnimationFrame( animate );
 
-        var light = new THREE.PointLight(0xFFFFFF, 1, 500);
-        light.position.set(10,0,25);
-        scene.add(light);
+				controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-        // refresh renderer all the time
-        var render = function() {
-            requestAnimationFrame(render);
-            renderer.render(scene, camera);
-        }
+				render();
 
-        function onMouseMove(event) {
-            event.preventDefault();
+			}
 
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = (event.clientY / window.innerHeight) * 2 - 1;
+			function render() {
 
-            raycaster.setFromCamera(mouse, camera);
+				renderer.render( scene, camera );
 
-            var intersects = raycaster.intersectObjects(scene.children, true);
-            for (var i = 0; i < intersects.length; i++) {
-                intersects[i].object.material.color.set(0xff000)
-                this.tl = new TimelineMax();
-                this.tl.to(intersects[i].object.scale, 1, {x:2, ease: Expo.easeout})
-            }
-        }
+			}
 
-        render();
+		</script>
 
-        window.addEventListener('mousemove', onMouseMove);
-    </script>
-</body> 
+	</body>
 </html>
