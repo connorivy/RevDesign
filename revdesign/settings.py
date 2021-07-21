@@ -74,21 +74,14 @@ WSGI_APPLICATION = 'revdesign.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-from pymongo.mongo_client import MongoClient
+import os
 
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'Cluster0',
-        'CLIENT': {
-           'host': 'mongodb+srv://connorivy:OarvgTkWYXYfek@cluster0.aykow.mongodb.net/Cluster0?retryWrites=true&w=majority',
-        },
-        'USER': 'connorivy',
-        'PASSWORD': 'OarvgTkWYXYfek',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-MongoClient.HOST = 'mongodb+srv://connorivy:OarvgTkWYXYfek@cluster0.aykow.mongodb.net/'
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
