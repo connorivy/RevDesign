@@ -151,11 +151,15 @@
 				//controls.dampingFactor = 0.05;
 
 				controls.screenSpacePanning = true;
+        controls.enablePan = true;
 
 				// controls.minDistance = 100;
 				// controls.maxDistance = 500;
 
 				controls.maxPolarAngle = Math.PI / 2;
+
+        controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
+        controls.update();
 
 				// world
 
