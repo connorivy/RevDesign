@@ -124,8 +124,16 @@
 			import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
 			import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
 			import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+      import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
+			import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
+			import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
+      import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
+      import Stats from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+			import { GPUStatsPanel } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GPUStatsPanel.js';
 
 			let camera, controls, scene, renderer;
+      let line, matLine;
+      let stats, gpuPanel
 
 			init();
 			render(); // remove when using next line for animation loop (requestAnimationFrame)
@@ -135,15 +143,15 @@
 
 				scene = new THREE.Scene();
 				scene.background = new THREE.Color( 0xcccccc );
-				scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+				// scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setPixelRatio( window.devicePixelRatio );
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.set( 400, 200, 0 );
+				camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
+				camera.position.set( 176, 126, -200 );
 
 				// controls
 
@@ -154,16 +162,17 @@
 				//controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
 				//controls.dampingFactor = 0.05;
 
-				controls.screenSpacePanning = false;
+				controls.screenSpacePanning = true;
 
-				controls.minDistance = 100;
-				controls.maxDistance = 500;
+				// controls.minDistance = 100;
+				// controls.maxDistance = 500;
 
 				controls.maxPolarAngle = Math.PI / 2;
 
 				// world
 
 				{% block structure %} {% endblock %}
+        camera.lookAt(scene.position);
 
 				// lights
 
@@ -208,9 +217,13 @@
 			// }
 
 			function render() {
+				// main scene
+				renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+
+				// renderer will set this eventually
+				matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
 
 				renderer.render( scene, camera );
-
 			}
 
 		</script>

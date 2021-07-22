@@ -1,25 +1,68 @@
 {% extends "model/base.html" %}
 {% block structure %}
 
-	// world
+	matLine = new LineMaterial( {
 
-	const geometry = new THREE.BoxGeometry( 1, 1, 1 );
-	geometry.translate( 0, 0.5, 0 );
-	const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: true } );
+		color: 0xffffff,
+		linewidth: 5, // in pixels
+		vertexColors: true,
+		//resolution:  // to be set by renderer, eventually
+		dashed: false,
+		alphaToCoverage: true,
 
-	for ( let i = 0; i < 500; i ++ ) {
+	} );
+	
 
-		const mesh = new THREE.Mesh( geometry, material );
-		mesh.position.x = Math.random() * 1600 - 800;
-		mesh.position.y = 0;
-		mesh.position.z = Math.random() * 1600 - 800;
-		mesh.scale.x = 20;
-		mesh.scale.y = Math.random() * 80 + 10;
-		mesh.scale.z = 20;
-		mesh.updateMatrix();
-		mesh.matrixAutoUpdate = false;
-		scene.add( mesh );
+	const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
+	
+	{% for member in members %}
+		var points = [];
+		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
+		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
+
+		var geometry = new LineGeometry();
+		geometry.setPositions(points)
+		line = new Line2( geometry, matLine );
+		line.computeLineDistances();
+		line.scale.set( 1, 1, 1 );
+		scene.add( line );
+	{% endfor %}
+
+
+	// Position and THREE.Color Data
+
+	const positions = [];
+	const colors = [];
+
+	const points2 = GeometryUtils.hilbert3D( new THREE.Vector3( 176, 126, 0 ), 20.0, 1, 0, 1, 2, 3, 4, 5, 6, 7 );
+
+	const spline = new THREE.CatmullRomCurve3( points2 );
+	const divisions = Math.round( 12 * points2.length );
+	const point = new THREE.Vector3();
+	const color = new THREE.Color();
+
+	for ( let i = 0, l = divisions; i < l; i ++ ) {
+
+		const t = i / l;
+
+		spline.getPoint( t, point );
+		positions.push( point.x, point.y, point.z );
+		console.log(point.x)
+
+		color.setHSL( t, 1.0, 0.5 );
+		colors.push( color.r, color.g, color.b );
 
 	}
+
+
+	// Line2 ( LineGeometry, LineMaterial )
+
+	geometry.setPositions( positions );
+	geometry.setColors( colors );
+
+	line = new Line2( geometry, matLine );
+	line.computeLineDistances();
+	line.scale.set( 1, 1, 1 );
+	scene.add( line );
 
 {% endblock structure %}

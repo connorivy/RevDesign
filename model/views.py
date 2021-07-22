@@ -7,4 +7,4 @@ def home(request):
     context = {
         'members': Member.objects.all()
     }
-    return render(request, 'model/model.html') 
+    return render(request, 'model/model.html', context) 
