@@ -9,16 +9,6 @@
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 		<link type="text/css" rel="stylesheet" href= "{% static 'model/main.css' %}">
-		<style>
-			body {
-				background-color: #ccc;
-				color: #000;
-			}
-
-			a {
-				color: #f00;
-			}
-		</style>
 	</head>
 
 	<body>
@@ -128,8 +118,6 @@
 			import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
 			import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
       import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
-      import Stats from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
-			import { GPUStatsPanel } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GPUStatsPanel.js';
 
 			let camera, controls, scene, renderer;
       let line, matLine;
