@@ -80,12 +80,12 @@
 		distance = Math.abs( width / Math.sin( fov / 2 ) );
 	}
 
-	console.log(distance)
-	console.log((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, extreme_values.minz - distance)
-
-
-	camera.position.set((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, extreme_values.minz - distance)
-	camera.lookAt((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, (extreme_values.maxy + extreme_values.miny)/2)
+	const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
+	const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
+	const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
+	camera.position.set(camera_lookat_x, camera_lookat_y, extreme_values.minz - distance)
+	camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+	controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
 	// Line2 ( LineGeometry, LineMaterial )
 
 	geometry.setPositions( positions );

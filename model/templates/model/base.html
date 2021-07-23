@@ -160,11 +160,12 @@
 				controls.maxPolarAngle = Math.PI / 2;
 
         controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
-        controls.update();
 
 				// world
 
 				{% block structure %} {% endblock %}
+        // camera.lookAt(scene.position);
+        controls.update();
 
 				// lights
 
