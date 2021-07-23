@@ -21,6 +21,7 @@
 		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
 		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
 
+		geometry = new LineGeometry();
 		geometry.setPositions(points)
 		line = new Line2( geometry, matLine );
 		line.computeLineDistances();
