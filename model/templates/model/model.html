@@ -14,13 +14,13 @@
 	
 
 	const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
+	var geometry = new LineGeometry();
 	
 	{% for member in members %}
 		var points = [];
 		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
 		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
 
-		var geometry = new LineGeometry();
 		geometry.setPositions(points)
 		line = new Line2( geometry, matLine );
 		line.computeLineDistances();
@@ -41,19 +41,51 @@
 	const point = new THREE.Vector3();
 	const color = new THREE.Color();
 
+	var extreme_values = { 
+		"minx": 1000000, 
+		"maxx": -1000000, 
+		"miny": 1000000, 
+		"maxy": -1000000, 
+		"minz": 1000000, 
+		"maxz": -1000000, 
+   };
+
 	for ( let i = 0, l = divisions; i < l; i ++ ) {
 
 		const t = i / l;
 
 		spline.getPoint( t, point );
 		positions.push( point.x, point.y, point.z );
+		extreme_values = setExremeValues(extreme_values, point)
 
 		color.setHSL( t, 1.0, 0.5 );
 		colors.push( color.r, color.g, color.b );
 
 	}
+	console.log(extreme_values);
+
+	var height = (extreme_values.maxy - extreme_values.miny);
+	var width = (extreme_values.maxx - extreme_values.minx);
+	var height_diff = window.innerHeight - height;
+	var width_diff = window.innerWidth - width;
+
+	// Convert camera fov degrees to radians
+	var fov = camera.fov * ( Math.PI / 180 ); 
+	var distance = 0;
+
+	if (height_diff > width_diff) {
+		// Calculate the camera distance
+		distance = Math.abs( height / Math.sin( fov / 2 ) );
+	} else {
+		distance = Math.abs( width / Math.sin( fov / 2 ) );
+	}
+
+	console.log(distance)
+	console.log((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, extreme_values.minz - distance)
 
 
+	camera.position.set((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, extreme_values.minz - distance)
+	camera.lookAt((extreme_values.maxx + extreme_values.minx)/2, (extreme_values.maxy + extreme_values.miny)/2, (extreme_values.maxy + extreme_values.miny)/2)
 	// Line2 ( LineGeometry, LineMaterial )
 
 	geometry.setPositions( positions );
@@ -63,5 +95,25 @@
 	line.computeLineDistances();
 	line.scale.set( 1, 1, 1 );
 	scene.add( line );
+
+	function setExremeValues(saved_values, test_values) {
+		if (test_values.x < saved_values.minx) {
+			saved_values.minx = test_values.x
+		} else if (test_values.x > saved_values.maxx) {
+			saved_values.maxx = test_values.x
+		}
+		if (test_values.y < saved_values.miny) {
+			saved_values.miny = test_values.y
+		} else if (test_values.y > saved_values.maxy) {
+			saved_values.maxy = test_values.y
+		}
+		if (test_values.z < saved_values.minz) {
+			saved_values.minz = test_values.z
+		} else if (test_values.z > saved_values.maxz) {
+			saved_values.maxz = test_values.z
+		}
+
+		return saved_values
+	}
 
 {% endblock structure %}

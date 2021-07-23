@@ -139,7 +139,8 @@
 				document.body.appendChild( renderer.domElement );
 
 				camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
-				camera.position.set( 176, 126, -200 );
+        console.log(camera.position.x)
+				// camera.position.set( 176, 126, -200 );
 
 				// controls
 
@@ -164,7 +165,6 @@
 				// world
 
 				{% block structure %} {% endblock %}
-        camera.lookAt(scene.position);
 
 				// lights
 
@@ -216,6 +216,7 @@
 				matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
 
 				renderer.render( scene, camera );
+
 			}
 
 		</script>
