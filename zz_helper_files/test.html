@@ -22,6 +22,28 @@
 </head>
 
 <body>
+    <header class="site-header">
+        <nav class="navbar navbar-expand-md navbar-top-custom navbar-dark bg-steel fixed-top">
+          <div class="container">
+            <a class="navbar-brand mr-4" href="{% url 'model-home' %}">RevDesign</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarToggle">
+              <div class="navbar-nav mr-auto">
+                <a class="nav-item nav-link" href="{% url 'analysis-home' %}">Analysis</a>
+                <a class="nav-item nav-link" href="{% url 'analysis-beam' %}">Beam</a>
+              </div>
+              <!-- Navbar Right Side -->
+              <div class="navbar-nav">
+                <a class="nav-item nav-link" href="#">Login</a>
+                <a class="nav-item nav-link" href="#">Register</a>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <nav class="navbar-expand-md navbar-bot-custom navbar-dark bg-steel"></nav>
+    </header>
 	
 
     <div class="wrapper">
@@ -90,7 +112,7 @@
 
                     <button type="button" id="sidebarCollapse" class="btn btn-info">
                         <i class="fas fa-align-left"></i>
-                        <span>Toggle Sidebar</span>
+                        <!-- <span>Toggle Sidebar</span> -->
                     </button>
                     <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <i class="fas fa-align-justify"></i>
