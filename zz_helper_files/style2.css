@@ -5,7 +5,7 @@
 @import "https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700";
 body {
     font-family: 'Poppins', sans-serif;
-    background: #fafafa;
+    background: #ffffff;
     /* margin-top: 5rem; */
 }
 
@@ -56,11 +56,11 @@ a:focus {
 }
 
 .bg-steel {
-    background-color: #5f788a;
+    background-color: #97282C;
   }
 
 .site-header .navbar-nav .nav-link {
-    color: #cbd5db;
+    color: #fafafa;
   }
 
 /* ---------------------------------------------------
@@ -80,7 +80,7 @@ a:focus {
     left: 0;
     height: 100vh;
     z-index: 999;
-    background: #7386D5;
+    background: #fafafa;
     color: #fff;
     transition: all 0.3s;
 }
@@ -91,16 +91,22 @@ a:focus {
 
 #sidebar .sidebar-header {
     padding: 20px;
-    background: #6d7fcc;
+    /* background: #6d7fcc; */
+}
+
+#sidebar .sidebar-header h3 {
+    color: #54565B;
+    padding: 10px;
 }
 
 #sidebar ul.components {
     padding: 20px 0;
-    border-bottom: 1px solid #47748b;
+    border-bottom: 1px solid #54565B;
+    color: #54565B;
 }
 
 #sidebar ul p {
-    color: #fff;
+    color: #54565B;
     padding: 10px;
 }
 
@@ -111,14 +117,14 @@ a:focus {
 }
 
 #sidebar ul li a:hover {
-    color: #7386D5;
+    color: #973437;
     background: #fff;
 }
 
 #sidebar ul li.active>a,
 a[aria-expanded="true"] {
-    color: #fff;
-    background: #6d7fcc;
+    color: #54565B;
+    background: #fafafa;
 }
 
 a[data-toggle="collapse"] {
@@ -136,7 +142,7 @@ a[data-toggle="collapse"] {
 ul ul a {
     font-size: 0.9em !important;
     padding-left: 30px !important;
-    background: #6d7fcc;
+    background: #fafafa;
 }
 
 ul.CTAs {
@@ -153,12 +159,12 @@ ul.CTAs a {
 
 a.download {
     background: #fff;
-    color: #7386D5;
+    color: #97282C;
 }
 
 a.article,
 a.article:hover {
-    background: #6d7fcc !important;
+    background: #97282C !important;
     color: #fff !important;
 }
 
