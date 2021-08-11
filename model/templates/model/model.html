@@ -18,8 +18,8 @@
 	
 	{% for member in members %}
 		var points = [];
-		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
-		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
+		points.push( {{ member.node1x }}, {{ member.node1z }}, {{ member.node1y }} );
+		points.push( {{ member.node2x }}, {{ member.node2z }}, {{ member.node2y }} );
 		console.log({{ member.node1x }});
 
 		geometry = new LineGeometry();
@@ -29,33 +29,6 @@
 		line.scale.set( 1, 1, 1 );
 		scene.add( line );
 	{% endfor %}
-
-	{% for key, member in local_members.items %}
-		var points = [];
-		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
-		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
-		console.log({{ member.node1x }});
-
-		geometry = new LineGeometry();
-		geometry.setPositions(points)
-		line = new Line2( geometry, matLine );
-		line.computeLineDistances();
-		line.scale.set( 1, 1, 1 );
-		scene.add( line );
-	{% endfor %}
-
-
-	// Position and THREE.Color Data
-
-	const positions = [];
-	const colors = [];
-
-	const points2 = GeometryUtils.hilbert3D( new THREE.Vector3( 176, 126, 0 ), 20.0, 1, 0, 1, 2, 3, 4, 5, 6, 7 );
-
-	const spline = new THREE.CatmullRomCurve3( points2 );
-	const divisions = Math.round( 12 * points2.length );
-	const point = new THREE.Vector3();
-	const color = new THREE.Color();
 
 	var extreme_values = { 
 		"minx": 1000000, 
@@ -66,22 +39,33 @@
 		"maxz": -1000000, 
    };
 
-	for ( let i = 0, l = divisions; i < l; i ++ ) {
+	{% for key, member in local_members.items %}
+		var points = [];
+		var new_member = {
+			'node1x': {{ member.node1x }},
+			'node1y': {{ member.node1y }},
+			'node1z': {{ member.node1z }},
+			'node2x': {{ member.node2x }},
+			'node2y': {{ member.node2y }},
+			'node2z': {{ member.node2z }}
+		}
+		points.push( {{ member.node1y }}, {{ member.node1z }}, {{ member.node1x }} );
+		points.push( {{ member.node2y }}, {{ member.node2z }}, {{ member.node2x }} );
 
-		const t = i / l;
+		extreme_values = setExremeValues(extreme_values, new_member)
 
-		spline.getPoint( t, point );
-		positions.push( point.x, point.y, point.z );
-		extreme_values = setExremeValues(extreme_values, point)
+		geometry = new LineGeometry();
+		geometry.setPositions(points)
+		line = new Line2( geometry, matLine );
+		line.computeLineDistances();
+		line.scale.set( 1, 1, 1 );
+		scene.add( line );
+	{% endfor %}
 
-		color.setHSL( t, 1.0, 0.5 );
-		colors.push( color.r, color.g, color.b );
 
-	}
-	console.log(extreme_values);
-
-	var height = (extreme_values.maxy - extreme_values.miny);
+	var height = (extreme_values.maxz - extreme_values.minz);
 	var width = (extreme_values.maxx - extreme_values.minx);
+
 	var height_diff = window.innerHeight - height;
 	var width_diff = window.innerWidth - width;
 
@@ -99,34 +83,41 @@
 	const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
 	const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
 	const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
-	camera.position.set(camera_lookat_x, camera_lookat_y, extreme_values.minz - distance)
+	camera.position.set(camera_lookat_x, extreme_values.miny - distance, camera_lookat_z)
 	camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
 	controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
-	// Line2 ( LineGeometry, LineMaterial )
 
-	geometry.setPositions( positions );
-	geometry.setColors( colors );
 
-	line = new Line2( geometry, matLine );
-	line.computeLineDistances();
-	line.scale.set( 1, 1, 1 );
-	scene.add( line );
-
-	function setExremeValues(saved_values, test_values) {
-		if (test_values.x < saved_values.minx) {
-			saved_values.minx = test_values.x
-		} else if (test_values.x > saved_values.maxx) {
-			saved_values.maxx = test_values.x
+	function setExremeValues(saved_values, member) {
+		if (member.node1x < saved_values.minx) {
+			saved_values.minx = member.node1x
+		} else if (member.node1x > saved_values.maxx) {
+			saved_values.maxx = member.node1x
 		}
-		if (test_values.y < saved_values.miny) {
-			saved_values.miny = test_values.y
-		} else if (test_values.y > saved_values.maxy) {
-			saved_values.maxy = test_values.y
+		if (member.node1y < saved_values.miny) {
+			saved_values.miny = member.node1y
+		} else if (member.node1y > saved_values.maxy) {
+			saved_values.maxy = member.node1y
 		}
-		if (test_values.z < saved_values.minz) {
-			saved_values.minz = test_values.z
-		} else if (test_values.z > saved_values.maxz) {
-			saved_values.maxz = test_values.z
+		if (member.node1z < saved_values.minz) {
+			saved_values.minz = member.node1z
+		} else if (member.node1z > saved_values.maxz) {
+			saved_values.maxz = member.node1z
+		}
+		if (member.node2x < saved_values.minx) {
+			saved_values.minx = member.node2x
+		} else if (member.node2x > saved_values.maxx) {
+			saved_values.maxx = member.node2x
+		}
+		if (member.node2y < saved_values.miny) {
+			saved_values.miny = member.node2y
+		} else if (member.node2y > saved_values.maxy) {
+			saved_values.maxy = member.node2y
+		}
+		if (member.node2z < saved_values.minz) {
+			saved_values.minz = member.node2z
+		} else if (member.node2z > saved_values.maxz) {
+			saved_values.maxz = member.node2z
 		}
 
 		return saved_values

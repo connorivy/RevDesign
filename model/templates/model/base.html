@@ -166,7 +166,7 @@
 				document.body.appendChild( renderer.domElement );
 
 				camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
-        console.log(camera.position.x)
+                console.log(camera.position.x)
 				// camera.position.set( 176, 126, -200 );
 
 				// controls
@@ -179,20 +179,20 @@
 				//controls.dampingFactor = 0.05;
 
 				controls.screenSpacePanning = true;
-        controls.enablePan = true;
+                controls.enablePan = true;
 
 				// controls.minDistance = 100;
 				// controls.maxDistance = 500;
 
 				controls.maxPolarAngle = Math.PI / 2;
 
-        controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
+                controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
 
 				// world
 
 				{% block structure %} {% endblock %}
-        // camera.lookAt(scene.position);
-        controls.update();
+                // camera.lookAt(scene.position);
+                controls.update();
 
 				// lights
 
