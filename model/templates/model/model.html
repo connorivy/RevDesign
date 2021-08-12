@@ -49,8 +49,8 @@
 			'node2y': {{ member.node2y }},
 			'node2z': {{ member.node2z }}
 		}
-		points.push( {{ member.node1y }}, {{ member.node1z }}, {{ member.node1x }} );
-		points.push( {{ member.node2y }}, {{ member.node2z }}, {{ member.node2x }} );
+		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
+		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
 
 		extreme_values = setExremeValues(extreme_values, new_member)
 
@@ -83,7 +83,11 @@
 	const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
 	const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
 	const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
-	camera.position.set(camera_lookat_x, extreme_values.miny - distance, camera_lookat_z)
+
+	// the following is a translation between revit coordinates (Xr,Yr,Zr) and ThreeJS coords (Xt,Yt,Zt)
+	// I don't have control over threeJS coordinates so I've translated revit to threeJS
+	// Xt = Xr    Yt = Zr    Zt = -Yr
+	camera.position.set(camera_lookat_x, extreme_values.miny - distance/2, camera_lookat_z)
 	camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
 	controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
 

@@ -9,5 +9,4 @@ def home(request):
         'members': Member.objects.all(),
         'local_members': define_local_members()
     }
-    print(context)
     return render(request, 'model/model.html', context) 

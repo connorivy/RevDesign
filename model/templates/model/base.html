@@ -1,253 +1,295 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-    <title>RevDesign</title>
+        <title>RevDesign</title>
 
-    <!-- Bootstrap CSS CDN -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
-    <!-- Our Custom CSS -->
-    <link rel="stylesheet" href="{% static 'model/main.css' %}">
-    <!-- Scrollbar Custom CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
-    <!-- Font Awesome JS -->
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
-</head>
+        <!-- Bootstrap CSS CDN -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+        <!-- Our Custom CSS -->
+        <link rel="stylesheet" href="{% static 'model/main.css' %}">
+        <!-- Scrollbar Custom CSS -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
+        <!-- Font Awesome JS -->
+        <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
+        <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
+    </head>
 
-	<body>
-    <header class="site-header">
-        <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
-          <div class="container">
-            <a class="navbar-brand mr-4" href="{% url 'model-home' %}">RevDesign</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarToggle">
-              <div class="navbar-nav mr-auto">
-                <a class="nav-item nav-link" href="{% url 'analysis-home' %}">Analysis</a>
-                <a class="nav-item nav-link" href="{% url 'analysis-beam' %}">Beam</a>
-              </div>
-              <!-- Navbar Right Side -->
-              <div class="navbar-nav">
-                <a class="nav-item nav-link" href="#">Login</a>
-                <a class="nav-item nav-link" href="#">Register</a>
-              </div>
+    <body>
+        <header class="site-header">
+            <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
+            <div class="container">
+                <a class="navbar-brand mr-4" href="{% url 'model-home' %}">RevDesign</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarToggle">
+                <div class="navbar-nav mr-auto">
+                    <a class="nav-item nav-link" href="{% url 'analysis-home' %}">Analysis</a>
+                    <a class="nav-item nav-link" href="{% url 'analysis-beam' %}">Beam</a>
+                </div>
+                <!-- Navbar Right Side -->
+                <div class="navbar-nav">
+                    <a class="nav-item nav-link" href="#">Login</a>
+                    <a class="nav-item nav-link" href="#">Register</a>
+                </div>
+                </div>
             </div>
-          </div>
-        </nav>
-    </header>
+            </nav>
+        </header>
 
-    <div class="wrapper">
-      <!-- Sidebar  -->
-      <nav id="sidebar">
-          <div class="sidebar-header">
-              <h3>Bootstrap Sidebar</h3>
-          </div>
+        <div class="wrapper">
+        <!-- Sidebar  -->
+            <nav id="sidebar">
+                <div class="sidebar-header">
+                    <h3>Bootstrap Sidebar</h3>
+                </div>
 
-          <ul class="list-unstyled components">
-              <p>Dummy Heading</p>
-              <li class="active">
-                  <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
-                  <ul class="collapse list-unstyled" id="homeSubmenu">
-                      <li>
-                          <a href="#">Home 1</a>
-                      </li>
-                      <li>
-                          <a href="#">Home 2</a>
-                      </li>
-                      <li>
-                          <a href="#">Home 3</a>
-                      </li>
-                  </ul>
-              </li>
-              <li>
-                  <a href="#">About</a>
-              </li>
-              <li>
-                  <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Pages</a>
-                  <ul class="collapse list-unstyled" id="pageSubmenu">
-                      <li>
-                          <a href="#">Page 1</a>
-                      </li>
-                      <li>
-                          <a href="#">Page 2</a>
-                      </li>
-                      <li>
-                          <a href="#">Page 3</a>
-                      </li>
-                  </ul>
-              </li>
-              <li>
-                  <a href="#">Portfolio</a>
-              </li>
-              <li>
-                  <a href="#">Contact</a>
-              </li>
-          </ul>
+                <ul class="list-unstyled components">
+                    <p>Dummy Heading</p>
+                    <li class="active">
+                        <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
+                        <ul class="collapse list-unstyled" id="homeSubmenu">
+                            <li>
+                                <a href="#">Home 1</a>
+                            </li>
+                            <li>
+                                <a href="#">Home 2</a>
+                            </li>
+                            <li>
+                                <a href="#">Home 3</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">About</a>
+                    </li>
+                    <li>
+                        <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Pages</a>
+                        <ul class="collapse list-unstyled" id="pageSubmenu">
+                            <li>
+                                <a href="#">Page 1</a>
+                            </li>
+                            <li>
+                                <a href="#">Page 2</a>
+                            </li>
+                            <li>
+                                <a href="#">Page 3</a>
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="#">Portfolio</a>
+                    </li>
+                    <li>
+                        <a href="#">Contact</a>
+                    </li>
+                </ul>
 
-          <ul class="list-unstyled CTAs">
-              <li>
-                  <a href="https://bootstrapious.com/tutorial/files/sidebar.zip" class="download">Download source</a>
-              </li>
-              <li>
-                  <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Back to article</a>
-              </li>
-          </ul>
-      </nav>
+                <ul class="list-unstyled CTAs">
+                    <li>
+                        <a href="https://bootstrapious.com/tutorial/files/sidebar.zip" class="download">Download source</a>
+                    </li>
+                    <li>
+                        <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Back to article</a>
+                    </li>
+                </ul>
+            </nav>
 
-      <!-- Page Content  -->
-      <div id="content">
+            <!-- Page Content  -->
+            <div id="content">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid">
 
-          <nav class="navbar navbar-expand-lg navbar-light bg-light">
-              <div class="container-fluid">
+                        <button type="button" id="sidebarCollapse" class="btn btn-info">
+                            <i class="fas fa-align-left"></i>
+                            <!-- <span>Toggle Sidebar</span> -->
+                        </button>
+                        <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                            <i class="fas fa-align-justify"></i>
+                        </button>
 
-                  <button type="button" id="sidebarCollapse" class="btn btn-info">
-                      <i class="fas fa-align-left"></i>
-                      <!-- <span>Toggle Sidebar</span> -->
-                  </button>
-                  <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                      <i class="fas fa-align-justify"></i>
-                  </button>
+                        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                            <ul class="nav navbar-nav ml-auto">
+                                <li class="nav-item active">
+                                    <a class="nav-link" href="#">Page</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Page</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Page</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Page</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
 
-                  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                      <ul class="nav navbar-nav ml-auto">
-                          <li class="nav-item active">
-                              <a class="nav-link" href="#">Page</a>
-                          </li>
-                          <li class="nav-item">
-                              <a class="nav-link" href="#">Page</a>
-                          </li>
-                          <li class="nav-item">
-                              <a class="nav-link" href="#">Page</a>
-                          </li>
-                          <li class="nav-item">
-                              <a class="nav-link" href="#">Page</a>
-                          </li>
-                      </ul>
-                  </div>
-              </div>
-          </nav>
+    <script type="module">
+        import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
+        import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
+        import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+        import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
+        import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
+        import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
+        import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
 
-          
-      </div>
-  </div>
+        let camera, controls, scene, renderer;
+        let line, matLine;
+        let stats, gpuPanel;
+        let INTERSECTED;
 
-		<script type="module">
-			import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
-			import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
-			import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-      import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
-			import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
-			import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
-      import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
+        const pointer = new THREE.Vector2();
+        var mouse = new THREE.Vector2();
+        var raycaster = new THREE.Raycaster();
 
-			let camera, controls, scene, renderer;
-      let line, matLine;
-      let stats, gpuPanel
+        init();
+        render(); // remove when using next line for animation loop (requestAnimationFrame)
+        // animate();
 
-			init();
-			render(); // remove when using next line for animation loop (requestAnimationFrame)
-			// animate();
+        function init() {
 
-			function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color( 0xcccccc );
+            // scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
 
-				scene = new THREE.Scene();
-				scene.background = new THREE.Color( 0xcccccc );
-				// scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
+            renderer = new THREE.WebGLRenderer( { antialias: true } );
+            renderer.setPixelRatio( window.devicePixelRatio );
 
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				document.body.appendChild( renderer.domElement );
+            // var container = document.getElementById('content');
+            // var width = container.offsetWidth;
+            // var height = container.offsetHeight;
+            // renderer.setSize(width, height);
+            // // add the renderer to the div
+            // container.appendChild(renderer.domElement);
 
-				camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
-                console.log(camera.position.x)
-				// camera.position.set( 176, 126, -200 );
+            // container = document.createElement( 'div' );
+			// document.body.appendChild( container );
 
-				// controls
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
 
-				controls = new MapControls( camera, renderer.domElement );
+            camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
+            camera.up = new THREE.Vector3( 0, 0, 1 );
+            // camera.position.set( 176, 126, -200 );
 
-				controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+            // controls
 
-				//controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-				//controls.dampingFactor = 0.05;
+            controls = new MapControls( camera, renderer.domElement );
 
-				controls.screenSpacePanning = true;
-                controls.enablePan = true;
+            controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
 
-				// controls.minDistance = 100;
-				// controls.maxDistance = 500;
+            //controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+            //controls.dampingFactor = 0.05;
 
-				controls.maxPolarAngle = Math.PI / 2;
+            controls.screenSpacePanning = true;
+            controls.enablePan = true;
 
-                controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
+            // controls.minDistance = 100;
+            // controls.maxDistance = 500;
 
-				// world
+            controls.maxPolarAngle = Math.PI / 2;
 
-				{% block structure %} {% endblock %}
-                // camera.lookAt(scene.position);
-                controls.update();
+            controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
 
-				// lights
+            // world
 
-				const dirLight1 = new THREE.DirectionalLight( 0xffffff );
-				dirLight1.position.set( 1, 1, 1 );
-				scene.add( dirLight1 );
+            {% block structure %} {% endblock %}
+            // camera.lookAt(scene.position);
+            controls.update();
 
-				const dirLight2 = new THREE.DirectionalLight( 0x002288 );
-				dirLight2.position.set( - 1, - 1, - 1 );
-				scene.add( dirLight2 );
+            // lights
 
-				const ambientLight = new THREE.AmbientLight( 0x222222 );
-				scene.add( ambientLight );
+            const dirLight1 = new THREE.DirectionalLight( 0xffffff );
+            dirLight1.position.set( 1, 1, 1 );
+            scene.add( dirLight1 );
 
-				//
+            const dirLight2 = new THREE.DirectionalLight( 0x002288 );
+            dirLight2.position.set( - 1, - 1, - 1 );
+            scene.add( dirLight2 );
 
-				window.addEventListener( 'resize', onWindowResize );
+            const ambientLight = new THREE.AmbientLight( 0x222222 );
+            scene.add( ambientLight );
+
+            //
+
+            window.addEventListener( 'resize', onWindowResize );
 
 
-				const gui = new GUI();
-				gui.add( controls, 'screenSpacePanning' );
+            const gui = new GUI();
+            gui.add( controls, 'screenSpacePanning' );
 
-			}
+        }
 
-			function onWindowResize() {
+        function onWindowResize() {
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}
+        }
 
-			// function animate() {
+        function onMouseMove(event) {
 
-			// 	requestAnimationFrame( animate );
+        // calculate mouse position in normalized device coordinates
+        // (-1 to +1) for both components
 
-			// 	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-			// 	render();
+        }
 
-			// }
+        // function animate() {
 
-			function render() {
-				// main scene
-				renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+        // 	requestAnimationFrame( animate );
 
-				// renderer will set this eventually
-				matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+        // 	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-				renderer.render( scene, camera );
+        // 	render();
 
-			}
+        // }
 
-		</script>
+
+        function render() {
+            // main scene
+            renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+
+            // renderer will set this eventually
+            matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+
+            raycaster.setFromCamera( pointer, camera );
+			// calculate objects intersecting the picking ray
+            var intersects = raycaster.intersectObjects(scene.children);
+            if (intersects.length > 0) {
+                console.log(intersects);
+            }
+
+            for (var i = 0; i < intersects.length; i++) {
+
+                intersects[i].object.material.color.set(0xff0000);
+            
+
+            }
+
+            renderer.render( scene, camera );
+
+            // console.log(camera.position)
+
+        }
+
+    </script>
+
     <!-- jQuery CDN - Slim version (=without AJAX) -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <!-- Popper.JS -->
