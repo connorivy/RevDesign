@@ -1,380 +1,168 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
-    <title>Collapsible sidebar using Bootstrap 4</title>
-
-    <!-- Bootstrap CSS CDN -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
-    <!-- Our Custom CSS -->
-    <link rel="stylesheet" href="style2.css">
-    <!-- Scrollbar Custom CSS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.min.css">
-    <!-- Font Awesome JS -->
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/solid.js" integrity="sha384-tzzSw1/Vo+0N5UhStP3bvwWPq+uvzCMfrN1fEFe+xBmv1C/AtVX5K0uZtmcHitFZ" crossorigin="anonymous"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.0.13/js/fontawesome.js" integrity="sha384-6OIrr52G08NpOFSZdxxz1xdNSndlD4vdcf/q2myIUVO0VsqaGHJsB0RaBE01VTOY" crossorigin="anonymous"></script>
-
-</head>
-
-<body>
-    <header class="site-header">
-        <nav class="navbar navbar-expand-md navbar-top-custom navbar-dark bg-steel fixed-top">
-          <div class="container">
-            <a class="navbar-brand mr-4" href="{% url 'model-home' %}">RevDesign</a>
-            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarToggle" aria-controls="navbarToggle" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarToggle">
-              <div class="navbar-nav mr-auto">
-                <a class="nav-item nav-link" href="{% url 'analysis-home' %}">Analysis</a>
-                <a class="nav-item nav-link" href="{% url 'analysis-beam' %}">Beam</a>
-              </div>
-              <!-- Navbar Right Side -->
-              <div class="navbar-nav">
-                <a class="nav-item nav-link" href="#">Login</a>
-                <a class="nav-item nav-link" href="#">Register</a>
-              </div>
-            </div>
-          </div>
-        </nav>
-        <nav class="navbar-expand-md navbar-bot-custom navbar-dark bg-steel"></nav>
-    </header>
-	
-
-    <div class="wrapper">
-        <!-- Sidebar  -->
-        <nav id="sidebar">
-            <div class="sidebar-header">
-                <h3>Bootstrap Sidebar</h3>
-            </div>
-
-            <ul class="list-unstyled components">
-                <p>Dummy Heading</p>
-                <li class="active">
-                    <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
-                    <ul class="collapse list-unstyled" id="homeSubmenu">
-                        <li>
-                            <a href="#">Home 1</a>
-                        </li>
-                        <li>
-                            <a href="#">Home 2</a>
-                        </li>
-                        <li>
-                            <a href="#">Home 3</a>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">About</a>
-                </li>
-                <li>
-                    <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Pages</a>
-                    <ul class="collapse list-unstyled" id="pageSubmenu">
-                        <li>
-                            <a href="#">Page 1</a>
-                        </li>
-                        <li>
-                            <a href="#">Page 2</a>
-                        </li>
-                        <li>
-                            <a href="#">Page 3</a>
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">Portfolio</a>
-                </li>
-                <li>
-                    <a href="#">Contact</a>
-                </li>
-            </ul>
-
-            <ul class="list-unstyled CTAs">
-                <li>
-                    <a href="https://bootstrapious.com/tutorial/files/sidebar.zip" class="download">Download source</a>
-                </li>
-                <li>
-                    <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Back to article</a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Page Content  -->
-        <div id="content">
-
-            <nav class="navbar navbar-expand-lg navbar-light bg-light">
-                <div class="container-fluid">
-
-                    <button type="button" id="sidebarCollapse" class="btn btn-info">
-                        <i class="fas fa-align-left"></i>
-                        <!-- <span>Toggle Sidebar</span> -->
-                    </button>
-                    <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                        <i class="fas fa-align-justify"></i>
-                    </button>
+<html lang="en">
+	<head>
+		<title>three.js webgl - interactive cubes</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+		<style>
+			body {
+				background-color: #f0f0f0;
+				color: #444;
+			}
+			a {
+				color: #08f;
+			}
+		</style>
+	</head>
+	<body>
 
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <ul class="nav navbar-nav ml-auto">
-                            <li class="nav-item active">
-                                <a class="nav-link" href="#">Page</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Page</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Page</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Page</a>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
+		<div id="info">
+			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - interactive cubes
+		</div>
 
-            
-        </div>
-    </div>
+		<script type="module">
 
-    <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
-        import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
-        import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-        import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
-        import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
-        import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
-        import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
+            import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
+            // import Stats from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
 
-        let camera, controls, scene, renderer;
-        let line, matLine;
-        let stats, gpuPanel
+			// import Stats from './jsm/libs/stats.module.js';
 
-        init();
-        render(); // remove when using next line for animation loop (requestAnimationFrame)
-        // animate();
-
-        function init() {
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0xcccccc );
-            // scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
-
-            renderer = new THREE.WebGLRenderer( { antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
-
-            camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
-            console.log(camera.position.x)
-            // camera.position.set( 176, 126, -200 );
-
-            // controls
-
-            controls = new MapControls( camera, renderer.domElement );
-
-            controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-
-            //controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-            //controls.dampingFactor = 0.05;
-
-            controls.screenSpacePanning = true;
-            controls.enablePan = true;
-
-            // controls.minDistance = 100;
-            // controls.maxDistance = 500;
-
-            controls.maxPolarAngle = Math.PI / 2;
-
-            controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
-
-            // world
-            matLine = new LineMaterial( {
-
-            color: 0xffffff,
-            linewidth: 5, // in pixels
-            vertexColors: true,
-            //resolution:  // to be set by renderer, eventually
-            dashed: false,
-            alphaToCoverage: true,
-
-            } );
-
-
-            const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
-            var geometry = new LineGeometry();
-
-
-            // Position and THREE.Color Data
-
-            const positions = [];
-            const colors = [];
-
-            const points2 = GeometryUtils.hilbert3D( new THREE.Vector3( 176, 126, 0 ), 20.0, 1, 0, 1, 2, 3, 4, 5, 6, 7 );
-
-            const spline = new THREE.CatmullRomCurve3( points2 );
-            const divisions = Math.round( 12 * points2.length );
-            const point = new THREE.Vector3();
-            const color = new THREE.Color();
-
-            var extreme_values = { 
-            "minx": 1000000, 
-            "maxx": -1000000, 
-            "miny": 1000000, 
-            "maxy": -1000000, 
-            "minz": 1000000, 
-            "maxz": -1000000, 
-            };
-
-            for ( let i = 0, l = divisions; i < l; i ++ ) {
+			let container, stats;
+			let camera, scene, raycaster, renderer;
 
-            const t = i / l;
+			let INTERSECTED;
+			let theta = 0;
 
-            spline.getPoint( t, point );
-            positions.push( point.x, point.y, point.z );
-            extreme_values = setExremeValues(extreme_values, point)
+			const pointer = new THREE.Vector2();
+			const radius = 100;
 
-            color.setHSL( t, 1.0, 0.5 );
-            colors.push( color.r, color.g, color.b );
+			init();
+			animate();
 
-            }
-            console.log(extreme_values);
+			function init() {
 
-            var height = (extreme_values.maxy - extreme_values.miny);
-            var width = (extreme_values.maxx - extreme_values.minx);
-            var height_diff = window.innerHeight - height;
-            var width_diff = window.innerWidth - width;
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
 
-            // Convert camera fov degrees to radians
-            var fov = camera.fov * ( Math.PI / 180 ); 
-            var distance = 0;
+				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
 
-            if (height_diff > width_diff) {
-            // Calculate the camera distance
-            distance = Math.abs( height / Math.sin( fov / 2 ) );
-            } else {
-            distance = Math.abs( width / Math.sin( fov / 2 ) );
-            }
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0xf0f0f0 );
 
-            const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
-            const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
-            const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
-            camera.position.set(camera_lookat_x, camera_lookat_y, extreme_values.minz - distance)
-            camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
-            controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
-            // Line2 ( LineGeometry, LineMaterial )
+				const light = new THREE.DirectionalLight( 0xffffff, 1 );
+				light.position.set( 1, 1, 1 ).normalize();
+				scene.add( light );
 
-            geometry.setPositions( positions );
-            geometry.setColors( colors );
+				const geometry = new THREE.BoxGeometry( 20, 20, 20 );
 
-            line = new Line2( geometry, matLine );
-            line.computeLineDistances();
-            line.scale.set( 1, 1, 1 );
-            scene.add( line );
+				for ( let i = 0; i < 2000; i ++ ) {
 
-            function setExremeValues(saved_values, test_values) {
-                if (test_values.x < saved_values.minx) {
-                    saved_values.minx = test_values.x
-                } else if (test_values.x > saved_values.maxx) {
-                    saved_values.maxx = test_values.x
-                }
-                if (test_values.y < saved_values.miny) {
-                    saved_values.miny = test_values.y
-                } else if (test_values.y > saved_values.maxy) {
-                    saved_values.maxy = test_values.y
-                }
-                if (test_values.z < saved_values.minz) {
-                    saved_values.minz = test_values.z
-                } else if (test_values.z > saved_values.maxz) {
-                    saved_values.maxz = test_values.z
-                }
+					const object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
 
-                return saved_values
-            }
-            
-            // camera.lookAt(scene.position);
-            controls.update();
+					object.position.x = Math.random() * 800 - 400;
+					object.position.y = Math.random() * 800 - 400;
+					object.position.z = Math.random() * 800 - 400;
 
-            // lights
+					object.rotation.x = Math.random() * 2 * Math.PI;
+					object.rotation.y = Math.random() * 2 * Math.PI;
+					object.rotation.z = Math.random() * 2 * Math.PI;
 
-            const dirLight1 = new THREE.DirectionalLight( 0xffffff );
-            dirLight1.position.set( 1, 1, 1 );
-            scene.add( dirLight1 );
+					object.scale.x = Math.random() + 0.5;
+					object.scale.y = Math.random() + 0.5;
+					object.scale.z = Math.random() + 0.5;
 
-            const dirLight2 = new THREE.DirectionalLight( 0x002288 );
-            dirLight2.position.set( - 1, - 1, - 1 );
-            scene.add( dirLight2 );
+					scene.add( object );
 
-            const ambientLight = new THREE.AmbientLight( 0x222222 );
-            scene.add( ambientLight );
+				}
 
-            //
+				raycaster = new THREE.Raycaster();
 
-            window.addEventListener( 'resize', onWindowResize );
+				renderer = new THREE.WebGLRenderer();
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
 
+				// stats = new Stats();
+				// container.appendChild( stats.dom );
 
-            const gui = new GUI();
-            gui.add( controls, 'screenSpacePanning' );
+				document.addEventListener( 'mousemove', onPointerMove );
 
-        }
+				//
 
-        function onWindowResize() {
+				window.addEventListener( 'resize', onWindowResize );
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
+			}
 
-            renderer.setSize( window.innerWidth, window.innerHeight );
+			function onWindowResize() {
 
-        }
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
 
-        // function animate() {
+				renderer.setSize( window.innerWidth, window.innerHeight );
 
-        // 	requestAnimationFrame( animate );
+			}
 
-        // 	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+			function onPointerMove( event ) {
 
-        // 	render();
+				pointer.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
 
-        // }
+			}
 
-        function render() {
-            // main scene
-            renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+			//
 
-            // renderer will set this eventually
-            matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+			function animate() {
 
-            renderer.render( scene, camera );
+				requestAnimationFrame( animate );
 
-        }
+				render();
+				// stats.update();
 
-    </script>
+			}
 
-    <!-- jQuery CDN - Slim version (=without AJAX) -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <!-- Popper.JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
-    <!-- Bootstrap JS -->
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
-    <!-- jQuery Custom Scroller CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
+			function render() {
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $("#sidebar").mCustomScrollbar({
-                theme: "minimal"
-            });
+				theta += 0.1;
 
-            $('#sidebarCollapse').on('click', function () {
-                $('#sidebar, #content').toggleClass('active');
-                $('.collapse.in').toggleClass('in');
-                $('a[aria-expanded=true]').attr('aria-expanded', 'false');
-            });
-        });
-    </script>
-</body>
+				camera.position.x = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+				camera.position.y = radius * Math.sin( THREE.MathUtils.degToRad( theta ) );
+				camera.position.z = radius * Math.cos( THREE.MathUtils.degToRad( theta ) );
+				camera.lookAt( scene.position );
 
+				camera.updateMatrixWorld();
+
+				// find intersections
+
+				raycaster.setFromCamera( pointer, camera );
+
+				const intersects = raycaster.intersectObjects( scene.children );
+
+				if ( intersects.length > 0 ) {
+
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+
+						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+					}
+
+				} else {
+
+					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+					INTERSECTED = null;
+
+				}
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
 </html>

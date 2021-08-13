@@ -154,8 +154,8 @@
         var raycaster = new THREE.Raycaster();
 
         init();
-        render(); // remove when using next line for animation loop (requestAnimationFrame)
-        // animate();
+        // render(); // remove when using next line for animation loop (requestAnimationFrame)
+        animate();
 
         function init() {
 
@@ -250,15 +250,15 @@
 
         }
 
-        // function animate() {
+        function animate() {
 
-        // 	requestAnimationFrame( animate );
+        	requestAnimationFrame( animate );
 
-        // 	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+        	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
 
-        // 	render();
+        	render();
 
-        // }
+        }
 
 
         function render() {
@@ -278,8 +278,8 @@
             for (var i = 0; i < intersects.length; i++) {
 
                 intersects[i].object.material.color.set(0xff0000);
-            
-
+                intersects[i].object.material.color.needsUpdate = true;
+                console.log(intersects[i].object.material.color)
             }
 
             renderer.render( scene, camera );

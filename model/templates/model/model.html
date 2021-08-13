@@ -16,19 +16,20 @@
 	const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
 	var geometry = new LineGeometry();
 	
-	{% for member in members %}
-		var points = [];
-		points.push( {{ member.node1x }}, {{ member.node1z }}, {{ member.node1y }} );
-		points.push( {{ member.node2x }}, {{ member.node2z }}, {{ member.node2y }} );
-		console.log({{ member.node1x }});
+	// {% for member in members %}
+	// 	var points = [];
+	// 	points.push( {{ member.node1x }}, {{ member.node1z }}, {{ member.node1y }} );
+	// 	points.push( {{ member.node2x }}, {{ member.node2z }}, {{ member.node2y }} );
+	// 	console.log({{ member.node1x }});
 
-		geometry = new LineGeometry();
-		geometry.setPositions(points)
-		line = new Line2( geometry, matLine );
-		line.computeLineDistances();
-		line.scale.set( 1, 1, 1 );
-		scene.add( line );
-	{% endfor %}
+	// 	geometry = new LineGeometry();
+	// 	geometry.setPositions(points)
+	// 	// line = new Line2( geometry, matLine );
+	// 	line = new THREE.Line( geometry, material )
+	// 	line.computeLineDistances();
+	// 	line.scale.set( 1, 1, 1 );
+	// 	scene.add( line );
+	// {% endfor %}
 
 	var extreme_values = { 
 		"minx": 1000000, 
