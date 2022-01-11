@@ -1,4 +1,4 @@
-{% extends "model/base.html" %}
+{% extends "model/threejs.html" %}
 {% block structure %}
 
 	matLine = new LineMaterial( {
@@ -50,6 +50,10 @@
 			'node2y': {{ member.node2y }},
 			'node2z': {{ member.node2z }}
 		}
+
+
+
+
 		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
 		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
 
@@ -86,7 +90,7 @@
 	const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
 
 	// the following is a translation between revit coordinates (Xr,Yr,Zr) and ThreeJS coords (Xt,Yt,Zt)
-	// I don't have control over threeJS coordinates so I've translated revit to threeJS
+	// I don't have control over revit coordinates so I've translated revit to threeJS
 	// Xt = Xr    Yt = Zr    Zt = -Yr
 	camera.position.set(camera_lookat_x, extreme_values.miny - distance/2, camera_lookat_z)
 	camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 

@@ -20,7 +20,84 @@
     </head>
 
     <body>
-        <header class="site-header">
+        <header class="site-header py-0">
+            <nav class="navbar navbar-expand-lg navbar-dark bg-steel py-0" id="top_navbar">
+                <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse py-0" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item navbar-first">
+                        <a class="nav-link py-0" href="#">File<span class="sr-only"></span></a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link py-0" href="#">Codes<span class="sr-only"></span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link py-0" href="#">Materials<span class="sr-only"></span></a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link py-0" href="#">Loads</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link py-0" href="#">Link</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle py-0" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Dropdown
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="#">Action</a>
+                        <a class="dropdown-item" href="#">Another action</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                      </div>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link disabled py-0" href="#">Disabled</a>
+                    </li>
+                  </ul>
+                </div>
+            </nav>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light py-4" id="bot_navbar">
+                <a class="navbar-brand" href="#">jBeam</a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+                </button>
+              
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                      <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link" href="#">Link</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Add Load
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item" href="#">Point</a>
+                        <a class="dropdown-item" href="#">Distributed</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#">Something else here</a>
+                      </div>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link disabled" href="#">Disabled</a>
+                    </li>
+                  </ul>
+                  <form class="form-inline my-2 my-lg-0">
+                    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Search</button>
+                  </form>
+                </div>
+            </nav>
+        </header>
+        <!-- <header class="site-header">
             <nav class="navbar navbar-expand-md navbar-dark bg-steel fixed-top">
             <div class="container">
                 <a class="navbar-brand mr-4" href="{% url 'model-home' %}">RevDesign</a>
@@ -32,7 +109,7 @@
                     <a class="nav-item nav-link" href="{% url 'analysis-home' %}">Analysis</a>
                     <a class="nav-item nav-link" href="{% url 'analysis-beam' %}">Beam</a>
                 </div>
-                <!-- Navbar Right Side -->
+
                 <div class="navbar-nav">
                     <a class="nav-item nav-link" href="#">Login</a>
                     <a class="nav-item nav-link" href="#">Register</a>
@@ -40,7 +117,7 @@
                 </div>
             </div>
             </nav>
-        </header>
+        </header> -->
 
         <div class="wrapper">
         <!-- Sidebar  -->
@@ -102,7 +179,7 @@
 
             <!-- Page Content  -->
             <div id="content">
-                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                <nav id="tabNavBar" class="navbar navbar-expand-lg navbar-light bg-light">
                     <div class="container-fluid">
 
                         <button type="button" id="sidebarCollapse" class="btn btn-info">
@@ -131,164 +208,18 @@
                         </div>
                     </div>
                 </nav>
+
+                <div id="threejs-container" class="module">
+                    <canvas></canvas>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
-        import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
-        import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-        import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
-        import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
-        import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
-        import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
+    {%  block threejs %} 
 
-        let camera, controls, scene, renderer;
-        let line, matLine;
-        let stats, gpuPanel;
-        let INTERSECTED;
-
-        const pointer = new THREE.Vector2();
-        var mouse = new THREE.Vector2();
-        var raycaster = new THREE.Raycaster();
-
-        init();
-        // render(); // remove when using next line for animation loop (requestAnimationFrame)
-        animate();
-
-        function init() {
-
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color( 0xcccccc );
-            // scene.fog = new THREE.FogExp2( 0xcccccc, 0.002 );
-
-            renderer = new THREE.WebGLRenderer( { antialias: true } );
-            renderer.setPixelRatio( window.devicePixelRatio );
-
-            // var container = document.getElementById('content');
-            // var width = container.offsetWidth;
-            // var height = container.offsetHeight;
-            // renderer.setSize(width, height);
-            // // add the renderer to the div
-            // container.appendChild(renderer.domElement);
-
-            // container = document.createElement( 'div' );
-			// document.body.appendChild( container );
-
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
-
-            camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 5000 );
-            camera.up = new THREE.Vector3( 0, 0, 1 );
-            // camera.position.set( 176, 126, -200 );
-
-            // controls
-
-            controls = new MapControls( camera, renderer.domElement );
-
-            controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-
-            //controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-            //controls.dampingFactor = 0.05;
-
-            controls.screenSpacePanning = true;
-            controls.enablePan = true;
-
-            // controls.minDistance = 100;
-            // controls.maxDistance = 500;
-
-            controls.maxPolarAngle = Math.PI / 2;
-
-            controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
-
-            // world
-
-            {% block structure %} {% endblock %}
-            // camera.lookAt(scene.position);
-            controls.update();
-
-            // lights
-
-            const dirLight1 = new THREE.DirectionalLight( 0xffffff );
-            dirLight1.position.set( 1, 1, 1 );
-            scene.add( dirLight1 );
-
-            const dirLight2 = new THREE.DirectionalLight( 0x002288 );
-            dirLight2.position.set( - 1, - 1, - 1 );
-            scene.add( dirLight2 );
-
-            const ambientLight = new THREE.AmbientLight( 0x222222 );
-            scene.add( ambientLight );
-
-            //
-
-            window.addEventListener( 'resize', onWindowResize );
-
-
-            const gui = new GUI();
-            gui.add( controls, 'screenSpacePanning' );
-
-        }
-
-        function onWindowResize() {
-
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-
-            renderer.setSize( window.innerWidth, window.innerHeight );
-
-        }
-
-        function onMouseMove(event) {
-
-        // calculate mouse position in normalized device coordinates
-        // (-1 to +1) for both components
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        }
-
-        function animate() {
-
-        	requestAnimationFrame( animate );
-
-        	//controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
-
-        	render();
-
-        }
-
-
-        function render() {
-            // main scene
-            renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
-
-            // renderer will set this eventually
-            matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
-
-            raycaster.setFromCamera( pointer, camera );
-			// calculate objects intersecting the picking ray
-            var intersects = raycaster.intersectObjects(scene.children);
-            if (intersects.length > 0) {
-                console.log(intersects);
-            }
-
-            for (var i = 0; i < intersects.length; i++) {
-
-                intersects[i].object.material.color.set( 0xff0000 );
-                intersects[i].object.material.needsUpdate = true;
-                console.log(intersects[i].object.material.color)
-            }
-
-            renderer.render( scene, camera );
-
-            // console.log(camera.position)
-
-        }
-
-    </script>
+    {% endblock threejs %}
 
     <!-- jQuery CDN - Slim version (=without AJAX) -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

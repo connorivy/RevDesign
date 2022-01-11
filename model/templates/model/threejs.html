@@ -1,0 +1,165 @@
+{% extends "model/base.html" %}
+{% block threejs %}
+<script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
+    import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
+    import { MapControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
+    import { Line2 } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/Line2.js';
+    import { LineMaterial } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineMaterial.js';
+    import { LineGeometry } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/lines/LineGeometry.js';
+    import { GeometryUtils } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/utils/GeometryUtils.js';
+
+    let camera, controls, scene, renderer;
+    let line, matLine;
+    let stats, gpuPanel;
+    let INTERSECTED;
+
+    const pointer = new THREE.Vector2();
+    var mouse = new THREE.Vector2();
+    var raycaster = new THREE.Raycaster();
+
+    init();
+    // render(); // remove when using next line for animation loop (requestAnimationFrame)
+    animate();
+
+    function init() {
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color( 0xeeeeee );
+        const canvas = document.querySelector("#threejs-container canvas");
+        renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+
+        camera = new THREE.PerspectiveCamera(5.5, 2, 1, 5000);
+        camera.up = new THREE.Vector3( 0, 0, 1 );  
+        // camera.position.set( 176, 126, -200 );
+
+        // controls
+
+        controls = new MapControls( camera, renderer.domElement );
+        controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
+        //controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+        //controls.dampingFactor = 0.05;
+        controls.screenSpacePanning = true;
+        controls.enablePan = true;
+        // controls.minDistance = 100;
+        // controls.maxDistance = 500;
+        controls.maxPolarAngle = Math.PI / 2;
+        controls.mouseButtons = {MIDDLE: THREE.MOUSE.RIGHT, RIGHT: THREE.MOUSE.RIGHT};
+
+        // world
+
+        {% block structure %} {% endblock %}
+        // camera.lookAt(scene.position);
+        controls.update();
+
+        // lights
+
+        const dirLight1 = new THREE.DirectionalLight( 0xffffff );
+        dirLight1.position.set( 1, 1, 1 );
+        scene.add( dirLight1 );
+
+        const dirLight2 = new THREE.DirectionalLight( 0x002288 );
+        dirLight2.position.set( - 1, - 1, - 1 );
+        scene.add( dirLight2 );
+
+        const ambientLight = new THREE.AmbientLight( 0x222222 );
+        scene.add( ambientLight );
+
+        
+        canvas.addEventListener( 'resize', resizeCanvasToDisplaySize );
+        resizeCanvasToDisplaySize();
+        // render();
+
+
+        // const gui = new GUI();
+        // gui.add( controls, 'screenSpacePanning' );
+
+    }
+
+    function resizeCanvasToDisplaySize() {
+        const canvas = renderer.domElement;
+        // look up the size the canvas is being displayed
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;     
+
+        // adjust displayBuffer size to match
+        if (canvas.width != width || canvas.height != height) {
+            console.log('resize')
+            // you must pass false here or three.js sadly fights the browser
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+
+            // update camera position
+            // var vFOV = THREE.MathUtils.degToRad( camera.fov ); // convert vertical fov to radians
+            // var desired_screen_width = 220;
+            // var desired_screen_height = 79;
+
+            // var dist_for_height = desired_screen_height / ( 2 * Math.tan(vFOV/2) )
+            // var dist_for_width = desired_screen_width / ( 2 * Math.tan(vFOV/2) * camera.aspect )
+
+            // var dist = Math.max(dist_for_height, dist_for_width)
+
+            // var multiplier = dist / Math.sqrt(initialCamPos.x*initialCamPos.x+initialCamPos.y*initialCamPos.y+initialCamPos.z*initialCamPos.z) // I'm essentially linearly interpolating the camera on this line
+            // camera.position.set( initialCamPos.x*multiplier, initialCamPos.y*multiplier, initialCamPos.z*multiplier );
+            // camera.lookAt(initialCamPos.x*multiplier, 0, initialCamPos.z*multiplier);
+
+            // set matLine resolution
+            lineMat.resolution.set( width, height );
+
+            //calculate text locations
+            var rect = canvas.getBoundingClientRect();
+            var beamLenTag = document.getElementById('beamLenTag');
+            // beamLenTag.innerHTML = beam.L;
+            beamLenTag.style.fontSize = 1 / multiplier * 25 + 'px'; // maybe change this from px to have a more scalable webpage
+            var vect = createVector(100, 0, -29, camera, rect.width, rect.height);
+
+            beamLenTag.style.top = vect.y + rect.top + 'px';
+            beamLenTag.style.left = vect.x  - beamLenTag.clientWidth / 2 + rect.left + 'px';      
+        }
+    }
+
+    function onMouseMove( event ) {
+        // calculate mouse position in normalized device coordinates
+        // (-1 to +1) for both components
+
+        var rect = renderer.domElement.getBoundingClientRect();
+
+        mouse.x = ( ( event.clientX - rect.left ) / ( rect.width ) ) * 2 - 1;
+        mouse.y = - ( ( event.clientY - rect.top ) / ( rect.height) ) * 2 + 1;
+    }
+
+    function animate() {
+
+        requestAnimationFrame( animate );
+
+        //controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+
+        render();
+
+    }
+
+
+    function render() {
+        // main scene
+        renderer.setViewport( 0, 0, window.innerWidth, window.innerHeight );
+
+        // renderer will set this eventually
+        matLine.resolution.set( window.innerWidth, window.innerHeight ); // resolution of the viewport
+
+        raycaster.setFromCamera( pointer, camera );
+        // calculate objects intersecting the picking ray
+        var intersects = raycaster.intersectObjects(scene.children);
+
+        for (var i = 0; i < intersects.length; i++) {
+
+            intersects[i].object.material.color.set( 0xff0000 );
+            intersects[i].object.material.needsUpdate = true;
+        }
+
+        renderer.render( scene, camera );
+    }
+
+</script>
+
+{% endblock threejs %}
