@@ -1,135 +1,151 @@
 {% extends "model/threejs.html" %}
 {% block structure %}
 
-	matLine = new LineMaterial( {
+    matLine = new LineMaterial( {
 
-		color: 0xffffff,
-		linewidth: 5, // in pixels
-		vertexColors: true,
-		//resolution:  // to be set by renderer, eventually
-		dashed: false,
-		alphaToCoverage: true,
+        color: 0xffffff,
+        linewidth: 5, // in pixels
+        vertexColors: true,
+        //resolution:  // to be set by renderer, eventually
+        dashed: false,
+        alphaToCoverage: true,
 
-	} );
-	
+    } );
+    
 
-	const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
-	var geometry = new LineGeometry();
-	
-	// {% for member in members %}
-	// 	var points = [];
-	// 	points.push( {{ member.node1x }}, {{ member.node1z }}, {{ member.node1y }} );
-	// 	points.push( {{ member.node2x }}, {{ member.node2z }}, {{ member.node2y }} );
-	// 	console.log({{ member.node1x }});
+    const material = new THREE.LineBasicMaterial( { color: 0xfca4c5 } );
+    var geometry = new LineGeometry();
+    
+    {% for member in members %}
+    	var points = [];
+    	points.push( {{ member.node1.x }}, {{ member.node1.y }}, {{ member.node1.z }} );
+    	points.push( {{ member.node2.x }}, {{ member.node2.y }}, {{ member.node2.z }} );
+    	// console.log({{ member.node2.x }}, {{ member.node2.z }}, {{ member.node2.y }});
 
-	// 	geometry = new LineGeometry();
-	// 	geometry.setPositions(points)
-	// 	// line = new Line2( geometry, matLine );
-	// 	line = new THREE.Line( geometry, material )
-	// 	line.computeLineDistances();
-	// 	line.scale.set( 1, 1, 1 );
-	// 	scene.add( line );
-	// {% endfor %}
+        try {
+            console.log({{member.new_node1}})
+        } catch (error) {
 
-	var extreme_values = { 
-		"minx": 1000000, 
-		"maxx": -1000000, 
-		"miny": 1000000, 
-		"maxy": -1000000, 
-		"minz": 1000000, 
-		"maxz": -1000000, 
+        }
+    	geometry = new LineGeometry();
+    	geometry.setPositions(points)
+    	line = new Line2( geometry, matLine );
+    	// line = new THREE.Line( geometry, material )
+    	line.computeLineDistances();
+    	line.scale.set( 1, 1, 1 );
+    	scene.add( line );
+    {% endfor %}
+
+    var extreme_values = { 
+        "minx": 1000000, 
+        "maxx": -1000000, 
+        "miny": 1000000, 
+        "maxy": -1000000, 
+        "minz": 1000000, 
+        "maxz": -1000000, 
    };
 
-	{% for key, member in local_members.items %}
-		var points = [];
-		var new_member = {
-			'node1x': {{ member.node1x }},
-			'node1y': {{ member.node1y }},
-			'node1z': {{ member.node1z }},
-			'node2x': {{ member.node2x }},
-			'node2y': {{ member.node2y }},
-			'node2z': {{ member.node2z }}
-		}
+    const camera_lookat_x = -250;
+    const camera_lookat_y = -385;
+    const camera_lookat_z = 125;
+
+    // the following is a translation between revit coordinates (Xr,Yr,Zr) and ThreeJS coords (Xt,Yt,Zt)
+    // I don't have control over revit coordinates so I've translated revit to threeJS
+    // Xt = Xr    Yt = Zr    Zt = -Yr
+    camera.position.set(-250, 0, -385)
+    camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+    controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+
+    // {% for key, member in local_members.items %}
+    //     var points = [];
+    //     var new_member = {
+    //         'node1x': {{ member.node1x }},
+    //         'node1y': {{ member.node1y }},
+    //         'node1z': {{ member.node1z }},
+    //         'node2x': {{ member.node2x }},
+    //         'node2y': {{ member.node2y }},
+    //         'node2z': {{ member.node2z }}
+    //     }
 
 
 
 
-		points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
-		points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
+    //     points.push( {{ member.node1x }}, {{ member.node1y }}, {{ member.node1z }} );
+    //     points.push( {{ member.node2x }}, {{ member.node2y }}, {{ member.node2z }} );
 
-		extreme_values = setExremeValues(extreme_values, new_member)
+    //     extreme_values = setExremeValues(extreme_values, new_member)
 
-		geometry = new LineGeometry();
-		geometry.setPositions(points)
-		line = new Line2( geometry, matLine );
-		line.computeLineDistances();
-		line.scale.set( 1, 1, 1 );
-		scene.add( line );
-	{% endfor %}
-
-
-	var height = (extreme_values.maxz - extreme_values.minz);
-	var width = (extreme_values.maxx - extreme_values.minx);
-
-	var height_diff = window.innerHeight - height;
-	var width_diff = window.innerWidth - width;
-
-	// Convert camera fov degrees to radians
-	var fov = camera.fov * ( Math.PI / 180 ); 
-	var distance = 0;
-
-	if (height_diff > width_diff) {
-		// Calculate the camera distance
-		distance = Math.abs( height / Math.sin( fov / 2 ) );
-	} else {
-		distance = Math.abs( width / Math.sin( fov / 2 ) );
-	}
-
-	const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
-	const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
-	const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
-
-	// the following is a translation between revit coordinates (Xr,Yr,Zr) and ThreeJS coords (Xt,Yt,Zt)
-	// I don't have control over revit coordinates so I've translated revit to threeJS
-	// Xt = Xr    Yt = Zr    Zt = -Yr
-	camera.position.set(camera_lookat_x, extreme_values.miny - distance/2, camera_lookat_z)
-	camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
-	controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+    //     geometry = new LineGeometry();
+    //     geometry.setPositions(points)
+    //     line = new Line2( geometry, matLine );
+    //     line.computeLineDistances();
+    //     line.scale.set( 1, 1, 1 );
+    //     scene.add( line );
+    // {% endfor %}
 
 
-	function setExremeValues(saved_values, member) {
-		if (member.node1x < saved_values.minx) {
-			saved_values.minx = member.node1x
-		} else if (member.node1x > saved_values.maxx) {
-			saved_values.maxx = member.node1x
-		}
-		if (member.node1y < saved_values.miny) {
-			saved_values.miny = member.node1y
-		} else if (member.node1y > saved_values.maxy) {
-			saved_values.maxy = member.node1y
-		}
-		if (member.node1z < saved_values.minz) {
-			saved_values.minz = member.node1z
-		} else if (member.node1z > saved_values.maxz) {
-			saved_values.maxz = member.node1z
-		}
-		if (member.node2x < saved_values.minx) {
-			saved_values.minx = member.node2x
-		} else if (member.node2x > saved_values.maxx) {
-			saved_values.maxx = member.node2x
-		}
-		if (member.node2y < saved_values.miny) {
-			saved_values.miny = member.node2y
-		} else if (member.node2y > saved_values.maxy) {
-			saved_values.maxy = member.node2y
-		}
-		if (member.node2z < saved_values.minz) {
-			saved_values.minz = member.node2z
-		} else if (member.node2z > saved_values.maxz) {
-			saved_values.maxz = member.node2z
-		}
+    // var height = (extreme_values.maxz - extreme_values.minz);
+    // var width = (extreme_values.maxx - extreme_values.minx);
 
-		return saved_values
-	}
+    // var height_diff = window.innerHeight - height;
+    // var width_diff = window.innerWidth - width;
+
+    // // Convert camera fov degrees to radians
+    // var fov = camera.fov * ( Math.PI / 180 ); 
+    // var distance = 0;
+
+    // if (height_diff > width_diff) {
+    //     // Calculate the camera distance
+    //     distance = Math.abs( height / Math.sin( fov / 2 ) );
+    // } else {
+    //     distance = Math.abs( width / Math.sin( fov / 2 ) );
+    // }
+
+    // const camera_lookat_x = (extreme_values.maxx + extreme_values.minx)/2
+    // const camera_lookat_y = (extreme_values.maxy + extreme_values.miny)/2
+    // const camera_lookat_z = (extreme_values.maxz + extreme_values.minz)/2
+
+    // // the following is a translation between revit coordinates (Xr,Yr,Zr) and ThreeJS coords (Xt,Yt,Zt)
+    // // I don't have control over revit coordinates so I've translated revit to threeJS
+    // // Xt = Xr    Yt = Zr    Zt = -Yr
+    // camera.position.set(camera_lookat_x, extreme_values.miny - distance/2, camera_lookat_z)
+    // camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+    // controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+
+
+    function setExremeValues(saved_values, member) {
+        if (member.node1x < saved_values.minx) {
+            saved_values.minx = member.node1x
+        } else if (member.node1x > saved_values.maxx) {
+            saved_values.maxx = member.node1x
+        }
+        if (member.node1y < saved_values.miny) {
+            saved_values.miny = member.node1y
+        } else if (member.node1y > saved_values.maxy) {
+            saved_values.maxy = member.node1y
+        }
+        if (member.node1z < saved_values.minz) {
+            saved_values.minz = member.node1z
+        } else if (member.node1z > saved_values.maxz) {
+            saved_values.maxz = member.node1z
+        }
+        if (member.node2x < saved_values.minx) {
+            saved_values.minx = member.node2x
+        } else if (member.node2x > saved_values.maxx) {
+            saved_values.maxx = member.node2x
+        }
+        if (member.node2y < saved_values.miny) {
+            saved_values.miny = member.node2y
+        } else if (member.node2y > saved_values.maxy) {
+            saved_values.maxy = member.node2y
+        }
+        if (member.node2z < saved_values.minz) {
+            saved_values.minz = member.node2z
+        } else if (member.node2z > saved_values.maxz) {
+            saved_values.maxz = member.node2z
+        }
+
+        return saved_values
+    }
 
 {% endblock structure %}

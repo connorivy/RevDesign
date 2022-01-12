@@ -11,6 +11,9 @@ class node(models.Model):
     y = models.DecimalField(max_digits=14, decimal_places=10)
     z = models.DecimalField(max_digits=14, decimal_places=10)
 
+    # def __str__(self):
+    #     return f'{self.id}'
+
 class Member(models.Model):
     id = models.CharField(primary_key=True, max_length=50)
     type = models.CharField(max_length=25)
@@ -18,8 +21,8 @@ class Member(models.Model):
     node1 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='node1')
     node2 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='node2')
 
-    new_node1 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='new_node1', default=None)
-    new_node2 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='new_node2', default=None)
+    new_node1 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='new_node1', null=True, blank=True)
+    new_node2 = models.ForeignKey(node, on_delete=models.CASCADE, related_name='new_node2', null=True, blank=True)
 
 
     def __str__(self):
