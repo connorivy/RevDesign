@@ -89,7 +89,7 @@ def classify_selected_elements():
         try:
             usage = str(el.StructuralType).lower()
         except:
-            print('continue')
+            print('No structural type defined')
             continue
 
         element['id'] = str(el.UniqueId)
@@ -138,6 +138,20 @@ def replace_non_nums(string):
         if char in acceptable_chars:
             new_char += char
     return new_char
+
+def syncRevitWithDB():
+    import sqlite3
+
+    db_filepath = 'C:/Users/civy/Music/GitHub/RevDesign/db.sqlite3'
+    con = sqlite3.connect(db_filepath)
+    cur = con.cursor()
+
+    # cur.execute('SELECT * FROM beam_members')
+    cur.execute(f'INSERT INTO model_nodes VALUES {sdf},{sdf},{sdf}')
+    print(cur.fetchall())
+
+    
+
 
         
 class Element:
