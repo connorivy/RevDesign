@@ -36,15 +36,6 @@
     	scene.add( line );
     {% endfor %}
 
-    var extreme_values = { 
-        "minx": 1000000, 
-        "maxx": -1000000, 
-        "miny": 1000000, 
-        "maxy": -1000000, 
-        "minz": 1000000, 
-        "maxz": -1000000, 
-   };
-
     const camera_lookat_x = -250;
     const camera_lookat_y = -385;
     const camera_lookat_z = 125;
@@ -55,6 +46,16 @@
     camera.position.set(-250, 0, -385)
     camera.lookAt(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
     controls.target.set(camera_lookat_x, camera_lookat_y, camera_lookat_z) 
+
+
+    // var extreme_values = { 
+    //     "minx": 1000000, 
+    //     "maxx": -1000000, 
+    //     "miny": 1000000, 
+    //     "maxy": -1000000, 
+    //     "minz": 1000000, 
+    //     "maxz": -1000000, 
+    // };
 
     // {% for key, member in local_members.items %}
     //     var points = [];

@@ -24,7 +24,7 @@ def linkRevitWithDB():
 
         node1_index = 2
         node2_index = 3
-        tolerance = .0001
+        tolerance = .00000001
 
         num_elements = len(selection)
         for index in range(num_elements):
@@ -78,7 +78,7 @@ def linkRevitWithDB():
                 print('node1 DNE')
                 # if there isn't already a node with these coordinates in the database, create one
                 query = (   
-                    'INSERT INTO model_node (display_id,x,y,z)'
+                    'INSERT INTO model_node (display_id,x,y,z) '
                     'VALUES (0,?,?,?)'  
                 )
                 cur.execute(query,(str(x1),str(y1),str(z1)))
@@ -94,7 +94,7 @@ def linkRevitWithDB():
                 print('node2 DNE')
                 # if there isn't already a node with these coordinates in the database, create one
                 query = (   
-                    'INSERT INTO model_node (display_id,x,y,z)'
+                    'INSERT INTO model_node (display_id,x,y,z) '
                     'VALUES (0,?,?,?)' 
                 )
                 cur.execute(query,(str(x2),str(y2),str(z2)) )
@@ -113,18 +113,19 @@ def linkRevitWithDB():
                 print('member exists')
                 # cols = cur.execute("PRAGMA table_info(model_Member)")
                 # print('COLS',cols.fetchall())
-                print(node1_id)
+                print(node1_id, model_member, model_member[node1_index])
                 if not (node1_id == model_member[node1_index]): # would cause beam to seem 'new' if it were just flipped where node1=node2 and vice versa 
                     query = (   
-                        'UPDATE model_Member'
-                        'SET new_node1_id = ?'
+                        'UPDATE model_Member '
+                        'SET new_node1_id = ? '
                         'WHERE id = ?'
                     )
                     cur.execute(query, (str(node1_id), str(model_member[0])))
+                    print('EXISTING COL, NEW NODE', cur.execute('SELECT * FROM model_Member WHERE id = ? LIMIT 1',(str(el.UniqueId),)).fetchone())
                 if not (node2_id == model_member[node2_index]): 
                     query = (   
-                        'UPDATE model_Member'
-                        'SET new_node2_id = ?'
+                        'UPDATE model_Member '
+                        'SET new_node2_id = ? '
                         'WHERE id = ?'
                     )
                     cur.execute(query, (str(node2_id), str(model_member[0])))
