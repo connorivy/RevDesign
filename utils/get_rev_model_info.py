@@ -70,6 +70,11 @@ def get_gbs():
     # h = el.GetParameters('Depth')
     # print(h[0].AsDouble())
 
+    # for param in el.Parameters:
+	# h = el.GetParameters(param.Definition.Name)
+	# for i in range(0,len(h)):
+	# 	print(param.Definition.Name, h[i].AsString(), len(h))
+
 import System
 def classify_selected_elements():
     #Set the file path
