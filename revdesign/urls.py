@@ -16,10 +16,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from users import views as user_views
+from analysis import views as analysis_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('register/', user_views.register, name='register'),
-    path('analysis/', include('analysis.urls')),
+    path('analysis/', analysis_views.vue_test, name='analysis-vue_test'),
     path('', include('model.urls')),
 ]

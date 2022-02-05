@@ -122,6 +122,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'var/static_root/'
+STATICFILES_DIRS = ['static']
 
 # If you want the static files to be in the main directory
 # STATICFILES_DIRS = [
