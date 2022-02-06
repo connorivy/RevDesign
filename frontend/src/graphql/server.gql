@@ -1,0 +1,17 @@
+query {
+  serverInfo {
+    name
+    company
+    description
+    adminContact
+    canonicalUrl
+    inviteOnly
+    version
+    termsOfService
+    roles {
+      name
+      description
+      resourceTarget
+    }
+  }
+}

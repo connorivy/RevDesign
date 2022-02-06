@@ -3,6 +3,20 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*node_modules/
+frontend/dist
+viewer/dist
+
+*.env
+*.crt
+.vscode
+.idea
+coverage/
+viewer/example/*.js
+viewer/example/*.js.map
+.tool-versions
+
+
 # C extensions
 *.so
 
