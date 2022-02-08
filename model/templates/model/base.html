@@ -61,7 +61,7 @@
                   </ul>
                 </div>
             </nav>
-            <nav class="navbar navbar-expand-lg navbar-light bg-light py-4" id="bot_navbar">
+            <nav class="navbar navbar-expand-lg navbar-light bg-light py-4" id="bot_navbar" style="display: none;">
                 <a class="navbar-brand" href="#">jBeam</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                   <span class="navbar-toggler-icon"></span>
@@ -94,6 +94,35 @@
                     <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
                     <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Search</button>
                   </form>
+                </div>
+            </nav>
+            <nav class="navbar navbar-expand-lg navbar-light bg-light py-4" id="bot_navbar"> 
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <button onclick="v.unloadAll()">Dispose Everything</button>
+                    </li>
+                    <li class="nav-item">
+                        <button onclick="v.toggleCameraProjection()">Ortho/Perspective</button>
+                    </li>
+                    <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        View
+                      </a>
+                      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <button onclick="v.interactions.rotateTo()">3D</button>
+                        <button onclick="v.interactions.rotateTo('front')">Front</button>
+                        <button onclick="v.interactions.rotateTo('back')">Back</button>
+                        <button onclick="v.interactions.rotateTo('left')">Left</button>
+                        <button onclick="v.interactions.rotateTo('right')">Right</button>
+                      </div>
+                    </li>
+                    <li class="nav-item">
+                        Used Memory (MB): <span id="info-mem">-</span> /
+                        LoadProgress: <span id="info-progress">-</span> /
+                        ViewerBusy: <span id="info-busy">idle</span> /
+                        Draw Calls: <span id="info-draws">-</span>
+                    </li>
                 </div>
             </nav>
         </header>
@@ -209,17 +238,16 @@
                     </div>
                 </nav>
 
-                <div id="app" class="module">
-                    <canvas></canvas>
+                <div id="threejs-container">
                 </div>
 
             </div>
         </div>
     </div>
 
-    {%  block threejs %} 
+    <!-- {%  block threejs %} 
 
-    {% endblock threejs %}
+    {% endblock threejs %} -->
 
     <!-- jQuery CDN - Slim version (=without AJAX) -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -229,6 +257,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
     <!-- jQuery Custom Scroller CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
+    <!-- Custom THREE JS script -->
+    <script type="text/javascript" src="{% static 'dist/viewer.js' %}"></script>
     <script type="text/javascript">
       $(document).ready(function () {
           $("#sidebar").mCustomScrollbar({

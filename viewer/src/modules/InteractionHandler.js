@@ -78,6 +78,7 @@ export default class InteractionHandler {
       }
       case 'Mesh':
         this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        this.setCameraRotationCenter(objs[0])
         break
       case 'Line':
         this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
@@ -190,7 +191,14 @@ export default class InteractionHandler {
         this.viewer.cameraHandler.controls.setPosition( camPos.x + dist, camPos.y + dist, camPos.z + dist )
       }
     }
-    
+  }
+
+  setCameraRotationCenter(target) {
+    const box = new THREE.Box3().setFromObject( target )
+    if( box.max.x === Infinity || box.max.x === -Infinity ) {
+      box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+    }
+    this.viewer.cameraHandler.controls.setPosition( box.x, box.y, box.z)
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {

@@ -18,7 +18,7 @@ if ( env === 'build' ) {
 
 const config = {
   mode: mode,
-  entry: path.resolve( __dirname + '/src/index.js' ),
+  entry: path.resolve( __dirname + '/src/viewer.js' ),
   target: 'web',
   devtool: 'source-map',
   output: {
