@@ -42,16 +42,19 @@ export default class SelectionHelper extends EventEmitter {
       },0 ) )
     }
 
-    // dragging event, this shouldn't be under the "hover option"
-    if ( typeof _options !== 'undefined' && _options.hover ) {
-      this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
-        this.pointerDown = true
+    // This event was firing after the 'pointerup' event which would cause the pointer down function to always be true
+    // I moved the pointerdown = true to the other function for pointerdown and got rid of this one
 
-        if ( this.viewer.cameraHandler.orbiting ) return
+    // // dragging event, this shouldn't be under the "hover option"
+    // if ( typeof _options !== 'undefined' && _options.hover ) {
+    //   this.viewer.renderer.domElement.addEventListener( 'pointerdown', debounce( ( e ) => {
+    //     console.log('pointerdown')
 
-        this.emit( 'mouse-down', this.getClickedObjects( e ) )
-      }, 100 ) )
-    }
+    //     // if ( this.viewer.cameraHandler.orbiting ) return
+
+    //     this.emit( 'mouse-down', this.getClickedObjects( e ) )
+    //   }, 100 ) )
+    // }
 
     this.checkForSectionBoxInclusion = true
     if ( typeof _options !== 'undefined' && _options.checkForSectionBoxInclusion ) {
@@ -61,14 +64,14 @@ export default class SelectionHelper extends EventEmitter {
     // Handle mouseclicks
     let mdTime
     this.viewer.renderer.domElement.addEventListener( 'pointerdown', ( e ) => {
+      this.pointerDown = true
       e.preventDefault()
       mdTime = new Date().getTime()
     } )
 
     this.viewer.renderer.domElement.addEventListener( 'pointerup', ( e ) => {
       e.preventDefault()
-      if( this.viewer.cameraHandler.orbiting ) return
-
+      // if( this.viewer.cameraHandler.orbiting ) return
       let delta = new Date().getTime() - mdTime
       this.pointerDown = false
       
@@ -133,6 +136,7 @@ export default class SelectionHelper extends EventEmitter {
   }
 
   getClickedObjects( e ) {
+    this.viewer.cameraHandler.activeCam.camera.updateMatrixWorld();
     const normalizedPosition = this._getNormalisedClickPosition( e )
     this.raycaster.setFromCamera( normalizedPosition, this.viewer.cameraHandler.activeCam.camera )
     let targetObjects = this.subset ? this.subset : this.viewer.sceneManager.filteredObjects

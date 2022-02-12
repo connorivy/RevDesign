@@ -177,6 +177,7 @@ export default class Viewer extends EventEmitter {
       this.reflectionsNeedUpdate = false
     }
 
+    // this.cameraHandler.activeCam.camera.updateMatrixWorld();
     this.renderer.render( this.scene, this.cameraHandler.activeCam.camera )
 
   }

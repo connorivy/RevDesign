@@ -20,6 +20,15 @@ export default class CameraHandler {
 
     CameraControls.install( { THREE: THREE } )
     this.controls = new CameraControls( this.camera, this.viewer.renderer.domElement )
+
+    // action must be changed to offset in order to keep orbit point on offset
+    this.controls.mouseButtons.left = CameraControls.ACTION.NONE;
+    this.controls.mouseButtons.right = CameraControls.ACTION.ROTATE;
+    this.controls.mouseButtons.middle = CameraControls.ACTION.OFFSET;
+
+    //disable camera damping
+    this.controls.dampingFactor = 1
+    
     this.controls.maxPolarAngle = Math.PI / 1.5
     this.setupWASDControls()
 
@@ -39,10 +48,10 @@ export default class CameraHandler {
     ]
 
     this.orbiting = false
-    this.controls.addEventListener( 'transitionstart', () => { this.orbiting = true } )
+    // this.controls.addEventListener( 'transitionstart', () => { this.orbiting = true } )
     // note: moved to new controls event called "rest"
     this.controls.addEventListener( 'controlend', () => { } )
-    this.controls.addEventListener( 'rest', () => { setTimeout( () => { this.orbiting = false }, 400 ) } )
+    // this.controls.addEventListener( 'rest', () => { setTimeout( () => { this.orbiting = false }, 400 ) } )
 
     window.addEventListener( 'resize', this.onWindowResize.bind( this ), false )
     this.onWindowResize()

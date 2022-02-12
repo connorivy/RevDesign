@@ -7,12 +7,18 @@ export default class InteractionHandler {
     this.viewer = viewer
     this.preventSelection = false
     
-    this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: false } )
+    this.selectionHelper = new SelectionHelper( this.viewer, { sectionBox: this.sectionBox, hover: true } )
     this.selectionMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x0B55D2, emissive: 0x0B55D2, side: THREE.DoubleSide } )
     this.selectionMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
     // Fix overlapping faces flickering
     this.selectionMeshMaterial.polygonOffset = true
     this.selectionMeshMaterial.polygonOffsetFactor = -0.1
+
+    this.hoverMeshMaterial = new THREE.MeshLambertMaterial( { color: 0x507ecc, emissive: 0x507ecc, side: THREE.DoubleSide } )
+    this.hoverMeshMaterial.clippingPlanes = this.viewer.sectionBox.planes
+    // Fix overlapping faces flickering
+    this.hoverMeshMaterial.polygonOffset = true
+    this.hoverMeshMaterial.polygonOffsetFactor = -0.1
 
     this.selectionLineMaterial = new THREE.LineBasicMaterial( { color: 0x0B55D2 } )
     this.selectionLineMaterial.clippingPlanes = this.viewer.sectionBox.planes
@@ -26,8 +32,15 @@ export default class InteractionHandler {
 
     this.selectedObjectsUserData = []
 
+    this.hoveredObjects = new THREE.Group()
+    this.viewer.scene.add( this.hoveredObjects )
+    this.hoveredObjects.renderOrder = 1000
+
+    this.hoveredObjectsUserData = []
+
     this.selectionHelper.on( 'object-doubleclicked', this._handleDoubleClick.bind( this ) )
     this.selectionHelper.on( 'object-clicked', this._handleSelect.bind( this ) )
+    this.selectionHelper.on( 'hovered', this._handleHover.bind( this ) )
 
     document.addEventListener( 'keydown', ( e ) => {
       if( e.key === 'Escape' && this.viewer.mouseOverRenderer ) {
@@ -78,7 +91,6 @@ export default class InteractionHandler {
       }
       case 'Mesh':
         this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
-        this.setCameraRotationCenter(objs[0])
         break
       case 'Line':
         this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
@@ -87,6 +99,10 @@ export default class InteractionHandler {
         console.warn( 'Point selection not implemented.' )
         return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
     }
+
+    this.setOrbitPoint(objs[0].object)
+    // dehover objects after click event
+    this.dehoverObjects()
 
     let box 
     if ( selType === 'Block' ) {
@@ -101,6 +117,99 @@ export default class InteractionHandler {
     this.selectedObjects.add( box )
     this.viewer.needsRender = true
     this.viewer.emit( 'select', this.selectedObjectsUserData )
+  }
+
+  _handleHover( objs ) {
+    if( this.viewer.cameraHandler.orbiting ) return
+    if( this.preventSelection ) return
+
+    if ( objs.length === 0 ) {
+      this.dehoverObjects()
+      return
+    }
+
+    if ( !this.selectionHelper.multiSelect ) this.dehoverObjects()
+
+    // if the hovered item is clicked, don't do anything
+    if (this.selectedObjectsUserData.some(e => e.id === objs[0].object.userData.id)) {
+      return
+    }
+    
+    let selType = objs[0].object.type
+    let rootBlock = null
+    if ( objs[0].object.parent?.userData?.speckle_type?.toLowerCase().includes( 'blockinstance' ) ) {
+      selType = 'Block'
+      rootBlock = this.getParentBlock( objs[0].object.parent )
+    }
+
+    switch ( selType ) {
+      case 'Block': {
+        let blockObjs = this.getBlockObjectsCloned( rootBlock )
+        for( let child of blockObjs ) {          
+          child.material = this.hoverMeshMaterial
+          this.hoveredObjects.add( child )
+        }
+        break
+      }
+      case 'Mesh':
+        this.hoveredObjects.add( new THREE.Mesh( objs[0].object.geometry, this.hoverMeshMaterial ) )
+        break
+      case 'Line':
+        this.hoveredObjects.add( new THREE.Line( objs[0].object.geometry, this.hoverMeshMaterial ) )
+        break
+      case 'Point':
+        console.warn( 'Point selection not implemented.' )
+        return // exit the whole func here, points cause all sorts of trouble when being selected (ie, bbox stuff)
+    }
+
+    let box 
+    if ( selType === 'Block' ) {
+      this.hoveredObjectsUserData.push( rootBlock.userData )
+      box = new THREE.BoxHelper( rootBlock, 0x23F3BD )
+    } else {
+      this.hoveredObjectsUserData.push( objs[0].object.userData )
+      box = new THREE.BoxHelper( objs[0].object, 0x23F3BD )
+    }
+    
+    box.material = this.selectionEdgesMaterial
+    this.hoveredObjects.add( box )
+    this.viewer.needsRender = true
+    this.viewer.emit( 'hover', this.hoveredObjectsUserData )
+  }
+
+  // function to have the camera rotate around a member when it is selected like in Revit
+  setOrbitPoint( target ) {
+    var _v3A = new THREE.Vector3();
+    var _xColumn = new THREE.Vector3();
+    var _yColumn = new THREE.Vector3();
+    var _zColumn = new THREE.Vector3();
+
+    const box = new THREE.Box3().setFromObject( target )
+    if( box.max.x === Infinity || box.max.x === -Infinity ) {
+      box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
+    }
+
+    _xColumn.setFromMatrixColumn( this.viewer.cameraHandler.activeCam.camera.matrixWorldInverse, 0 );
+    _yColumn.setFromMatrixColumn( this.viewer.cameraHandler.activeCam.camera.matrixWorldInverse, 1 );
+    _zColumn.setFromMatrixColumn( this.viewer.cameraHandler.activeCam.camera.matrixWorldInverse, 2 );
+
+    const targetX = (box.max.x + box.min.x) / 2;
+    const targetY = (box.max.y + box.min.y) / 2;
+    const targetZ = (box.max.z + box.min.z) / 2;
+
+    const position = _v3A.set( targetX, targetY, targetZ );
+    const distance = position.distanceTo( this.viewer.cameraHandler.activeCam.camera.position );
+    const cameraToPoint = position.sub( this.viewer.cameraHandler.activeCam.camera.position );
+    _xColumn.multiplyScalar( cameraToPoint.x );
+    _yColumn.multiplyScalar( cameraToPoint.y );
+    _zColumn.multiplyScalar( cameraToPoint.z );
+
+    _v3A.copy( _xColumn ).add( _yColumn ).add( _zColumn );
+    _v3A.z = _v3A.z + distance;
+
+    this.viewer.cameraHandler.controls.dollyTo( distance, false );
+    this.viewer.cameraHandler.controls.setFocalOffset( - _v3A.x, _v3A.y, - _v3A.z, false );
+    this.viewer.cameraHandler.controls.moveTo( targetX, targetY, targetZ, false );
   }
 
   getParentBlock( block ) {
@@ -129,6 +238,13 @@ export default class InteractionHandler {
     this.selectedObjectsUserData = []
     this.viewer.needsRender = true
     this.viewer.emit( 'select', this.selectedObjectsUserData )
+  }
+
+  dehoverObjects() {
+    this.hoveredObjects.clear()
+    this.hoveredObjectsUserData = []
+    this.viewer.needsRender = true
+    this.viewer.emit( 'hover', this.hoveredObjectsUserData )
   }
 
   zoomToObject( target, fit = 1.2, transition = true ) {
@@ -191,14 +307,7 @@ export default class InteractionHandler {
         this.viewer.cameraHandler.controls.setPosition( camPos.x + dist, camPos.y + dist, camPos.z + dist )
       }
     }
-  }
-
-  setCameraRotationCenter(target) {
-    const box = new THREE.Box3().setFromObject( target )
-    if( box.max.x === Infinity || box.max.x === -Infinity ) {
-      box = new THREE.Box3( new THREE.Vector3( -1,-1,-1 ), new THREE.Vector3( 1,1,1 ) )
-    }
-    this.viewer.cameraHandler.controls.setPosition( box.x, box.y, box.z)
+    
   }
 
   rotateCamera( azimuthAngle = 0.261799, polarAngle = 0, transition = true ) {

@@ -14,7 +14,7 @@
     "dist"
   ],
   "scripts": {
-    "serve": "webpack serve --env dev --config webpack.config.example.js --port 9002",
+    "serve": "webpack serve --env dev --config webpack.config.js --port 9002",
     "dev": "webpack --progress --watch --env dev",
     "build": "webpack --env dev && webpack --env build",
     "prepublishOnly": "npm run build"
