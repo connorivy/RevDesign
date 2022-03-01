@@ -311,23 +311,34 @@
             console.log('WARNING: number of unique coordinates does not equal number of segments')
         }
 
-        var coordArray = Array.from(coords, e => JSON.parse(e));
+        var coordArrayFloor = Array.from(coords, e => JSON.parse(e));
         // for (var i = 0; i < coords.size; i++) {
         //     console.log(coords[i])
-        //     coordArray.push(JSON.parse(coords[i]))
+        //     coordArrayFloor.push(JSON.parse(coords[i]))
         // }
 
         // get all shearwalls
-        
+        var coordArrayWalls = []
+        for (var i; i < v.sceneManager.shearWalls.length; i++) {
+            coordArrayWalls.push([
+                v.sceneManager.shearWalls[i].start.x, 
+                v.sceneManager.shearWalls[i].start.y, 
+                v.sceneManager.shearWalls[i].end.x,
+                v.sceneManager.shearWalls[i].end.x,
+            ])
+        }
 
-        console.log(coordArray)
+        console.log(coordArrayWalls)
+
+        console.log(coordArrayFloor)
 
         // POST request
         $.ajax({
             type: 'POST',
             url: "{% url 'get_floor_mesh' %}",
             data: {
-                'coord_list': JSON.stringify(coordArray),
+                'coord_list_floor': JSON.stringify(coordArrayFloor),
+                'coord_list_walls': coordArrayWalls,
             },
             success: function (response) {
                 console.log(response)

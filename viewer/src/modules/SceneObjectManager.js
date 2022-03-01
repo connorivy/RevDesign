@@ -11,6 +11,7 @@ export default class SceneObjectManager {
     this.viewer = viewer
     this.scene = viewer.scene
     this.views = []
+    this.shearWalls = []
 
     this.sceneObjects = new SceneObjects( viewer )
 
@@ -175,6 +176,7 @@ export default class SceneObjectManager {
     var line = null
     if (wrapper.meta.lineType == 'shearWall') {
       line = new THREE.Line( wrapper.bufferGeometry, this.lineDashedMaterial )
+      this.shearWalls.push(line)
     } else {
       line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
     }
