@@ -319,12 +319,13 @@
 
         // get all shearwalls
         var coordArrayWalls = []
-        for (var i; i < v.sceneManager.shearWalls.length; i++) {
+        console.log(v.sceneManager.shearWalls)
+        for (var i = 0; i < v.sceneManager.shearWalls.length; i++) {
             coordArrayWalls.push([
-                v.sceneManager.shearWalls[i].start.x, 
-                v.sceneManager.shearWalls[i].start.y, 
-                v.sceneManager.shearWalls[i].end.x,
-                v.sceneManager.shearWalls[i].end.x,
+                v.sceneManager.shearWalls[i].userData.start.x, 
+                v.sceneManager.shearWalls[i].userData.start.y, 
+                v.sceneManager.shearWalls[i].userData.end.x,
+                v.sceneManager.shearWalls[i].userData.end.y,
             ])
         }
 
@@ -338,7 +339,7 @@
             url: "{% url 'get_floor_mesh' %}",
             data: {
                 'coord_list_floor': JSON.stringify(coordArrayFloor),
-                'coord_list_walls': coordArrayWalls,
+                'coord_list_walls': JSON.stringify(coordArrayWalls),
             },
             success: function (response) {
                 console.log(response)
