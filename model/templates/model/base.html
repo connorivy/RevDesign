@@ -117,12 +117,24 @@
                         <button onclick="v.interactions.rotateTo('right')">Right</button>
                       </div>
                     </li>
-                    <li class="nav-item">
-                        Used Memory (MB): <span id="info-mem">-</span> /
-                        LoadProgress: <span id="info-progress">-</span> /
-                        ViewerBusy: <span id="info-busy">idle</span> /
-                        Draw Calls: <span id="info-draws">-</span>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Analytics
+                        </a>
+                        <div class="dropdown-menu">
+                            Used Memory (MB): <span id="info-mem">-</span> /
+                            LoadProgress: <span id="info-progress">-</span> /
+                            ViewerBusy: <span id="info-busy">idle</span> /
+                            Draw Calls: <span id="info-draws">-</span>
+                        </div>
                     </li>
+                    <li class="nav-item">
+                        <button onclick="getFloorMesh()">Get Mesh</button>
+                    </li>
+                    <form class="form-inline my-2 my-lg-0">
+                        <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+                        <button id="objectUrlInput" class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Search</button>
+                    </form>
                 </div>
             </nav>
         </header>
@@ -249,8 +261,8 @@
 
     {% endblock threejs %} -->
 
-    <!-- jQuery CDN - Slim version (=without AJAX) -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <!-- jQuery CDN -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- Popper.JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
     <!-- Bootstrap JS -->
@@ -271,6 +283,61 @@
               $('a[aria-expanded=true]').attr('aria-expanded', 'false');
           });
       });
+
+      function getFloorMesh() {
+        if ( v.interactions.selectedObjectsUserData.length == 0 ) {
+            console.log('No Floor Selected')
+            return
+        } else if ( v.interactions.selectedObjectsUserData.length > 1 ) {
+            console.log( 'Too many objects selected')
+            return
+        } 
+        var segments = v.interactions.selectedObjectsUserData[0].outline.segments;
+        var coords = new Set();
+        for (var i = 0; i < segments.length; i++) {
+            coords.add(JSON.stringify(
+            {
+                'x': segments[i].start.x,
+                'y': segments[i].start.y,
+            }))
+            coords.add(JSON.stringify(
+            {
+                'x': segments[i].end.x,
+                'y': segments[i].end.y,
+            }))
+        }
+        console.log(segments, coords)
+        if (segments.length != coords.size) {
+            console.log('WARNING: number of unique coordinates does not equal number of segments')
+        }
+
+        var coordArray = Array.from(coords, e => JSON.parse(e));
+        // for (var i = 0; i < coords.size; i++) {
+        //     console.log(coords[i])
+        //     coordArray.push(JSON.parse(coords[i]))
+        // }
+
+        // get all shearwalls
+        
+
+        console.log(coordArray)
+
+        // POST request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'get_floor_mesh' %}",
+            data: {
+                'coord_list': JSON.stringify(coordArray),
+            },
+            success: function (response) {
+                console.log(response)
+            },
+            error: function (response) {
+                console.log('error')
+                console.log(response)
+            }
+        })
+    };
     </script>
   </body>
 </html>

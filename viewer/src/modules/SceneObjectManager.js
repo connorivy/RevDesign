@@ -45,6 +45,8 @@ export default class SceneObjectManager {
     } )
 
     this.lineMaterial = new THREE.LineBasicMaterial( { color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
+
+    this.lineDashedMaterial = new THREE.LineDashedMaterial( { color: 0xFFCD01, clippingPlanes: this.viewer.sectionBox.planes, scale: 1, dashSize: 1, gapSize: .5 } )
     
     this.pointMaterial = new THREE.PointsMaterial( { size: 2, sizeAttenuation: false, color: 0x7F7F7F, clippingPlanes: this.viewer.sectionBox.planes } )
 
@@ -170,7 +172,13 @@ export default class SceneObjectManager {
   }
 
   addLine( wrapper, addToScene = true ) {
-    const line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
+    var line = null
+    if (wrapper.meta.lineType == 'shearWall') {
+      line = new THREE.Line( wrapper.bufferGeometry, this.lineDashedMaterial )
+    } else {
+      line = new THREE.Line( wrapper.bufferGeometry, this.lineMaterial )
+    }
+    line.computeLineDistances()
     line.userData = wrapper.meta
     line.uuid = wrapper.meta.id
     if ( addToScene ) {

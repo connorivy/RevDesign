@@ -154,11 +154,11 @@ export default class CameraHandler {
   }
 
   disableRotations() {
-    this.controls.mouseButtons.left = CameraControls.ACTION.TRUCK
+    // this.controls.mouseButtons.left = CameraControls.ACTION.TRUCK
   }
 
   enableRotations() {
-    this.controls.mouseButtons.left = CameraControls.ACTION.ROTATE
+    // this.controls.mouseButtons.left = CameraControls.ACTION.ROTATE
   }
 
   setupWASDControls() {

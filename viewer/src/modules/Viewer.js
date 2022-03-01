@@ -182,6 +182,16 @@ export default class Viewer extends EventEmitter {
 
   }
 
+  async togglePostprocessing() {
+    this.postprocessing = !this.postprocessing
+    if (this.postprocessing) {
+      await this.applyFilter({filterBy: {'speckle_type' : 'Objects.Structural.Geometry.Element1D'}, ghostOthers: true})
+    }
+    else {
+      await this.applyFilter({filterBy: {'speckle_type' : 'Objects.Geometry.Line'}, ghostOthers: true})
+    }
+  }
+
   toggleSectionBox() {
     this.sectionBox.toggle()
   }

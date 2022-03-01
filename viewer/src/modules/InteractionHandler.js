@@ -93,7 +93,7 @@ export default class InteractionHandler {
         this.selectedObjects.add( new THREE.Mesh( objs[0].object.geometry, this.selectionMeshMaterial ) )
         break
       case 'Line':
-        this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionMeshMaterial ) )
+        this.selectedObjects.add( new THREE.Line( objs[0].object.geometry, this.selectionLineMaterial ) )
         break
       case 'Point':
         console.warn( 'Point selection not implemented.' )

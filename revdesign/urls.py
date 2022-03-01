@@ -18,9 +18,14 @@ from django.urls import path, include
 from users import views as user_views
 from analysis import views as analysis_views
 
+from model import requests as model_requests
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('register/', user_views.register, name='register'),
     path('analysis/', analysis_views.vue_test, name='analysis-vue_test'),
     path('', include('model.urls')),
+
+    # AJAX requests
+    path('post/ajax/validate/get_floor_mesh', model_requests.get_floor_mesh, name = "get_floor_mesh"),
 ]
