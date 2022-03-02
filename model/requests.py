@@ -18,18 +18,30 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
+        mesh_size = 1
         polygon = []
         with pygmsh.geo.Geometry() as geom:
             # add lines from floor
             for coord in coord_list_floor:
                 polygon.append([coord['x'], coord['y']])
-            geom.add_polygon(polygon, mesh_size=.5)
+            geom.add_polygon(polygon, mesh_size=mesh_size)
 
             # add points from shear walls
+            boundary_layers = []
             for wall in coord_list_walls:
-                points = get_points_from_wall(wall, .1)
-                for point in points:
-                    geom.add_point(point)
+                p0 = geom.add_point([float(wall[0]), float(wall[1])])
+                p1 = geom.add_point([float(wall[2]), float(wall[3])])
+                poly = geom.add_line(p0, p1)
+                print('POLY', poly)
+                boundary_layers.append(geom.add_boundary_layer(
+                    edges_list = [poly],
+                    lcmin = mesh_size / 10,
+                    lcmax = mesh_size / 1.2,
+                    distmin = mesh_size / 10,
+                    distmax = mesh_size / 1.4
+                ))
+            # print('BLS', boundary_layers)
+            geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
         # with pygmsh.geo.Geometry() as geom:
@@ -54,3 +66,6 @@ def get_points_from_wall(wall, mesh_size=1):
     parts = np.ceil(np.linalg.norm(a-b) / mesh_size) + 1
     print(np.linspace(a,b,int(parts)).tolist())
     return np.linspace(a,b,int(parts)).tolist()
+
+def get_poly_from_wall(wall, mesh_size=1):
+    return pygmsh.common.Polygon([[float(wall[0]), float(wall[1])],[float(wall[2]), float(wall[3])]], mesh_size)
