@@ -1,6 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .models import *
+from .sfepy.linear_elastic import *
 import pygmsh
 import numpy as np
 import json
@@ -61,6 +62,9 @@ def get_floor_mesh(request):
         #     )
         #     mesh = geom.generate_mesh()
         mesh.write('test1.mesh')
+
+        pb = get_sfepy_pb()
+        create_mesh_reactions(pb)
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
