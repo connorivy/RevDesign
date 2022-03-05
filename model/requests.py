@@ -31,17 +31,27 @@ def get_floor_mesh(request):
 
             boundary = geom.add_polygon(polygon, mesh_size=mesh_size)
             np_poly = np.asarray(polygon)
-            np_curves = np.array(boundary.curves)
 
-            plus_x = []
-            minus_x = []
-            plus_y = []
-            minus_y = []
+            # sort surves in acending order by the avarage x and y values or the curves
+            # only works for lines at the moment, not curves
+            curves_sorted_by_x = sorted(boundary.curves, key=lambda x: (x.points[0].x[0] + x.points[1].x[0]) / 2, reverse=False)
+            curves_sorted_by_y = sorted(boundary.curves, key=lambda x: (x.points[0].x[1] + x.points[1].x[1]) / 2, reverse=False)
 
             max_x, max_y = np_poly.max(axis=0)
             min_x, min_y = np_poly.min(axis=0)
 
-            
+            wind_line_vert = [[min_y, max_y]]
+            wind_line_horiz = [[min_x, max_x]]
+
+            print(np_poly)
+            # minus_x_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_x, wind_line_vert.copy(), 1)
+            # plus_x_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
+            minus_y_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_y, wind_line_horiz.copy(), 0)
+            plus_y_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
+            # print(minus_x_wind_load_curves, plus_x_wind_load_curves)
+            print(minus_y_wind_load_curves, plus_y_wind_load_curves)
+
+
 
 
             # https://github.com/nschloe/pygmsh/issues/537 
@@ -104,3 +114,84 @@ def get_floor_mesh(request):
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
+
+def get_curves_with_wind_load(curves_sorted, wind_line, dir):
+    '''
+    dir = 0 if dealing with the horizontal direction, 1 if dealing with the vertical direction
+    '''
+    curves = []
+    for curve in curves_sorted:
+        if not wind_line:
+            break
+        
+        # only works with cardinal directions
+        if is_nearly_perpendicular(curve, dir, .176): #.176 is the slope of a line a 10deg with the horizon
+            continue
+        for segment in wind_line:
+            if lines_overlap(segment, curve, dir):
+                curves.append(curve)
+                wind_line = adjust_wind_line(wind_line, segment, curve, dir)
+                break
+    return curves
+
+def is_nearly_perpendicular(curve, dir, tol):
+    '''
+    dir = 0 if dealing with the horizontal direction, 1 if dealing with the vertical direction
+    '''
+
+    print('is_nearly_perpendicular', curve, dir)
+    # if curve has the same x value, then line is vertical and slope equantion will fail
+    if abs(curve.points[1].x[0] - curve.points[0].x[0]) < .001:
+        print('is_nearly_perpendicular', not dir)
+        return not dir
+
+    # if slope is close to zero, then its a horizontal line
+    slope = abs((curve.points[1].x[1] - curve.points[0].x[1]) / (curve.points[1].x[0] - curve.points[0].x[0]))
+    if slope < tol:
+        print('is_nearly_perpendicular', dir)
+        return dir
+    else:
+        print('is_nearly_perpendicular', not dir)
+        return not dir
+
+def lines_overlap(wind_line, curve, dir):
+    print('lines overlap', wind_line, curve, dir)
+    if max(wind_line) < min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(wind_line) > max(curve.points[0].x[dir], curve.points[1].x[dir]):
+        print('lines overlap', 'False')
+        return False
+    else:
+        print('lines overlap', 'True')
+        return True
+
+def adjust_wind_line(wind_line, segment, curve, dir):
+    print('adjust_wind_line', wind_line, segment, curve, dir)
+    min_segment = min(segment)
+    max_segment = max(segment)
+    min_curve = min(curve.points[0].x[dir], curve.points[1].x[dir])
+    max_curve = max(curve.points[0].x[dir], curve.points[1].x[dir])
+
+    #           --------------                curve
+    #     -----------------------------       segment
+    if min_segment < min_curve and max_segment > max_curve:
+        wind_line.append([min_segment, min_curve])
+        wind_line.append([max_segment, max_curve])
+
+    # --------------                          curve
+    #        -----------------------------    segment
+    elif min_segment < min_curve and max_segment > max_curve:
+        wind_line.append([max_segment, max_curve])
+
+    #                       --------------    curve
+    # -----------------------------           segment
+    elif min_segment < min_curve and max_segment > max_curve:
+        wind_line.append([min_curve, min_segment])
+
+    #         --------------                  curve
+    #            -------                      segment
+    else:
+        pass
+
+    wind_line.remove(segment)
+    print('adjust_wind_line', wind_line)
+    return wind_line
+
