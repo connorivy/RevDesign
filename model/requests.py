@@ -23,6 +23,7 @@ def get_floor_mesh(request):
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
+        boundary_layers = []
         with pygmsh.geo.Geometry() as geom:
             # add lines from floor
             for coord in coord_list_floor:
@@ -30,6 +31,13 @@ def get_floor_mesh(request):
                 polygon.append([round(coord['x'],6), round(coord['y'],6)])
 
             boundary = geom.add_polygon(polygon, mesh_size=mesh_size)
+            # boundary_layers.append(geom.add_boundary_layer(
+            #         edges_list = boundary.curves,
+            #         lcmin = mesh_size / 10,
+            #         lcmax = mesh_size / 1.2,
+            #         distmin = 0,
+            #         distmax = mesh_size / 1.4
+            #     ))
             np_poly = np.asarray(polygon)
 
             # sort surves in acending order by the avarage x and y values or the curves
@@ -43,16 +51,12 @@ def get_floor_mesh(request):
             wind_line_vert = [[min_y, max_y]]
             wind_line_horiz = [[min_x, max_x]]
 
-            print(np_poly)
-            # minus_x_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_x, wind_line_vert.copy(), 1)
-            # plus_x_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
+            minus_x_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_x, wind_line_vert.copy(), 1)
+            plus_x_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
             minus_y_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_y, wind_line_horiz.copy(), 0)
             plus_y_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
             # print(minus_x_wind_load_curves, plus_x_wind_load_curves)
-            print(minus_y_wind_load_curves, plus_y_wind_load_curves)
-
-
-
+            # print(minus_y_wind_load_curves, plus_y_wind_load_curves)
 
             # https://github.com/nschloe/pygmsh/issues/537 
             # https://github.com/nschloe/meshio/issues/550
@@ -60,7 +64,6 @@ def get_floor_mesh(request):
             # geom.add_physical(boundary, label='boundary')
 
             # add points from shear walls
-            boundary_layers = []
             for wall in coord_list_walls:
                 p0 = None
                 p1 = None
@@ -96,21 +99,30 @@ def get_floor_mesh(request):
                 ))
                 # geom.add_physical(line, label='SW')
 
-            # create lists of shear wall objects 
-            print('LINE', line.points[0], line.points[1], line.points[0]._id)
-            if abs(line.points[0].x[0] - line.points[1].x[0]) < 1e-5:
-                vert_shear_walls.append(line)
-            else:
-                horiz_shear_walls.append(line)
+                # create lists of shear wall objects 
+                if abs(line.points[0].x[0] - line.points[1].x[0]) < 1e-5:
+                    vert_shear_walls.append(line)
+                else:
+                    horiz_shear_walls.append(line)
 
             geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
-        # print('cell_sets', mesh.cell_sets, mesh.cell_data)
-        mesh.write('test1.vtu')
+        print('cell_sets', mesh.cell_sets, mesh.cell_data)
 
-        # pb = get_sfepy_pb()
-        # create_mesh_reactions(pb)
+        mesh.write('test1.mesh')
+
+        options = {
+            'minus_x_wind_load_curves' : minus_x_wind_load_curves,
+            'plus_x_wind_load_curves': plus_x_wind_load_curves,
+            'minus_y_wind_load_curves' : minus_y_wind_load_curves,
+            'plus_y_wind_load_curves' : plus_y_wind_load_curves,
+            'vert_shear_walls' : vert_shear_walls,
+            'horiz_shear_walls' : horiz_shear_walls,
+        }
+
+        pb = get_sfepy_pb(**options)
+        create_mesh_reactions(pb)
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
@@ -139,28 +151,28 @@ def is_nearly_perpendicular(curve, dir, tol):
     dir = 0 if dealing with the horizontal direction, 1 if dealing with the vertical direction
     '''
 
-    print('is_nearly_perpendicular', curve, dir)
+    # print('is_nearly_perpendicular', curve, dir)
     # if curve has the same x value, then line is vertical and slope equantion will fail
     if abs(curve.points[1].x[0] - curve.points[0].x[0]) < .001:
-        print('is_nearly_perpendicular', not dir)
+        # print('is_nearly_perpendicular', not dir)
         return not dir
 
     # if slope is close to zero, then its a horizontal line
     slope = abs((curve.points[1].x[1] - curve.points[0].x[1]) / (curve.points[1].x[0] - curve.points[0].x[0]))
     if slope < tol:
-        print('is_nearly_perpendicular', dir)
+        # print('is_nearly_perpendicular', dir)
         return dir
     else:
-        print('is_nearly_perpendicular', not dir)
+        # print('is_nearly_perpendicular', not dir)
         return not dir
 
 def lines_overlap(wind_line, curve, dir):
-    print('lines overlap', wind_line, curve, dir)
+    # print('lines overlap', wind_line, curve, dir)
     if max(wind_line) < min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(wind_line) > max(curve.points[0].x[dir], curve.points[1].x[dir]):
-        print('lines overlap', 'False')
+        # print('lines overlap', 'False')
         return False
     else:
-        print('lines overlap', 'True')
+        # print('lines overlap', 'True')
         return True
 
 def adjust_wind_line(wind_line, segment, curve, dir):
