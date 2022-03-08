@@ -166,7 +166,7 @@ export default class Viewer extends EventEmitter {
 
       // Second, set a scene background color (renderer is transparent by default)
       // and then finally update the cubemap camera.
-      this.scene.background = new THREE.Color( '#F0F3F8' )
+      this.scene.background = new THREE.Color( '#CDEAFF' )
       this.cubeCamera.update( this.renderer, this.scene )
       this.scene.background = null
 

@@ -64,13 +64,13 @@ def get_floor_mesh(request):
             # geom.add_physical(boundary, label='boundary')
 
             # add points from shear walls
-            for wall in coord_list_walls:
+            for index in range(len(coord_list_walls)):
                 p0 = None
                 p1 = None
-                x0 = round(float(wall[0]),6)
-                y0 = round(float(wall[1]),6)
-                x1 = round(float(wall[2]),6)
-                y1 = round(float(wall[3]),6)
+                x0 = round(float(coord_list_walls[index][0]),6)
+                y0 = round(float(coord_list_walls[index][1]),6)
+                x1 = round(float(coord_list_walls[index][2]),6)
+                y1 = round(float(coord_list_walls[index][3]),6)
 
                 # maybe make this loop a little more clever
                 for point in boundary.points:
@@ -97,7 +97,7 @@ def get_floor_mesh(request):
                     distmin = 0,
                     distmax = mesh_size / 1.4
                 ))
-                # geom.add_physical(line, label='SW')
+                # geom.add_physical(line, label=f'SW{index}')
 
                 # create lists of shear wall objects 
                 if abs(line.points[0].x[0] - line.points[1].x[0]) < 1e-5:
@@ -108,9 +108,20 @@ def get_floor_mesh(request):
             geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
-        print('cell_sets', mesh.cell_sets, mesh.cell_data)
+        # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
+        for index in range(len(mesh.cells)):
+            try:
+                print(mesh.cells[index].type)
+                if mesh.cells[index].type == 'line':
+                    print('del celbolck')
+                    mesh.cells.pop(index)
+                elif mesh.cells[index].type == 'vertex':
+                    print('del celbolck')
+                    mesh.cells.pop(index)
+            except:
+                break
 
-        mesh.write('test1.mesh')
+        mesh.write('.\model\sfepy\RevDesign.vtk')
 
         options = {
             'minus_x_wind_load_curves' : minus_x_wind_load_curves,
@@ -120,6 +131,8 @@ def get_floor_mesh(request):
             'vert_shear_walls' : vert_shear_walls,
             'horiz_shear_walls' : horiz_shear_walls,
         }
+
+        print('vert_shear_walls', vert_shear_walls)
 
         pb = get_sfepy_pb(**options)
         create_mesh_reactions(pb)
