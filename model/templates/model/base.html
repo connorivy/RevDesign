@@ -132,7 +132,7 @@
                         <button onclick="getFloorMesh()">Get Mesh</button>
                     </li>
                     <form class="form-inline my-2 my-lg-0">
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/b46550823cd335be47d51347b447c99a">
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/484aa60e78c3cd4854e4dc140e46b672">
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
                     </form>
@@ -296,16 +296,8 @@
         var segments = v.interactions.selectedObjectsUserData[0].outline.segments;
         var coords = new Set();
         for (var i = 0; i < segments.length; i++) {
-            coords.add(JSON.stringify(
-            {
-                'x': segments[i].start.x,
-                'y': segments[i].start.y,
-            }))
-            coords.add(JSON.stringify(
-            {
-                'x': segments[i].end.x,
-                'y': segments[i].end.y,
-            }))
+            coords.add(JSON.stringify([segments[i].start.x, segments[i].start.y, 0]))
+            coords.add(JSON.stringify([segments[i].end.x, segments[i].end.y, 0]))
         }
         console.log(segments, coords)
         if (segments.length != coords.size) {
@@ -325,8 +317,10 @@
             coordArrayWalls.push([
                 v.sceneManager.shearWalls[i].userData.start.x, 
                 v.sceneManager.shearWalls[i].userData.start.y, 
+                0,
                 v.sceneManager.shearWalls[i].userData.end.x,
                 v.sceneManager.shearWalls[i].userData.end.y,
+                0,
             ])
         }
 

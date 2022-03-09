@@ -6,6 +6,7 @@ import pygmsh
 import numpy as np
 import json
 import gmsh
+import meshio
 
 @csrf_exempt
 def get_floor_mesh(request):
@@ -20,7 +21,7 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
-        mesh_size = 15
+        mesh_size = 1
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
@@ -29,16 +30,16 @@ def get_floor_mesh(request):
             # add lines from floor
             for coord in coord_list_floor:
                 # round to nearest 6 decimal places bc revit is only accurate to 5 (I think?)
-                polygon.append([round(coord['x'],6), round(coord['y'],6)])
+                polygon.append([round(coord[0],6), round(coord[1],6)])
 
             surface = geom.add_polygon(polygon, mesh_size=mesh_size)
-            # boundary_layers.append(geom.add_boundary_layer(
-            #         edges_list = surface.curves,
-            #         lcmin = mesh_size / 10,
-            #         lcmax = mesh_size / 1.2,
-            #         distmin = 0,
-            #         distmax = mesh_size / 1.4
-            #     ))
+            boundary_layers.append(geom.add_boundary_layer(
+                    edges_list = surface.curves,
+                    lcmin = mesh_size / 5,
+                    lcmax = mesh_size / .8,
+                    distmin = .3,
+                    distmax = mesh_size / 1
+                ))
             np_poly = np.asarray(polygon)
 
             # sort surves in acending order by the avarage x and y values or the curves
@@ -68,8 +69,16 @@ def get_floor_mesh(request):
                 p1 = None
                 x0 = round(float(coord_list_walls[index][0]),6)
                 y0 = round(float(coord_list_walls[index][1]),6)
-                x1 = round(float(coord_list_walls[index][2]),6)
-                y1 = round(float(coord_list_walls[index][3]),6)
+                z0 = round(float(coord_list_walls[index][2]),6)
+                x1 = round(float(coord_list_walls[index][3]),6)
+                y1 = round(float(coord_list_walls[index][4]),6)
+                z1 = round(float(coord_list_walls[index][5]),6)
+
+                # create lists of shear wall objects 
+                if abs(x1 - x0) < 1e-5:
+                    vert_shear_walls.append([x0,y0,x1,y1])
+                else:
+                    horiz_shear_walls.append([x0,y0,x1,y1])
 
                 # maybe make this loop a little more clever
                 for point in surface.points:
@@ -85,40 +94,31 @@ def get_floor_mesh(request):
                         
                 if not p0:
                     p0 = geom.add_point([x0, y0])
+                # shear wall CANNOT be on the edge
+                else:
+                    continue
                 if not p1:
                     p1 = geom.add_point([x1, y1])
+                # shear wall CANNOT be on the edge
+                else:
+                    continue
                 line = geom.add_line(p0, p1)
 
                 # embed new line in surface
-                geom.in_surface(Cheating(line), Cheating(surface))
+                geom.in_surface(line,surface)
 
-                # print(geom._EMBED_QUEUE)
-
-
-                # boundary layer overriding points that I need to fix?
-                # boundary_layers.append(geom.add_boundary_layer(
-                #     edges_list = [line],
-                #     lcmin = mesh_size / 10,
-                #     lcmax = mesh_size / 1.2,
-                #     distmin = mesh_size / 10,
-                #     distmax = mesh_size / 1.4
-                # ))
+                print('boundary layer', line)
+                boundary_layers.append(geom.add_boundary_layer(
+                    edges_list = [line],
+                    lcmin = mesh_size / 10,
+                    lcmax = mesh_size / 1.2,
+                    distmin = 0,
+                    distmax = mesh_size / 1.4
+                ))
                 # geom.add_physical(line, label=f'SW{index}')
 
-                # create lists of shear wall objects 
-                if abs(line.points[0].x[0] - line.points[1].x[0]) < 1e-5:
-                    vert_shear_walls.append(line)
-                else:
-                    horiz_shear_walls.append(line)
-
-            for item, host in geom._EMBED_QUEUE:
-                print(item.dim, [item._id], host.dim, host._id)
-
-            print('setting mesh')
-            print(dir(geom.env))
-            # geom.set_background_mesh(boundary_layers, operator="Min")
+            geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
-            print('done')
 
         # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
         for index in range(len(mesh.cells)):
@@ -145,8 +145,8 @@ def get_floor_mesh(request):
 
         print('vert_shear_walls', vert_shear_walls)
 
-        # pb = get_sfepy_pb(**options)
-        # create_mesh_reactions(pb)
+        pb = get_sfepy_pb(**options)
+        create_mesh_reactions(pb)
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
@@ -238,7 +238,62 @@ def is_equal_2d_list(p1, p2):
     else:
         return False
 
-class Cheating():
-    def __init__(self, entity) -> None:
-        self.dim = entity.dim
-        self._id = entity
+def gmsh_version():
+    # I was going to switch from pygmsh to normal gmsh, but then I figured out my problemm was that I was adding nodes to the boundary and making it all out of order
+    # here is the code that I made anyways
+        # gmsh.initialize()
+    # model_name = "RevDesign"
+    # gmsh.model.add(model_name)
+    # geo = gmsh.model.geo
+    # mesh = gmsh.model.mesh
+    # field = gmsh.model.mesh.field
+
+    # points = []
+    # lines = []
+    # points.append(geo.addPoint(round(coord_list_floor[0][0],6), round(coord_list_floor[0][1],6), round(coord_list_floor[0][2],6)))
+    # for index in range(1, len(coord_list_floor)):
+    #     points.append(geo.addPoint(round(coord_list_floor[index][0],6), round(coord_list_floor[index][1],6), round(coord_list_floor[index][2],6)))
+    #     lines.append(geo.addLine(points[index-1], points[index]))
+    #     print(dir(points[index]))
+    # lines.append(geo.addLine(points[len(coord_list_floor)-1], points[0]))
+
+    # floor_loop = geo.addCurveLoop(lines)
+    # surface = geo.addPlaneSurface([floor_loop])
+
+    # # add points from shear walls
+    # sw_points = []
+    # sw_lines = []
+    # for index in range(len(coord_list_walls)):
+    #     x0 = round(float(coord_list_walls[index][0]),6)
+    #     y0 = round(float(coord_list_walls[index][1]),6)
+    #     z0 = round(float(coord_list_walls[index][2]),6)
+    #     x1 = round(float(coord_list_walls[index][3]),6)
+    #     y1 = round(float(coord_list_walls[index][4]),6)
+    #     z1 = round(float(coord_list_walls[index][5]),6)
+
+    #     # # maybe make this loop a little more clever
+    #     # for point in surface.points:
+    #     #     if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0]):
+    #     #         p0 = point
+    #     #         if p0 and p1:
+    #     #             break
+
+    #     #     elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1]):
+    #     #         p1 = point
+    #     #         if p0 and p1:
+    #     #             break
+
+    #     p0 = geo.addPoint(x0,y0,z0)
+    #     p1 = geo.addPoint(x1,y1,z1)
+    #     line = geo.addLine(p0,p1)
+
+    #     geo.synchronize()
+    #     mesh.embed(1, [line], 2, surface)
+
+    # geo.synchronize()
+    # mesh.generate(2)
+    # outmesh = extract_to_meshio()
+    # outmesh.write('.\model\sfepy\RevDesign.vtk')
+    # # gmsh.write(model_name + ".msh")
+    # gmsh.finalize()
+    pass
