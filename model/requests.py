@@ -19,7 +19,7 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
-        mesh_size = 15
+        mesh_size = 10
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
@@ -31,13 +31,13 @@ def get_floor_mesh(request):
                 polygon.append([round(coord[0],6), round(coord[1],6)])
 
             surface = geom.add_polygon(polygon, mesh_size=mesh_size)
-            boundary_layers.append(geom.add_boundary_layer(
-                    edges_list = surface.curves,
-                    lcmin = mesh_size / 5,
-                    lcmax = mesh_size / .8,
-                    distmin = .3,
-                    distmax = mesh_size / 1
-                ))
+            # boundary_layers.append(geom.add_boundary_layer(
+            #         edges_list = surface.curves,
+            #         lcmin = mesh_size / 5,
+            #         lcmax = mesh_size / .8,
+            #         distmin = .3,
+            #         distmax = mesh_size / 1
+            #     ))
             np_poly = np.asarray(polygon)
 
             # sort surves in acending order by the avarage x and y values or the curves
@@ -67,15 +67,13 @@ def get_floor_mesh(request):
                 p1 = None
                 x0 = round(float(coord_list_walls[index][0]),6)
                 y0 = round(float(coord_list_walls[index][1]),6)
-                z0 = round(float(coord_list_walls[index][2]),6)
-                x1 = round(float(coord_list_walls[index][3]),6)
-                y1 = round(float(coord_list_walls[index][4]),6)
-                z1 = round(float(coord_list_walls[index][5]),6)
+                x1 = round(float(coord_list_walls[index][2]),6)
+                y1 = round(float(coord_list_walls[index][3]),6)
 
                 # create lists of shear wall objects 
-                if abs(x1 - x0) < 1e-5:
+                if abs(x1 - x0) < 1e-4:
                     vert_shear_walls.append([x0,y0,x1,y1])
-                else:
+                elif abs(y1-y0) < 1e-4:
                     horiz_shear_walls.append([x0,y0,x1,y1])
 
                 # maybe make this loop a little more clever
@@ -107,7 +105,7 @@ def get_floor_mesh(request):
                 # embed new line in surface
                 geom.in_surface(line,surface)
 
-                print('boundary layer', line)
+                # print('boundary layer', line)
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
                     lcmin = mesh_size / 10,
@@ -143,7 +141,7 @@ def get_floor_mesh(request):
             'horiz_shear_walls' : horiz_shear_walls,
         }
 
-        print('vert_shear_walls', vert_shear_walls)
+        print('plus_x_wind_load_curves', plus_x_wind_load_curves)
 
         pb, state = get_sfepy_pb(**options)
         create_mesh_reactions(pb)
