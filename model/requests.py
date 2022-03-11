@@ -1,12 +1,10 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .models import *
-from .sfepy.linear_elastic import *
+from .sfepy_pb_description.linear_elastic import *
 import pygmsh
 import numpy as np
 import json
-import gmsh
-import meshio
 
 @csrf_exempt
 def get_floor_mesh(request):
@@ -21,7 +19,7 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
-        mesh_size = 1
+        mesh_size = 15
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
@@ -96,11 +94,13 @@ def get_floor_mesh(request):
                     p0 = geom.add_point([x0, y0])
                 # shear wall CANNOT be on the edge
                 else:
+                    print('SHEAR WALL ON EDGE')
                     continue
                 if not p1:
                     p1 = geom.add_point([x1, y1])
                 # shear wall CANNOT be on the edge
                 else:
+                    print('SHEAR WALL ON EDGE')
                     continue
                 line = geom.add_line(p0, p1)
 
@@ -131,8 +131,8 @@ def get_floor_mesh(request):
             except:
                 break
 
-        mesh.write('.\model\sfepy\RevDesign.vtk')
-        mesh.write('.\model\sfepy\RevDesign.mesh')
+        mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
+        mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
 
         options = {
             'minus_x_wind_load_curves' : minus_x_wind_load_curves,
@@ -145,8 +145,9 @@ def get_floor_mesh(request):
 
         print('vert_shear_walls', vert_shear_walls)
 
-        pb = get_sfepy_pb(**options)
+        pb, state = get_sfepy_pb(**options)
         create_mesh_reactions(pb)
+        # print(get_reactions_in_region(pb, state, 'vert_shear_wall2'))
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
