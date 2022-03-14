@@ -101,7 +101,7 @@ def define(**kwargs):
     }
 
     materials = {
-        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=29000*144 * .1, poisson=.2, plane='strain')},),
+        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 4/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
         'load' : ({'val' : -1},),
     }

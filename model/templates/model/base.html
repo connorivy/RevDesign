@@ -138,8 +138,10 @@
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <!-- Cantilever Example -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/3f256ee132f1ef4fae0a6f4d5d0f7aaf"> -->
+                        <!-- Slab with walls on edges -->
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c">
                         <!-- TB Floor1 -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5">
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5"> -->
                         <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
                     </form>
                 </div>
@@ -323,26 +325,76 @@
         var p1y = false
         var p0inPoly = [false, null]
         var p1inPoly = [false, null]
+        var p0IsCorner = false
+        var p1IsCorner = false
+        var distOfP0 = 0
+        var distOfP1 = 0
         for (var i = 0; i < v.sceneManager.shearWalls.length; i++) {
             p0x = +v.sceneManager.shearWalls[i].userData.start.x.toFixed(6)
             p0y = +v.sceneManager.shearWalls[i].userData.start.y.toFixed(6)
             p1x = +v.sceneManager.shearWalls[i].userData.end.x.toFixed(6)
             p1y = +v.sceneManager.shearWalls[i].userData.end.y.toFixed(6)
-            console.log([p0x, p0y], [p1x, p1y])
-            p0inPoly = pointInPolygon([p0x, p0y], [coordArrayFloor])
-            p1inPoly = pointInPolygon([p1x, p1y], [coordArrayFloor])
+            console.log('points of line', [p0x, p0y], [p1x, p1y])
+            p0inPoly = pointInPolygon([p0x, p0y], [coordArrayFloor], 1)
+            p1inPoly = pointInPolygon([p1x, p1y], [coordArrayFloor], 1)
             console.log('points in poly', p0inPoly, p1inPoly)
+            // one or both of the points is outside the slab, don't count it.
+            if (p0inPoly[0] === false || p1inPoly[0] === false) {
+                console.log('outside slab')
+                continue
+            }
+            // both points are inside the slab, yay
             if (p0inPoly[0] == true && p1inPoly[0] == true) {
+                console.log('inside slab')
                 coordArrayWalls.push([
                     p0x, 
                     p0y, 
                     p1x,
                     p1y,
                 ])
-            }
-            // eventually turn this into a function that adds points to the boundary polygon
-            else if (p0inPoly[0] == 0) {
+            // both points are on the border of the polygon
+            } else if (p0inPoly[0] === 0 && p1inPoly[0] === 0) {
+                console.log('on perim')
+                p0IsCorner = isEqual2DList(coordArrayFloor[p0inPoly[1]],[p0x, p0y]) || isEqual2DList(coordArrayFloor[p0inPoly[1]+1],[p0x, p0y])
+                p1IsCorner = isEqual2DList(coordArrayFloor[p1inPoly[1]],[p1x, p1y]) || isEqual2DList(coordArrayFloor[p1inPoly[1]+1],[p1x, p1y])
 
+                // if both are corners, continue
+                if (p0IsCorner && p1IsCorner) {
+                    continue
+                } else if (p0IsCorner) {
+                    coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
+                } else if (p1IsCorner) {
+                    coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+                // neither point is on a corner
+                } else {
+                    // find the point that has the largest index in the list, insert there, and then insert the new point into the smaller index
+                    if (p0inPoly[1] > p1inPoly[1]) {
+                        coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+                        coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
+                    } else if (p0inPoly[1] < p1inPoly[1]) {
+                        coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
+                        coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+                    // if the indicies are the same, then the points are on the same line. Find the one furthest away from the corner point and insert that right after the point,
+                    // then insert the closer point right after the corner point in the coodArrayFloor
+                    } else {
+                        distOfP0 = distanceFormula([p0x, p0y], coordArrayFloor[p0inPoly[1]])
+                        distOfP1 = distanceFormula([p1x, p1y], coordArrayFloor[p0inPoly[1]])
+                        // if p0 is closer, insert p1 then p0
+                        if (distOfP0 < distOfP1) {
+                            coordArrayFloor.splice(p0inPoly[1]+1, 0, [p1x, p1y])
+                            coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+                        } else {
+                            coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+                            coordArrayFloor.splice(p0inPoly[1]+1, 0, [p1x, p1y])
+                        }
+                    }
+                }
+            } else if (p0inPoly[0] === 0) {
+                console.log('p0 on perim')
+                coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
+            } else if (p1inPoly[0] === 0) {
+                console.log('p1 on perim')
+                coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
             }
         }
 
@@ -367,7 +419,7 @@
         })
     };
 
-    function pointInPolygon(p, polygon) {
+    function pointInPolygon(p, polygon, numDecimals) {
         let i = 0
         let ii = 0
         let k = 0
@@ -379,8 +431,8 @@
         let currentP = null
         let nextP = null
 
-        const x = p[0]
-        const y = p[1]
+        const x = +p[0].toFixed(numDecimals)
+        const y = +p[1].toFixed(numDecimals)
 
         const numContours = polygon.length
         for (i; i < numContours; i++) {
@@ -394,22 +446,22 @@
                 throw new Error('First and last coordinates in a ring must be the same')
             }
 
-            u1 = currentP[0] - x
-            v1 = currentP[1] - y
+            u1 = +currentP[0].toFixed(numDecimals) - x
+            v1 = +currentP[1].toFixed(numDecimals) - y
 
             for (ii; ii < contourLen; ii++) {
                 nextP = contour[ii + 1]
 
-                v2 = nextP[1] - y
+                v2 = +nextP[1].toFixed(numDecimals) - y
 
                 if ((v1 < 0 && v2 < 0) || (v1 > 0 && v2 > 0)) {
                     currentP = nextP
                     v1 = v2
-                    u1 = currentP[0] - x
+                    u1 = +currentP[0].toFixed(numDecimals) - x
                     continue
                 }
 
-                u2 = nextP[0] - p[0]
+                u2 = +nextP[0].toFixed(numDecimals) - x
 
                 if (v2 > 0 && v1 <= 0) {
                     f = (u1 * v2) - (u2 * v1)
@@ -440,6 +492,18 @@
 
         if (k % 2 === 0) return [false, null]
         return [true, null]
+    }
+
+    function isEqual2DList(p1, p2) {
+        tol = 1e-1
+        if (Math.abs(p2[0] - p1[0]) < tol && Math.abs(p2[1] - p1[1]) < tol) {
+            return true
+        } 
+        return false
+    }
+
+    function distanceFormula(p0, p1) {
+        return Math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
     }
     </script>
   </body>

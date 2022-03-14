@@ -19,7 +19,7 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
-        mesh_size = 10
+        mesh_size = 100
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
@@ -108,14 +108,14 @@ def get_floor_mesh(request):
                 # print('boundary layer', line)
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
-                    lcmin = mesh_size / 10,
+                    lcmin = mesh_size / 5,
                     lcmax = mesh_size / 1.2,
-                    distmin = 0,
+                    distmin = .3,
                     distmax = mesh_size / 1.4
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
 
-            geom.set_background_mesh(boundary_layers, operator="Min")
+            # geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
         # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
@@ -141,10 +141,10 @@ def get_floor_mesh(request):
             'horiz_shear_walls' : horiz_shear_walls,
         }
 
-        print('plus_x_wind_load_curves', plus_x_wind_load_curves)
+        # print('plus_x_wind_load_curves', plus_x_wind_load_curves)
 
-        pb, state = get_sfepy_pb(**options)
-        create_mesh_reactions(pb)
+        # pb, state = get_sfepy_pb(**options)
+        # create_mesh_reactions(pb)
         # print(get_reactions_in_region(pb, state, 'vert_shear_wall2'))
 
         return JsonResponse({'success?': 'yes'}, status = 200)
