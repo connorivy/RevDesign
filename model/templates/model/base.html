@@ -314,8 +314,7 @@
         var coordArrayFloor = Array.from(coords, e => JSON.parse(e));
         // 'close polygon loop' in order for the points in poly function to work
         coordArrayFloor.push(coordArrayFloor[0])
-        console.log(coordArrayFloor)
-
+        // console.log(coordArrayFloor)
 
         // get all shearwalls
         var coordArrayWalls = []
@@ -346,12 +345,6 @@
             // both points are inside the slab, yay
             if (p0inPoly[0] == true && p1inPoly[0] == true) {
                 console.log('inside slab')
-                coordArrayWalls.push([
-                    p0x, 
-                    p0y, 
-                    p1x,
-                    p1y,
-                ])
             // both points are on the border of the polygon
             } else if (p0inPoly[0] === 0 && p1inPoly[0] === 0) {
                 console.log('on perim')
@@ -396,10 +389,17 @@
                 console.log('p1 on perim')
                 coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
             }
+            coordArrayWalls.push([
+                p0x, 
+                p0y, 
+                p1x,
+                p1y,
+            ])
         }
 
         // pop value added earlier to close loop. This is how sfepy pygmsh prefers it's polygons
         coordArrayFloor.pop()
+        console.log(coordArrayFloor)
 
         // POST request
         $.ajax({
