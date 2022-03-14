@@ -101,7 +101,7 @@ def define(**kwargs):
     }
 
     materials = {
-        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 4/12, poisson=.2, plane='strain')},),
+        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
         'load' : ({'val' : -1},),
     }
@@ -127,10 +127,10 @@ def define(**kwargs):
         # 'rigid' : ('vert_shear_wall0', {'u.all' : None}, None, 'rigid'),
     }
 
-    fixed_nodes = True
+    fixed_nodes = False
     rhs = ''
-    # region_type = 'facet'
-    region_type = 'vertex'
+    region_type = 'facet'
+    # region_type = 'vertex'
     for index in range(len(kwargs['horiz_shear_walls'])):
         functions[f'horiz_shear_wall{index}'] = (lambda coors, domain=None, **kwargsv:
                                                     horiz_shear_walls(coors, domain, coords_2d_list=kwargs['horiz_shear_walls']),
@@ -146,7 +146,7 @@ def define(**kwargs):
         #     rhs += f'dw_point_lspring.2.horiz_shear_wall{index}(spring.stiffness, v, u) + '
         #     lcbcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.all' : None}, None, 'rigid'
 
-    # region_type = 'facet'
+    region_type = 'facet'
     for index in range(len(kwargs['vert_shear_walls'])):
         functions[f'vert_shear_wall{index}'] = (lambda coors, domain=None, **kwargsv:
                                                     vert_shear_walls(coors, domain, coords_2d_list=kwargs['vert_shear_walls']),

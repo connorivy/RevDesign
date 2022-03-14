@@ -30,6 +30,8 @@ def get_floor_mesh(request):
                 # round to nearest 6 decimal places bc revit is only accurate to 5 (I think?)
                 polygon.append([round(coord[0],6), round(coord[1],6)])
 
+            print(polygon)
+
             surface = geom.add_polygon(polygon, mesh_size=mesh_size)
             # boundary_layers.append(geom.add_boundary_layer(
             #         edges_list = surface.curves,
@@ -38,23 +40,6 @@ def get_floor_mesh(request):
             #         distmin = .3,
             #         distmax = mesh_size / 1
             #     ))
-            np_poly = np.asarray(polygon)
-
-            # sort surves in acending order by the avarage x and y values or the curves
-            # only works for lines at the moment, not curves
-            curves_sorted_by_x = sorted(surface.curves, key=lambda x: (x.points[0].x[0] + x.points[1].x[0]) / 2, reverse=False)
-            curves_sorted_by_y = sorted(surface.curves, key=lambda x: (x.points[0].x[1] + x.points[1].x[1]) / 2, reverse=False)
-
-            max_x, max_y = np_poly.max(axis=0)
-            min_x, min_y = np_poly.min(axis=0)
-
-            wind_line_vert = [[min_y, max_y]]
-            wind_line_horiz = [[min_x, max_x]]
-
-            minus_x_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_x, wind_line_vert.copy(), 1)
-            plus_x_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
-            minus_y_wind_load_curves = get_curves_with_wind_load(curves_sorted_by_y, wind_line_horiz.copy(), 0)
-            plus_y_wind_load_curves = get_curves_with_wind_load(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
 
             # https://github.com/nschloe/pygmsh/issues/537 
             # https://github.com/nschloe/meshio/issues/550
@@ -111,6 +96,7 @@ def get_floor_mesh(request):
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
 
+            wlc = get_wind_load_curves(polygon, surface)
             geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
@@ -129,15 +115,13 @@ def get_floor_mesh(request):
         mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
 
         options = {
-            'minus_x_wind_load_curves' : minus_x_wind_load_curves,
-            'plus_x_wind_load_curves': plus_x_wind_load_curves,
-            'minus_y_wind_load_curves' : minus_y_wind_load_curves,
-            'plus_y_wind_load_curves' : plus_y_wind_load_curves,
+            'minus_x_wind_load_curves' : wlc['minus_x_wind_load_curves'],
+            'plus_x_wind_load_curves': wlc['plus_x_wind_load_curves'],
+            'minus_y_wind_load_curves' : wlc['minus_y_wind_load_curves'],
+            'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
             'vert_shear_walls' : vert_shear_walls,
             'horiz_shear_walls' : horiz_shear_walls,
         }
-
-        print('shear walls', vert_shear_walls, horiz_shear_walls)
 
         pb, state = get_sfepy_pb(**options)
         create_mesh_reactions(pb)
@@ -146,7 +130,31 @@ def get_floor_mesh(request):
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
 
-def get_curves_with_wind_load(curves_sorted, wind_line, dir):
+def get_wind_load_curves(polygon, surface):
+    np_poly = np.asarray(polygon)
+
+    # sort surves in acending order by the avarage x and y values or the curves
+    # only works for lines at the moment, not curves
+    curves_sorted_by_x = sorted(surface.curves, key=lambda x: (x.points[0].x[0] + x.points[1].x[0]) / 2, reverse=False)
+    curves_sorted_by_y = sorted(surface.curves, key=lambda x: (x.points[0].x[1] + x.points[1].x[1]) / 2, reverse=False)
+
+    max_x, max_y = np_poly.max(axis=0)
+    min_x, min_y = np_poly.min(axis=0)
+
+    print(min_x, max_x)
+
+    wind_line_vert = [[min_y, max_y]]
+    wind_line_horiz = [[min_x, max_x]]
+
+    wlc = {}
+    wlc['minus_x_wind_load_curves'] = get_curves_from_wind_line(curves_sorted_by_x, wind_line_vert.copy(), 1)
+    wlc['plus_x_wind_load_curves'] = get_curves_from_wind_line(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
+    wlc['minus_y_wind_load_curves'] = get_curves_from_wind_line(curves_sorted_by_y, wind_line_horiz.copy(), 0)
+    wlc['plus_y_wind_load_curves'] = get_curves_from_wind_line(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
+
+    return wlc
+
+def get_curves_from_wind_line(curves_sorted, wind_line, dir):
     '''
     dir = 0 if dealing with the horizontal direction, 1 if dealing with the vertical direction
     '''
@@ -209,12 +217,12 @@ def adjust_wind_line(wind_line, segment, curve, dir):
 
     # --------------                          curve
     #        -----------------------------    segment
-    elif min_segment < min_curve and max_segment > max_curve:
+    elif min_segment >= min_curve and max_segment > max_curve:
         wind_line.append([max_segment, max_curve])
 
     #                       --------------    curve
     # -----------------------------           segment
-    elif min_segment < min_curve and max_segment > max_curve:
+    elif min_segment < min_curve and max_segment <= max_curve:
         wind_line.append([min_curve, min_segment])
 
     #         --------------                  curve
