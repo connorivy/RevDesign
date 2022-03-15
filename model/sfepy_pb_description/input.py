@@ -26,7 +26,7 @@ def vert_shear_walls(coors, domain, coords_2d_list):
             if is_equal(x[index],curve[0]) and y[index] <= max(curve[1], curve[3]) + 1e-5 and y[index] >= min(curve[1], curve[3]) - 1e-5:
                 flag = np.append(flag, int(index))
 
-    print('\n\nVERT CURVE\n\n', coords_2d_list, curve, flag)
+    # print('\n\nVERT CURVE\n\n', coords_2d_list, curve, flag)
 
     return flag
 
@@ -40,12 +40,12 @@ def horiz_shear_walls(coors, domain, coords_2d_list):
             if is_equal(y[index],curve[1]) and x[index] <= max(curve[0], curve[2]) + 1e-5 and x[index] >= min(curve[0], curve[2]) - 1e-5:
                 flag = np.append(flag, int(index))
 
-    print('\n\nHORIZ CURVE\n\n', coords_2d_list, curve, flag)
+    # print('\n\nHORIZ CURVE\n\n', coords_2d_list, curve, flag)
 
     return flag
 
 def get_wind_region(coors, domain, curve_list):
-    print('\n\n WIND CURVE \n\n', curve_list)
+    # print('\n\n WIND CURVE \n\n', curve_list)
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
@@ -64,7 +64,7 @@ def get_wind_region(coors, domain, curve_list):
                     flag = np.append(flag, int(index))
                     break
 
-    print('wind_flag', flag)
+    # print('wind_flag', flag)
 
     return flag
 
@@ -133,14 +133,14 @@ def define(**kwargs):
     region_type = 'facet'
     # region_type = 'vertex'
     for index in range(len(kwargs['horiz_shear_walls'])):
-        functions[f'horiz_shear_wall{index}'] = (lambda coors, domain=None, **kwargsv:
+        functions[f'f{kwargs["horiz_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     horiz_shear_walls(coors, domain, coords_2d_list=kwargs['horiz_shear_walls']),
                                                 )
         if get_length_of_sw(kwargs['horiz_shear_walls'][index]) < 1:
-            print(f'horiz_shear_wall{index}', 'vertex')
+            # print(f'f{kwargs["horiz_shear_walls"][index][-1]}', 'vertex')
             region_type = 'vertex'
-        regions[f'horiz_shear_wall{index}'] = f'vertices by horiz_shear_wall{index}', region_type
-        ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
+        regions[kwargs['horiz_shear_walls'][index][-1]] = f'vertices by f{kwargs["horiz_shear_walls"][index][-1]}', region_type
+        ebcs[kwargs['horiz_shear_walls'][index][-1]] = kwargs["horiz_shear_walls"][index][-1], {'u.0' : 0.0}
         # if kwargs['fixed_nodes']:
         #     ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
         # else:
@@ -149,18 +149,18 @@ def define(**kwargs):
 
     region_type = 'facet'
     for index in range(len(kwargs['vert_shear_walls'])):
-        functions[f'vert_shear_wall{index}'] = (lambda coors, domain=None, **kwargsv:
+        functions[f'f{kwargs["vert_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     vert_shear_walls(coors, domain, coords_2d_list=kwargs['vert_shear_walls']),
                                                 )
         if get_length_of_sw(kwargs['vert_shear_walls'][index]) < 2:
-            print(f'vert_shear_wall{index}', 'vertex')
+            # print(kwargs["vert_shear_walls"][index][-1], 'vertex')
             region_type = 'vertex'
-        regions[f'vert_shear_wall{index}'] = f'vertices by vert_shear_wall{index}', region_type
+        regions[kwargs["vert_shear_walls"][index][-1]] = f'vertices by f{kwargs["vert_shear_walls"][index][-1]}', region_type
         if kwargs['fixed_nodes']:
-            ebcs[f'vert_shear_wall{index}'] = f'vert_shear_wall{index}', {'u.1' : 0}
+            ebcs[kwargs["vert_shear_walls"][index][-1]] = kwargs["vert_shear_walls"][index][-1], {'u.1' : 0}
         else:
-            rhs += f'dw_point_lspring.2.vert_shear_wall{index}(spring.stiffness, v, u) + '
-            lcbcs[f'vert_shear_wall{index}'] = f'vert_shear_wall{index}', {'u.all' : None}, None, 'rigid',
+            rhs += f'dw_point_lspring.2.{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
+            lcbcs[kwargs["vert_shear_walls"][index][-1]] = f'{kwargs["vert_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
 
     equations = {
         'balance_of_forces' :

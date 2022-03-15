@@ -21,7 +21,6 @@ def get_floor_mesh(request):
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
         COMMIT_ID = request.POST.get('COMMIT_ID')
-        print(HOST, STREAM_ID, COMMIT_ID)
 
         # create and authenticate a client
         client = SpeckleClient(host=HOST)
@@ -30,16 +29,17 @@ def get_floor_mesh(request):
         # get the specified commit data
         # commit = client.commit.get(STREAM_ID, COMMIT_ID)
         # create an authenticated server transport from the client and receive the commit obj
-        transport = ServerTransport(STREAM_ID, client)
+        # transport = ServerTransport(STREAM_ID, client)
         # res = operations.receive(commit.referencedObject, transport)
 
         FLOOR_ID = request.POST.get('FLOOR_ID')
         floor_object = client.object.get(stream_id=STREAM_ID, object_id=FLOOR_ID)
+        sw = client.object.get(stream_id=STREAM_ID, object_id="9d06e7b2a417696be7661a26f138ddb8")
 
-        print(FLOOR_ID, floor_object, isinstance(floor_object, Base))
         # get the floor coord_list from the client side.
         coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
         coord_list_walls = json.loads(request.POST.get('coord_list_walls'))
+        coord_dict_walls = json.loads(request.POST.get('coord_dict_walls'))
         # print(coord_list_floor, coord_list_walls, request.POST)
 
         # This will be a huge job, but eventually I need to combine my Django and speckle servers
@@ -58,8 +58,6 @@ def get_floor_mesh(request):
                 # round to nearest 6 decimal places bc revit is only accurate to 5 (I think?)
                 polygon.append([round(coord[0],6), round(coord[1],6)])
 
-            print(polygon)
-
             surface = geom.add_polygon(polygon, mesh_size=mesh_size)
             # boundary_layers.append(geom.add_boundary_layer(
             #         edges_list = surface.curves,
@@ -75,19 +73,20 @@ def get_floor_mesh(request):
             # geom.add_physical(surface, label='surface')
 
             # add points from shear walls
-            for index in range(len(coord_list_walls)):
+            # for index in range(len(coord_list_walls)):
+            for wall_id in coord_dict_walls:
                 p0 = None
                 p1 = None
-                x0 = round(float(coord_list_walls[index][0]),6)
-                y0 = round(float(coord_list_walls[index][1]),6)
-                x1 = round(float(coord_list_walls[index][2]),6)
-                y1 = round(float(coord_list_walls[index][3]),6)
+                x0 = round(float(coord_dict_walls[wall_id][0]),6)
+                y0 = round(float(coord_dict_walls[wall_id][1]),6)
+                x1 = round(float(coord_dict_walls[wall_id][2]),6)
+                y1 = round(float(coord_dict_walls[wall_id][3]),6)
 
                 # create lists of shear wall objects 
                 if abs(x1 - x0) < 1e-4:
-                    vert_shear_walls.append([x0,y0,x1,y1])
+                    vert_shear_walls.append([x0,y0,x1,y1,wall_id])
                 elif abs(y1-y0) < 1e-4:
-                    horiz_shear_walls.append([x0,y0,x1,y1])
+                    horiz_shear_walls.append([x0,y0,x1,y1,wall_id])
 
                 # maybe make this loop a little more clever
                 for point in surface.points:
@@ -114,7 +113,6 @@ def get_floor_mesh(request):
                 # embed new line in surface
                 geom.in_surface(line,surface)
 
-                # print('boundary layer', line)
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
                     lcmin = mesh_size / 5,
@@ -131,7 +129,6 @@ def get_floor_mesh(request):
         # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
         for index in range(len(mesh.cells)):
             try:
-                print(mesh.cells[index].type)
                 if mesh.cells[index].type == 'line':
                     mesh.cells.pop(index)
                 elif mesh.cells[index].type == 'vertex':
@@ -147,16 +144,17 @@ def get_floor_mesh(request):
             'plus_x_wind_load_curves': wlc['plus_x_wind_load_curves'],
             'minus_y_wind_load_curves' : wlc['minus_y_wind_load_curves'],
             'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
-            'vert_shear_walls' : vert_shear_walls,
-            'horiz_shear_walls' : horiz_shear_walls,
+            'vert_shear_walls' : vert_shear_walls.copy(),
+            'horiz_shear_walls' : horiz_shear_walls.copy(),
             'fixed_nodes': True,
         }
 
-        print('plus/minus y wind load curves', options['plus_y_wind_load_curves'], options['minus_y_wind_load_curves'])
-
-        # pb, state = get_sfepy_pb(**options)
+        pb, state = get_sfepy_pb(**options)
         # create_mesh_reactions(pb)
-        # print(get_reactions_in_region(pb, state, 'vert_shear_wall0', options['fixed_nodes']))
+        # print(get_reactions_in_region(pb, state, vert_shear_walls.keys() + horiz_shear_walls.keys(), options['fixed_nodes']))
+        shear_wall = client.object.get(stream_id=STREAM_ID, object_id=vert_shear_walls[0][-1])
+        shear_walls = get_reactions_in_region(client, STREAM_ID, pb, state, [row[-1] for row in vert_shear_walls] + [row[-1] for row in horiz_shear_walls], options['fixed_nodes'])
+        send_to_speckle(client, STREAM_ID, shear_walls)
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
@@ -232,7 +230,6 @@ def lines_overlap(wind_line, curve, dir):
         return True
 
 def adjust_wind_line(wind_line, segment, curve, dir):
-    print('adjust_wind_line', wind_line, segment, curve, dir)
     min_segment = min(segment)
     max_segment = max(segment)
     min_curve = min(curve.points[0].x[dir], curve.points[1].x[dir])

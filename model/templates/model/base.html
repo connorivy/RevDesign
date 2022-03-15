@@ -137,7 +137,7 @@
                         <!-- Simply Supported Example -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <!-- Cantilever Example -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/3f256ee132f1ef4fae0a6f4d5d0f7aaf">
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/f818a5e2d060a71092ab41cd765014d0">
                         <!-- Slab with walls on edges -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c"> -->
                         <!-- TB Floor1 -->
@@ -318,6 +318,7 @@
 
         // get all shearwalls
         var coordArrayWalls = []
+        var coordDictWalls = {}
         var p0x = false
         var p1x = false
         var p0y = false
@@ -388,12 +389,18 @@
                 console.log('p1 on perim')
                 coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
             }
-            coordArrayWalls.push([
+            coordDictWalls[v.sceneManager.shearWalls[i].userData.id] = [
                 p0x, 
                 p0y, 
                 p1x,
                 p1y,
-            ])
+            ]
+            // coordArrayWalls.push([
+            //     p0x, 
+            //     p0y, 
+            //     p1x,
+            //     p1y,
+            // ])
         }
 
         // pop value added earlier to close loop. This is how sfepy pygmsh prefers it's polygons
@@ -408,6 +415,7 @@
             data: {
                 'coord_list_floor': JSON.stringify(coordArrayFloor),
                 'coord_list_walls': JSON.stringify(coordArrayWalls),
+                'coord_dict_walls': JSON.stringify(coordDictWalls),
                 'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
                 'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
                 'COMMIT_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].objectId,

@@ -16,6 +16,14 @@ except:
 import numpy as np
 import meshio
 
+from specklepy.api import operations
+from specklepy.api import operations
+from specklepy.api.client import SpeckleClient
+from specklepy.api.credentials import get_default_account
+from specklepy.transports.server import ServerTransport
+from specklepy.objects import Base
+from gql import gql
+
 def get_sfepy_pb(**kwargs):
     conf = ProblemConf.from_dict(input.define(**kwargs), input)
     # conf = ProblemConf.from_dict(biot_npbc.define(**kwargs), biot_npbc)
@@ -41,18 +49,36 @@ def create_mesh_reactions(pb):
     out = variables.create_output()
     pb.save_state('mesh_reactions.vtk', out=out)
 
-def get_reactions_in_region(pb, state, region_name, fixed_nodes, dim = 2):
+def get_reactions_in_region(client, STREAM_ID, pb, state, regions, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/
     # state is the State containing your variables with the problem solution.
+    shear_walls = []
     if fixed_nodes:
         state.apply_ebc()
         pb.remove_bcs()
         nls = pb.get_nls()
         residual = nls.fun(state())
 
-        # then the reaction forces in the nodes of a given region can be obtained by:
+        for region_name in regions:
+            # then the reaction forces in the nodes of a given region can be obtained by:
+            reg = pb.domain.regions[region_name]
+            dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+
+            res = residual.reshape((-1, dim)) # dim = space dimension = DOFs per node.
+            reactions = res[dofs]
+            total_shear = [0,0]
+            for rxn in reactions:
+                total_shear += rxn
+            print(STREAM_ID, region_name)
+            shear_wall = client.object.get(stream_id=STREAM_ID, object_id=region_name)
+            print('SHEAR WALL OBJ', shear_wall)
+            shear_wall.total_rxn = max(total_shear)
+            shear_walls.append(shear_wall)
+    else:
         reg = pb.domain.regions[region_name]
         dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+        spring = pb.get_materials()['spring']
+        reactions = dofs*spring.stiffness
 
         variables = pb.get_variables()
         u = variables.get_state_parts()['u']
@@ -60,17 +86,35 @@ def get_reactions_in_region(pb, state, region_name, fixed_nodes, dim = 2):
         print('dofs', dofs)
         print('u[dofs]', u[dofs])
         print('u', u)
-        print('domain', pb.domain)
 
-        res = residual.reshape((-1, dim)) # dim = space dimension = DOFs per node.
-        reactions = res[dofs]
-    else:
-        reg = pb.domain.regions[region_name]
-        dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
-        spring = pb.get_materials()['spring']
-        reactions = dofs*spring.stiffness
+    return shear_walls
 
-    return reactions
+def send_to_speckle(client, STREAM_ID, data):
+    base = Base(data=data)
+    print(base, isinstance(base, Base))
+
+    from pprint import pprint
+
+    # for key, value in vars(res['@Analytical Nodes'][5]).items():
+    #     print(key, value)
+
+    #     try:
+    #         if vars(value):
+    #             print('\n\n')
+    #             print(vars(value))
+    #             print('\n\n')
+    #     except:
+    #         continue
+    pprint(vars(base))
+    transport = ServerTransport(STREAM_ID, client)
+    obj_id = operations.send(base, [transport])
+
+    # now create a commit on that branch with your updated data!
+    commid_id = client.commit.create(
+        STREAM_ID,
+        obj_id,
+        message="testing123",
+    )
 
 
 def stress_strain(out, pb, state, extend=False):
