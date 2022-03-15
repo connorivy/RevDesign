@@ -36,23 +36,39 @@ def create_mesh_reactions(pb):
 
     pb.time_update()
     fvars = variables.copy()
+    print('f', f, f.shape)
     fvars.set_state(f, reduced=False)
     out = variables.create_output()
     pb.save_state('mesh_reactions.vtk', out=out)
 
-def get_reactions_in_region(pb, state, region_name, dim = 2):
+def get_reactions_in_region(pb, state, region_name, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/
     # state is the State containing your variables with the problem solution.
-    state.apply_ebc()
-    nls = pb.get_nls()
-    residual = nls.fun(state())
+    if fixed_nodes:
+        state.apply_ebc()
+        pb.remove_bcs()
+        nls = pb.get_nls()
+        residual = nls.fun(state())
 
-    # then the reaction forces in the nodes of a given region can be obtained by:
-    reg = pb.domain.regions[region_name]
-    dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+        # then the reaction forces in the nodes of a given region can be obtained by:
+        reg = pb.domain.regions[region_name]
+        dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
 
-    res = residual.reshape((-1, dim)) # dim = space dimension = DOFs per node.
-    reactions = res[dofs]
+        variables = pb.get_variables()
+        u = variables.get_state_parts()['u']
+
+        print('dofs', dofs)
+        print('u[dofs]', u[dofs])
+        print('u', u)
+        print('domain', pb.domain)
+
+        res = residual.reshape((-1, dim)) # dim = space dimension = DOFs per node.
+        reactions = res[dofs]
+    else:
+        reg = pb.domain.regions[region_name]
+        dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+        spring = pb.get_materials()['spring']
+        reactions = dofs*spring.stiffness
 
     return reactions
 

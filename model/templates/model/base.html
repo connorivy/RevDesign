@@ -137,9 +137,9 @@
                         <!-- Simply Supported Example -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <!-- Cantilever Example -->
-                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/3f256ee132f1ef4fae0a6f4d5d0f7aaf"> -->
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/3f256ee132f1ef4fae0a6f4d5d0f7aaf">
                         <!-- Slab with walls on edges -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c">
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c"> -->
                         <!-- TB Floor1 -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5"> -->
                         <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
@@ -334,8 +334,8 @@
             p1x = +v.sceneManager.shearWalls[i].userData.end.x.toFixed(6)
             p1y = +v.sceneManager.shearWalls[i].userData.end.y.toFixed(6)
             console.log('points of line', [p0x, p0y], [p1x, p1y])
-            p0inPoly = pointInPolygon([p0x, p0y], [coordArrayFloor], 1)
-            p1inPoly = pointInPolygon([p1x, p1y], [coordArrayFloor], 1)
+            p0inPoly = pointInPolygon([p0x, p0y], [coordArrayFloor], 3)
+            p1inPoly = pointInPolygon([p1x, p1y], [coordArrayFloor], 3)
             console.log('points in poly', p0inPoly, p1inPoly)
             // one or both of the points is outside the slab, don't count it.
             if (p0inPoly[0] === false || p1inPoly[0] === false) {
@@ -351,10 +351,9 @@
                 p0IsCorner = isEqual2DList(coordArrayFloor[p0inPoly[1]],[p0x, p0y]) || isEqual2DList(coordArrayFloor[p0inPoly[1]+1],[p0x, p0y])
                 p1IsCorner = isEqual2DList(coordArrayFloor[p1inPoly[1]],[p1x, p1y]) || isEqual2DList(coordArrayFloor[p1inPoly[1]+1],[p1x, p1y])
 
-                // if both are corners, continue
-                if (p0IsCorner && p1IsCorner) {
-                    continue
-                } else if (p0IsCorner) {
+                // if both are corners, just add to coord array walls
+                if (p0IsCorner && p1IsCorner) {} 
+                else if (p0IsCorner) {
                     coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
                 } else if (p1IsCorner) {
                     coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
@@ -400,6 +399,7 @@
         // pop value added earlier to close loop. This is how sfepy pygmsh prefers it's polygons
         coordArrayFloor.pop()
         console.log(coordArrayFloor)
+        // console.log(localStorage.getItem( 'prevLoadUrl' ), v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl, v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId)
 
         // POST request
         $.ajax({
@@ -408,6 +408,10 @@
             data: {
                 'coord_list_floor': JSON.stringify(coordArrayFloor),
                 'coord_list_walls': JSON.stringify(coordArrayWalls),
+                'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
+                'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
+                'COMMIT_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].objectId,
+                'FLOOR_ID': v.interactions.selectedObjectsUserData[0].id
             },
             success: function (response) {
                 console.log(response)

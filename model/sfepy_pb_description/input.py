@@ -10,7 +10,7 @@ def is_equal(p1, p2):
         return False
 
 def is_equal_wind(p1, p2):
-    tol = 1e-1
+    tol = 5e-2
     if abs(p2 - p1) / min(p1,p2) < tol:
         return True
     else:
@@ -52,12 +52,14 @@ def get_wind_region(coors, domain, curve_list):
         for curve in curve_list:
             # only works for vertical or horizontal lines
             # horizontal
-            if is_equal_wind(y[index],curve.points[0].x[1]):
+            if is_equal(y[index], curve.points[0].x[1]):
+                # print('horizontal line', [x[index], y[index]], [curve.points[0].x[0], curve.points[0].x[1]])
                 if x[index] <= max(curve.points[0].x[0], curve.points[1].x[0]) + 1e-5 and x[index] >= min(curve.points[0].x[0], curve.points[1].x[0]) - 1e-5:
                     flag = np.append(flag, int(index))
+                    # print('added')
                     break
             # vertical
-            elif is_equal_wind(x[index],curve.points[0].x[0]):
+            elif is_equal(x[index],curve.points[0].x[0]):
                 if y[index] <= max(curve.points[0].x[1], curve.points[1].x[1]) + 1e-5 and y[index] >= min(curve.points[0].x[1], curve.points[1].x[1]) - 1e-5:
                     flag = np.append(flag, int(index))
                     break
@@ -127,7 +129,6 @@ def define(**kwargs):
         # 'rigid' : ('vert_shear_wall0', {'u.all' : None}, None, 'rigid'),
     }
 
-    fixed_nodes = False
     rhs = ''
     region_type = 'facet'
     # region_type = 'vertex'
@@ -140,7 +141,7 @@ def define(**kwargs):
             region_type = 'vertex'
         regions[f'horiz_shear_wall{index}'] = f'vertices by horiz_shear_wall{index}', region_type
         ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
-        # if fixed_nodes:
+        # if kwargs['fixed_nodes']:
         #     ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
         # else:
         #     rhs += f'dw_point_lspring.2.horiz_shear_wall{index}(spring.stiffness, v, u) + '
@@ -155,7 +156,7 @@ def define(**kwargs):
             print(f'vert_shear_wall{index}', 'vertex')
             region_type = 'vertex'
         regions[f'vert_shear_wall{index}'] = f'vertices by vert_shear_wall{index}', region_type
-        if fixed_nodes:
+        if kwargs['fixed_nodes']:
             ebcs[f'vert_shear_wall{index}'] = f'vert_shear_wall{index}', {'u.1' : 0}
         else:
             rhs += f'dw_point_lspring.2.vert_shear_wall{index}(spring.stiffness, v, u) + '

@@ -6,9 +6,37 @@ import pygmsh
 import numpy as np
 import json
 
+from specklepy.api import operations
+from specklepy.api import operations
+from specklepy.api.client import SpeckleClient
+from specklepy.api.credentials import get_default_account
+from specklepy.transports.server import ServerTransport
+from specklepy.objects import Base
+from gql import gql
+
+
 @csrf_exempt
 def get_floor_mesh(request):
     if request.is_ajax and request.method == "POST":
+        HOST = request.POST.get('HOST')
+        STREAM_ID = request.POST.get('STREAM_ID')
+        COMMIT_ID = request.POST.get('COMMIT_ID')
+        print(HOST, STREAM_ID, COMMIT_ID)
+
+        # create and authenticate a client
+        client = SpeckleClient(host=HOST)
+        account = get_default_account()
+        client.authenticate(token=account.token)
+        # get the specified commit data
+        # commit = client.commit.get(STREAM_ID, COMMIT_ID)
+        # create an authenticated server transport from the client and receive the commit obj
+        transport = ServerTransport(STREAM_ID, client)
+        # res = operations.receive(commit.referencedObject, transport)
+
+        FLOOR_ID = request.POST.get('FLOOR_ID')
+        floor_object = client.object.get(stream_id=STREAM_ID, object_id=FLOOR_ID)
+
+        print(FLOOR_ID, floor_object, isinstance(floor_object, Base))
         # get the floor coord_list from the client side.
         coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
         coord_list_walls = json.loads(request.POST.get('coord_list_walls'))
@@ -121,11 +149,14 @@ def get_floor_mesh(request):
             'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
             'vert_shear_walls' : vert_shear_walls,
             'horiz_shear_walls' : horiz_shear_walls,
+            'fixed_nodes': True,
         }
 
-        pb, state = get_sfepy_pb(**options)
-        create_mesh_reactions(pb)
-        # print(get_reactions_in_region(pb, state, 'vert_shear_wall2'))
+        print('plus/minus y wind load curves', options['plus_y_wind_load_curves'], options['minus_y_wind_load_curves'])
+
+        # pb, state = get_sfepy_pb(**options)
+        # create_mesh_reactions(pb)
+        # print(get_reactions_in_region(pb, state, 'vert_shear_wall0', options['fixed_nodes']))
 
         return JsonResponse({'success?': 'yes'}, status = 200)
     return JsonResponse({}, status = 400)
@@ -140,8 +171,6 @@ def get_wind_load_curves(polygon, surface):
 
     max_x, max_y = np_poly.max(axis=0)
     min_x, min_y = np_poly.min(axis=0)
-
-    print(min_x, max_x)
 
     wind_line_vert = [[min_y, max_y]]
     wind_line_horiz = [[min_x, max_x]]
@@ -231,7 +260,7 @@ def adjust_wind_line(wind_line, segment, curve, dir):
         pass
 
     wind_line.remove(segment)
-    print('adjust_wind_line', wind_line)
+    # print('adjust_wind_line', wind_line)
     return wind_line
 
 def is_equal_2d_list(p1, p2):
@@ -240,6 +269,35 @@ def is_equal_2d_list(p1, p2):
         return True
     else:
         return False
+
+def get_object_by_id(client, id):
+    params = {
+            "myQuery": {
+                "field":"speckle_type",
+                "value":"Objects.Structural.Geometry.Element1D",
+                "operator":"="
+            }
+        }
+    query = gql(
+        '''
+        query($myQuery:[JSONObject!]){
+            stream(id:"218b84525a"){
+                object(id:"3f256ee132f1ef4fae0a6f4d5d0f7aaf"){
+                    totalChildrenCount
+                    children(query: $myQuery select:["speckle_type", "type", "family", "category"]){
+                        totalCount
+                        cursor
+                        objects{
+                            id
+                            data
+                        }
+                    }
+                }
+            }
+        }
+        '''
+    )
+    return client.make_re
 
 def gmsh_version():
     # I was going to switch from pygmsh to normal gmsh, but then I figured out my problemm was that I was adding nodes to the boundary and making it all out of order
