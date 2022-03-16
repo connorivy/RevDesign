@@ -33,12 +33,10 @@ def get_floor_mesh(request):
         # res = operations.receive(commit.referencedObject, transport)
 
         FLOOR_ID = request.POST.get('FLOOR_ID')
-        floor_object = client.object.get(stream_id=STREAM_ID, object_id=FLOOR_ID)
-        sw = client.object.get(stream_id=STREAM_ID, object_id="9d06e7b2a417696be7661a26f138ddb8")
+        # floor_object = client.object.get(stream_id=STREAM_ID, object_id=FLOOR_ID)
 
         # get the floor coord_list from the client side.
         coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
-        coord_list_walls = json.loads(request.POST.get('coord_list_walls'))
         coord_dict_walls = json.loads(request.POST.get('coord_dict_walls'))
         # print(coord_list_floor, coord_list_walls, request.POST)
 
@@ -115,9 +113,9 @@ def get_floor_mesh(request):
 
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
-                    lcmin = mesh_size / 5,
+                    lcmin = mesh_size / 10,
                     lcmax = mesh_size / 1.2,
-                    distmin = .3,
+                    distmin = 0,
                     distmax = mesh_size / 1.4
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
@@ -152,11 +150,10 @@ def get_floor_mesh(request):
         pb, state = get_sfepy_pb(**options)
         # create_mesh_reactions(pb)
         # print(get_reactions_in_region(pb, state, vert_shear_walls.keys() + horiz_shear_walls.keys(), options['fixed_nodes']))
-        shear_wall = client.object.get(stream_id=STREAM_ID, object_id=vert_shear_walls[0][-1])
-        shear_walls = get_reactions_in_region(client, STREAM_ID, pb, state, [row[-1] for row in vert_shear_walls] + [row[-1] for row in horiz_shear_walls], options['fixed_nodes'])
-        send_to_speckle(client, STREAM_ID, shear_walls)
+        shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in vert_shear_walls] + [row[-1] for row in horiz_shear_walls], options['fixed_nodes'])
+        # send_to_speckle(client, STREAM_ID, shear_walls)
 
-        return JsonResponse({'success?': 'yes'}, status = 200)
+        return JsonResponse({'shear_wall_data': shear_wall_data}, status = 200)
     return JsonResponse({}, status = 400)
 
 def get_wind_load_curves(polygon, surface):

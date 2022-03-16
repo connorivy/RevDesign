@@ -131,13 +131,16 @@
                     <li class="nav-item">
                         <button onclick="getFloorMesh()">Get Mesh</button>
                     </li>
+                    <li class="nav-item">
+                        <button onclick="sendToStream()">Send To Stream</button>
+                    </li>
                     <form class="form-inline my-2 my-lg-0">
                         <!-- Distribution of different sized shear walls -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/484aa60e78c3cd4854e4dc140e46b672"> -->
                         <!-- Simply Supported Example -->
-                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5">
                         <!-- Cantilever Example -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/f818a5e2d060a71092ab41cd765014d0">
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/425e7e9b0359d706241adf59ee899400"> -->
                         <!-- Slab with walls on edges -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c"> -->
                         <!-- TB Floor1 -->
@@ -266,10 +269,6 @@
         </div>
     </div>
 
-    <!-- {%  block threejs %} 
-
-    {% endblock threejs %} -->
-
     <!-- jQuery CDN -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- Popper.JS -->
@@ -314,10 +313,8 @@
         var coordArrayFloor = Array.from(coords, e => JSON.parse(e));
         // 'close polygon loop' in order for the points in poly function to work
         coordArrayFloor.push(coordArrayFloor[0])
-        // console.log(coordArrayFloor)
 
         // get all shearwalls
-        var coordArrayWalls = []
         var coordDictWalls = {}
         var p0x = false
         var p1x = false
@@ -349,17 +346,23 @@
             // both points are on the border of the polygon
             } else if (p0inPoly[0] === 0 && p1inPoly[0] === 0) {
                 console.log('on perim')
+                console.log(coordArrayFloor[p0inPoly[1]],coordArrayFloor[p0inPoly[1]+1],[p0x, p0y],[p1x, p1y])
                 p0IsCorner = isEqual2DList(coordArrayFloor[p0inPoly[1]],[p0x, p0y]) || isEqual2DList(coordArrayFloor[p0inPoly[1]+1],[p0x, p0y])
                 p1IsCorner = isEqual2DList(coordArrayFloor[p1inPoly[1]],[p1x, p1y]) || isEqual2DList(coordArrayFloor[p1inPoly[1]+1],[p1x, p1y])
 
                 // if both are corners, just add to coord array walls
-                if (p0IsCorner && p1IsCorner) {} 
+                if (p0IsCorner && p1IsCorner) {
+                    console.log('both corners')
+                } 
                 else if (p0IsCorner) {
+                    console.log('p0 is corner')
                     coordArrayFloor.splice(p1inPoly[1]+1, 0, [p1x, p1y])
                 } else if (p1IsCorner) {
+                    console.log('p1 is corner')
                     coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
                 // neither point is on a corner
                 } else {
+                    console.log('no corners')
                     // find the point that has the largest index in the list, insert there, and then insert the new point into the smaller index
                     if (p0inPoly[1] > p1inPoly[1]) {
                         coordArrayFloor.splice(p0inPoly[1]+1, 0, [p0x, p0y])
@@ -395,12 +398,6 @@
                 p1x,
                 p1y,
             ]
-            // coordArrayWalls.push([
-            //     p0x, 
-            //     p0y, 
-            //     p1x,
-            //     p1y,
-            // ])
         }
 
         // pop value added earlier to close loop. This is how sfepy pygmsh prefers it's polygons
@@ -414,7 +411,6 @@
             url: "{% url 'get_floor_mesh' %}",
             data: {
                 'coord_list_floor': JSON.stringify(coordArrayFloor),
-                'coord_list_walls': JSON.stringify(coordArrayWalls),
                 'coord_dict_walls': JSON.stringify(coordDictWalls),
                 'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
                 'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
@@ -423,6 +419,7 @@
             },
             success: function (response) {
                 console.log(response)
+                v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['shear_wall_data'])
             },
             error: function (response) {
                 console.log('error')
@@ -507,7 +504,7 @@
     }
 
     function isEqual2DList(p1, p2) {
-        tol = 1e-1
+        tol = 1e-2
         if (Math.abs(p2[0] - p1[0]) < tol && Math.abs(p2[1] - p1[1]) < tol) {
             return true
         } 

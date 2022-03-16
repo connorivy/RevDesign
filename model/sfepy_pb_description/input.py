@@ -136,9 +136,9 @@ def define(**kwargs):
         functions[f'f{kwargs["horiz_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     horiz_shear_walls(coors, domain, coords_2d_list=kwargs['horiz_shear_walls']),
                                                 )
-        if get_length_of_sw(kwargs['horiz_shear_walls'][index]) < 1:
-            # print(f'f{kwargs["horiz_shear_walls"][index][-1]}', 'vertex')
-            region_type = 'vertex'
+        # if get_length_of_sw(kwargs['horiz_shear_walls'][index]) < 1:
+        #     # print(f'f{kwargs["horiz_shear_walls"][index][-1]}', 'vertex')
+        #     region_type = 'vertex'
         regions[kwargs['horiz_shear_walls'][index][-1]] = f'vertices by f{kwargs["horiz_shear_walls"][index][-1]}', region_type
         ebcs[kwargs['horiz_shear_walls'][index][-1]] = kwargs["horiz_shear_walls"][index][-1], {'u.0' : 0.0}
         # if kwargs['fixed_nodes']:

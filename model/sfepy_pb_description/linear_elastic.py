@@ -49,10 +49,10 @@ def create_mesh_reactions(pb):
     out = variables.create_output()
     pb.save_state('mesh_reactions.vtk', out=out)
 
-def get_reactions_in_region(client, STREAM_ID, pb, state, regions, fixed_nodes, dim = 2):
+def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/
     # state is the State containing your variables with the problem solution.
-    shear_walls = []
+    shear_walls = {}
     if fixed_nodes:
         state.apply_ebc()
         pb.remove_bcs()
@@ -69,11 +69,10 @@ def get_reactions_in_region(client, STREAM_ID, pb, state, regions, fixed_nodes, 
             total_shear = [0,0]
             for rxn in reactions:
                 total_shear += rxn
-            print(STREAM_ID, region_name)
-            shear_wall = client.object.get(stream_id=STREAM_ID, object_id=region_name)
-            print('SHEAR WALL OBJ', shear_wall)
-            shear_wall.total_rxn = max(total_shear)
-            shear_walls.append(shear_wall)
+            shear_walls[region_name] = {
+                'totalReaction': max(abs(total_shear)),
+                'edited': True
+            }
     else:
         reg = pb.domain.regions[region_name]
         dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
@@ -90,6 +89,7 @@ def get_reactions_in_region(client, STREAM_ID, pb, state, regions, fixed_nodes, 
     return shear_walls
 
 def send_to_speckle(client, STREAM_ID, data):
+    # shear_wall = client.object.get(stream_id=STREAM_ID, object_id=region_name)
     base = Base(data=data)
     print(base, isinstance(base, Base))
 

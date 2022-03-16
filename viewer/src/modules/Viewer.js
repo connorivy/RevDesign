@@ -24,7 +24,7 @@ export default class Viewer extends EventEmitter {
     this.scene = new THREE.Scene()
 
     this.renderer = new THREE.WebGLRenderer( { antialias: true, alpha: true, preserveDrawingBuffer: true } )
-    this.renderer.setClearColor( 0xcccccc, 0 )
+    this.renderer.setClearColor( 0xCDEAFF, 0 )
     this.renderer.setPixelRatio( window.devicePixelRatio )
     this.renderer.setSize( this.container.offsetWidth, this.container.offsetHeight )
     this.container.appendChild( this.renderer.domElement )
@@ -168,7 +168,7 @@ export default class Viewer extends EventEmitter {
       // and then finally update the cubemap camera.
       this.scene.background = new THREE.Color( '#CDEAFF' )
       this.cubeCamera.update( this.renderer, this.scene )
-      this.scene.background = null
+      // this.scene.background = null
 
       // Finally, re-set the env maps of all materials
       for ( let obj of this.sceneManager.filteredObjects ) {
@@ -189,6 +189,19 @@ export default class Viewer extends EventEmitter {
     }
     else {
       await this.applyFilter({filterBy: {'speckle_type' : 'Objects.Geometry.Line'}, ghostOthers: true})
+    }
+  }
+
+  addAttributesToObjects(group, attributes) {
+    var uuids = Object.keys(attributes)
+    for ( let obj of group.children ) {
+      var passes = this.sceneManager.sceneObjects.filteringManager.passesFilter(obj, {'uuid': uuids} )
+      if (passes) {
+        for (var key in attributes[obj.uuid]){
+          obj.userData[key] = attributes[obj.uuid][key]
+        }
+        this.sceneManager.sceneObjects.editedObjects.push(obj)
+      }
     }
   }
 
@@ -226,7 +239,6 @@ export default class Viewer extends EventEmitter {
     } finally {
        if ( --this.inProgressOperations === 0 ) this.emit( 'busy', false )
     }
-
   }
 
   async cancelLoad( url, unload = false ) {
