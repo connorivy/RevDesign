@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 import Stats from 'three/examples/jsm/libs/stats.module.js'
 
@@ -64,6 +65,10 @@ export default class Viewer extends EventEmitter {
     this.needsRender = true
 
     this.inProgressOperations = 0
+
+    this.guiParams = 0
+    console.log(this.guiParams)
+    this.initGui()
   }
 
   sceneLights() {
@@ -127,6 +132,25 @@ export default class Viewer extends EventEmitter {
     
     let group = new THREE.Group()
     this.scene.add( group )
+  }
+
+  initGui() {
+    this.gui = new GUI();
+
+    const param = {
+      'fixed nodes': true,
+      'wind direction': 1,
+    };
+
+    this.gui.add( param, 'fixed nodes' ).onChange( function ( val ) {
+      this.value = val
+    } );
+
+    console.log(this)
+
+    this.gui.add( param, 'wind direction', { '+x <---': 0, '+y': 1, '-x --->': 2, '-y ^': 3 } ).onChange( function ( val ) {
+      this.value = val
+    } );
   }
 
   onWindowResize() {

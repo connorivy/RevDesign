@@ -136,13 +136,15 @@
                     </li>
                     <form class="form-inline my-2 my-lg-0">
                         <!-- Distribution of different sized shear walls -->
-                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/484aa60e78c3cd4854e4dc140e46b672"> -->
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/484aa60e78c3cd4854e4dc140e46b672">
                         <!-- Simply Supported Example -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5">
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <!-- Cantilever Example -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/425e7e9b0359d706241adf59ee899400"> -->
                         <!-- Slab with walls on edges -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c"> -->
+                        <!-- Multifloor simple example -->
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/0fd15870b313fcd574abe2d77fde0d4b"> -->
                         <!-- TB Floor1 -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5"> -->
                         <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
@@ -327,6 +329,10 @@
         var distOfP0 = 0
         var distOfP1 = 0
         for (var i = 0; i < v.sceneManager.shearWalls.length; i++) {
+            if (v.sceneManager.shearWalls[i].userData.length < 1) {
+                console.log('Cannot have a shear wall less than 1\'')
+                continue
+            }
             p0x = +v.sceneManager.shearWalls[i].userData.start.x.toFixed(6)
             p0y = +v.sceneManager.shearWalls[i].userData.start.y.toFixed(6)
             p1x = +v.sceneManager.shearWalls[i].userData.end.x.toFixed(6)
@@ -504,7 +510,8 @@
     }
 
     function isEqual2DList(p1, p2) {
-        tol = 1e-2
+        // tolerance is 6"
+        tol = 5e-1
         if (Math.abs(p2[0] - p1[0]) < tol && Math.abs(p2[1] - p1[1]) < tol) {
             return true
         } 

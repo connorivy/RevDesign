@@ -61,7 +61,7 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
 
         for region_name in regions:
             # then the reaction forces in the nodes of a given region can be obtained by:
-            reg = pb.domain.regions[region_name]
+            reg = pb.domain.regions[f'id{region_name}']
             dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
 
             res = residual.reshape((-1, dim)) # dim = space dimension = DOFs per node.
@@ -74,17 +74,20 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
                 'edited': True
             }
     else:
-        reg = pb.domain.regions[region_name]
-        dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
-        spring = pb.get_materials()['spring']
-        reactions = dofs*spring.stiffness
+        for region_name in regions:
+            reg = pb.domain.regions[f'id{region_name}']
+            dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+            spring = pb.get_materials()['spring']
+            reactions = dofs*spring.get_data('special', 'stiffness')
 
-        variables = pb.get_variables()
-        u = variables.get_state_parts()['u']
+            variables = pb.get_variables()
+            u = variables.get_state_parts()['u']
 
-        print('dofs', dofs)
-        print('u[dofs]', u[dofs])
-        print('u', u)
+            print('dofs', dofs)
+            print('u[dofs]', u[dofs])
+            print('u', u)
+            print('reactions', reactions)
+            print('u[dof] * stiffness', u[dofs] * spring.get_data('special', 'stiffness'))
 
     return shear_walls
 

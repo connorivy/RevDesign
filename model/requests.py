@@ -32,7 +32,7 @@ def get_floor_mesh(request):
         # transport = ServerTransport(STREAM_ID, client)
         # res = operations.receive(commit.referencedObject, transport)
 
-        FLOOR_ID = request.POST.get('FLOOR_ID')
+        # FLOOR_ID = request.POST.get('FLOOR_ID')
         # floor_object = client.object.get(stream_id=STREAM_ID, object_id=FLOOR_ID)
 
         # get the floor coord_list from the client side.
@@ -100,16 +100,19 @@ def get_floor_mesh(request):
 
                 # if both points are already defined, there is already a line between them so move on to the next wall
                 if p0 and p1:
-                    continue
-                        
-                if not p0:
-                    p0 = geom.add_point([x0, y0])
-                if not p1:
-                    p1 = geom.add_point([x1, y1])
-                line = geom.add_line(p0, p1)
+                    for edge_line in surface.lines:
+                        if p0._id in [edge_line.points[0]._id, edge_line.points[1]._id] and p1._id in [edge_line.points[0]._id, edge_line.points[1]._id]:
+                            line = edge_line
+                            print('LINE', edge_line)
+                else:    
+                    if not p0:
+                        p0 = geom.add_point([x0, y0])
+                    if not p1:
+                        p1 = geom.add_point([x1, y1])
+                    line = geom.add_line(p0, p1)
 
-                # embed new line in surface
-                geom.in_surface(line,surface)
+                    # embed new line in surface
+                    geom.in_surface(line,surface)
 
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
@@ -144,7 +147,7 @@ def get_floor_mesh(request):
             'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
             'vert_shear_walls' : vert_shear_walls.copy(),
             'horiz_shear_walls' : horiz_shear_walls.copy(),
-            'fixed_nodes': True,
+            'fixed_nodes': False,
         }
 
         pb, state = get_sfepy_pb(**options)

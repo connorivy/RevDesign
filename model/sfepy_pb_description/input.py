@@ -133,14 +133,14 @@ def define(**kwargs):
     region_type = 'facet'
     # region_type = 'vertex'
     for index in range(len(kwargs['horiz_shear_walls'])):
-        functions[f'f{kwargs["horiz_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
+        functions[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     horiz_shear_walls(coors, domain, coords_2d_list=kwargs['horiz_shear_walls']),
                                                 )
         # if get_length_of_sw(kwargs['horiz_shear_walls'][index]) < 1:
         #     # print(f'f{kwargs["horiz_shear_walls"][index][-1]}', 'vertex')
         #     region_type = 'vertex'
-        regions[kwargs['horiz_shear_walls'][index][-1]] = f'vertices by f{kwargs["horiz_shear_walls"][index][-1]}', region_type
-        ebcs[kwargs['horiz_shear_walls'][index][-1]] = kwargs["horiz_shear_walls"][index][-1], {'u.0' : 0.0}
+        regions[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'vertices by id{kwargs["horiz_shear_walls"][index][-1]}', region_type
+        ebcs[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'id{kwargs["horiz_shear_walls"][index][-1]}', {'u.0' : 0.0}
         # if kwargs['fixed_nodes']:
         #     ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
         # else:
@@ -149,17 +149,17 @@ def define(**kwargs):
 
     region_type = 'facet'
     for index in range(len(kwargs['vert_shear_walls'])):
-        functions[f'f{kwargs["vert_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
+        functions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     vert_shear_walls(coors, domain, coords_2d_list=kwargs['vert_shear_walls']),
                                                 )
         if get_length_of_sw(kwargs['vert_shear_walls'][index]) < 2:
             # print(kwargs["vert_shear_walls"][index][-1], 'vertex')
             region_type = 'vertex'
-        regions[kwargs["vert_shear_walls"][index][-1]] = f'vertices by f{kwargs["vert_shear_walls"][index][-1]}', region_type
+        regions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'vertices by id{kwargs["vert_shear_walls"][index][-1]}', region_type
         if kwargs['fixed_nodes']:
-            ebcs[kwargs["vert_shear_walls"][index][-1]] = kwargs["vert_shear_walls"][index][-1], {'u.1' : 0}
+            ebcs[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'id{kwargs["vert_shear_walls"][index][-1]}', {'u.1' : 0}
         else:
-            rhs += f'dw_point_lspring.2.{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
+            rhs += f'dw_point_lspring.2.id{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
             lcbcs[kwargs["vert_shear_walls"][index][-1]] = f'{kwargs["vert_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
 
     equations = {
