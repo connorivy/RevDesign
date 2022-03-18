@@ -16,14 +16,6 @@ except:
 import numpy as np
 import meshio
 
-from specklepy.api import operations
-from specklepy.api import operations
-from specklepy.api.client import SpeckleClient
-from specklepy.api.credentials import get_default_account
-from specklepy.transports.server import ServerTransport
-from specklepy.objects import Base
-from gql import gql
-
 def get_sfepy_pb(**kwargs):
     conf = ProblemConf.from_dict(input.define(**kwargs), input)
     # conf = ProblemConf.from_dict(biot_npbc.define(**kwargs), biot_npbc)

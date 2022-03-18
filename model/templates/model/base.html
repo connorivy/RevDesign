@@ -144,7 +144,7 @@
                         <!-- Slab with walls on edges -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/1c39e8c211b11b4c508947a99a03e77c"> -->
                         <!-- Multifloor simple example -->
-                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/0fd15870b313fcd574abe2d77fde0d4b"> -->
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/0a745e8955895a01c64786e6c93419e5"> -->
                         <!-- TB Floor1 -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5"> -->
                         <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
@@ -433,6 +433,30 @@
             }
         })
     };
+
+    function analyzeMesh() {
+        // POST request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'get_floor_mesh' %}",
+            data: {
+                'coord_list_floor': JSON.stringify(coordArrayFloor),
+                'coord_dict_walls': JSON.stringify(coordDictWalls),
+                'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
+                'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
+                'COMMIT_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].objectId,
+                'FLOOR_ID': v.interactions.selectedObjectsUserData[0].id
+            },
+            success: function (response) {
+                console.log(response)
+                v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['shear_wall_data'])
+            },
+            error: function (response) {
+                console.log('error')
+                console.log(response)
+            }
+        })
+    }
 
     function pointInPolygon(p, polygon, numDecimals) {
         let i = 0

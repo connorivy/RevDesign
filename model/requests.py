@@ -6,6 +6,9 @@ import pygmsh
 import numpy as np
 import json
 
+from .sfepy_pb_description.SpeckMesh import SpeckMesh
+from .sfepy_pb_description.connectToSpeckle import send_to_speckle
+
 from specklepy.api import operations
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
@@ -45,7 +48,7 @@ def get_floor_mesh(request):
         # I would just query those from the database
 
         # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
-        mesh_size = 1
+        mesh_size = 5
         polygon = []
         vert_shear_walls = []
         horiz_shear_walls = []
@@ -116,10 +119,10 @@ def get_floor_mesh(request):
 
                 boundary_layers.append(geom.add_boundary_layer(
                     edges_list = [line],
-                    lcmin = mesh_size / 10,
-                    lcmax = mesh_size / 1.2,
-                    distmin = 0,
-                    distmax = mesh_size / 1.4
+                    lcmin = mesh_size / 5,
+                    lcmax = mesh_size / 1,
+                    distmin = .1,
+                    distmax = mesh_size / 1
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
 
@@ -128,17 +131,34 @@ def get_floor_mesh(request):
             mesh = geom.generate_mesh()
 
         # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
-        for index in range(len(mesh.cells)):
-            try:
-                if mesh.cells[index].type == 'line':
-                    mesh.cells.pop(index)
-                elif mesh.cells[index].type == 'vertex':
-                    mesh.cells.pop(index)
-            except:
-                break
+        mesh.remove_orphaned_nodes()
+        mesh.remove_lower_dimensional_cells()
+        # for index in range(len(mesh.cells)):
+        #     try:
+        #         if mesh.cells[index].type == 'line':
+        #             mesh.cells.pop(index)
+        #         elif mesh.cells[index].type == 'vertex':
+        #             mesh.cells.pop(index)
+        #     except:
+        #         break
 
-        mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
-        mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
+        # mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
+        # mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
+        speckMeshCells = []
+        for index in range(len(mesh.cells)):
+            speckMeshCells.append(())
+            print(index, mesh.cells[index], mesh.cells[index].data.tolist())
+
+        speckMesh = SpeckMesh(
+            mesh.points.tolist(), 
+            mesh.cells, 
+            mesh.point_data,
+            mesh.cell_data, 
+            mesh.field_data,
+            mesh.point_sets,
+            mesh.cell_sets,
+            mesh.gmsh_periodic,
+            mesh.info)
 
         options = {
             'minus_x_wind_load_curves' : wlc['minus_x_wind_load_curves'],
@@ -149,6 +169,9 @@ def get_floor_mesh(request):
             'horiz_shear_walls' : horiz_shear_walls.copy(),
             'fixed_nodes': False,
         }
+
+        send_to_speckle(HOST, STREAM_ID, speckMesh)
+        print('minus_x', options['minus_x_wind_load_curves'])
 
         pb, state = get_sfepy_pb(**options)
         # create_mesh_reactions(pb)
@@ -266,92 +289,3 @@ def is_equal_2d_list(p1, p2):
         return True
     else:
         return False
-
-def get_object_by_id(client, id):
-    params = {
-            "myQuery": {
-                "field":"speckle_type",
-                "value":"Objects.Structural.Geometry.Element1D",
-                "operator":"="
-            }
-        }
-    query = gql(
-        '''
-        query($myQuery:[JSONObject!]){
-            stream(id:"218b84525a"){
-                object(id:"3f256ee132f1ef4fae0a6f4d5d0f7aaf"){
-                    totalChildrenCount
-                    children(query: $myQuery select:["speckle_type", "type", "family", "category"]){
-                        totalCount
-                        cursor
-                        objects{
-                            id
-                            data
-                        }
-                    }
-                }
-            }
-        }
-        '''
-    )
-    return client.make_re
-
-def gmsh_version():
-    # I was going to switch from pygmsh to normal gmsh, but then I figured out my problemm was that I was adding nodes to the boundary and making it all out of order
-    # here is the code that I made anyways
-        # gmsh.initialize()
-    # model_name = "RevDesign"
-    # gmsh.model.add(model_name)
-    # geo = gmsh.model.geo
-    # mesh = gmsh.model.mesh
-    # field = gmsh.model.mesh.field
-
-    # points = []
-    # lines = []
-    # points.append(geo.addPoint(round(coord_list_floor[0][0],6), round(coord_list_floor[0][1],6), round(coord_list_floor[0][2],6)))
-    # for index in range(1, len(coord_list_floor)):
-    #     points.append(geo.addPoint(round(coord_list_floor[index][0],6), round(coord_list_floor[index][1],6), round(coord_list_floor[index][2],6)))
-    #     lines.append(geo.addLine(points[index-1], points[index]))
-    #     print(dir(points[index]))
-    # lines.append(geo.addLine(points[len(coord_list_floor)-1], points[0]))
-
-    # floor_loop = geo.addCurveLoop(lines)
-    # surface = geo.addPlaneSurface([floor_loop])
-
-    # # add points from shear walls
-    # sw_points = []
-    # sw_lines = []
-    # for index in range(len(coord_list_walls)):
-    #     x0 = round(float(coord_list_walls[index][0]),6)
-    #     y0 = round(float(coord_list_walls[index][1]),6)
-    #     z0 = round(float(coord_list_walls[index][2]),6)
-    #     x1 = round(float(coord_list_walls[index][3]),6)
-    #     y1 = round(float(coord_list_walls[index][4]),6)
-    #     z1 = round(float(coord_list_walls[index][5]),6)
-
-    #     # # maybe make this loop a little more clever
-    #     # for point in surface.points:
-    #     #     if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0]):
-    #     #         p0 = point
-    #     #         if p0 and p1:
-    #     #             break
-
-    #     #     elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1]):
-    #     #         p1 = point
-    #     #         if p0 and p1:
-    #     #             break
-
-    #     p0 = geo.addPoint(x0,y0,z0)
-    #     p1 = geo.addPoint(x1,y1,z1)
-    #     line = geo.addLine(p0,p1)
-
-    #     geo.synchronize()
-    #     mesh.embed(1, [line], 2, surface)
-
-    # geo.synchronize()
-    # mesh.generate(2)
-    # outmesh = extract_to_meshio()
-    # outmesh.write('.\model\sfepy\RevDesign.vtk')
-    # # gmsh.write(model_name + ".msh")
-    # gmsh.finalize()
-    pass
