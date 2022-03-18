@@ -69,25 +69,29 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
             total_shear = [0,0]
             for rxn in reactions:
                 total_shear += rxn
+
+            print(total_shear, type(total_shear), type(max(abs(total_shear))), max(abs(total_shear)))
             shear_walls[region_name] = {
                 'totalReaction': max(abs(total_shear)),
-                'edited': True
+                # 'edited': True
             }
     else:
         for region_name in regions:
             reg = pb.domain.regions[f'id{region_name}']
             dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
             spring = pb.get_materials()['spring']
-            reactions = dofs*spring.get_data('special', 'stiffness')
 
             variables = pb.get_variables()
-            u = variables.get_state_parts()['u']
+            u = variables.get_state_parts()['u'].reshape((-1, dim))
+            reactions_list = u[dofs] * spring.get_data('special', 'stiffness')
+            total_shear = np.fromiter(map(sum,zip(*reactions_list)),dtype='float64')
 
-            print('dofs', dofs)
-            print('u[dofs]', u[dofs])
-            print('u', u)
-            print('reactions', reactions)
-            print('u[dof] * stiffness', u[dofs] * spring.get_data('special', 'stiffness'))
+            print(total_shear, type(total_shear), type(max(abs(total_shear))), max(abs(total_shear)))
+
+            shear_walls[region_name] = {
+                'totalReaction': max(abs(total_shear)),
+                # 'edited': True
+            }
 
     return shear_walls
 

@@ -152,15 +152,17 @@ def define(**kwargs):
         functions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
                                                     vert_shear_walls(coors, domain, coords_2d_list=kwargs['vert_shear_walls']),
                                                 )
-        if get_length_of_sw(kwargs['vert_shear_walls'][index]) < 2:
+        # if get_length_of_sw(kwargs['vert_shear_walls'][index]) < 2:
             # print(kwargs["vert_shear_walls"][index][-1], 'vertex')
-            region_type = 'vertex'
+            # region_type = 'vertex'
         regions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'vertices by id{kwargs["vert_shear_walls"][index][-1]}', region_type
         if kwargs['fixed_nodes']:
             ebcs[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'id{kwargs["vert_shear_walls"][index][-1]}', {'u.1' : 0}
         else:
             rhs += f'dw_point_lspring.2.id{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
-            lcbcs[kwargs["vert_shear_walls"][index][-1]] = f'{kwargs["vert_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
+            lcbcs[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'id{kwargs["vert_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
+
+    print(regions)
 
     equations = {
         'balance_of_forces' :
