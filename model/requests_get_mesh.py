@@ -6,7 +6,7 @@ import numpy as np
 import json
 
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
-from .sfepy_pb_description.connectToSpeckle import send_to_speckle
+from .sfepy_pb_description.connectToSpeckle import get_client, get_transport, send_to_speckle
 
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
@@ -31,7 +31,7 @@ def get_floor_mesh(request):
         # get the specified commit data
         # commit = client.commit.get(STREAM_ID, COMMIT_ID)
         # create an authenticated server transport from the client and receive the commit obj
-        # transport = ServerTransport(STREAM_ID, client)
+        transport = ServerTransport(STREAM_ID, client)
         # res = operations.receive(commit.referencedObject, transport)
 
         # FLOOR_ID = request.POST.get('FLOOR_ID')
@@ -174,7 +174,7 @@ def get_floor_mesh(request):
         }
 
 
-        send_to_speckle(HOST, STREAM_ID, data_to_replace = data_to_replace)
+        send_to_speckle(client, transport, STREAM_ID, data_to_replace = data_to_replace, commit_message='Edit speckMesh for floor')
         # print('minus_x', options['minus_x_wind_load_point_ids'])
 
         # pb, state = get_sfepy_pb(**options)

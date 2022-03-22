@@ -60,7 +60,8 @@ li.active a {
     color: #000000 !important;
 }
 
-#bot-navbar {
+.bot-navbar {
+    background: #fafafa;
     width: calc(100% - var(--right-sidebar-width))
 }
 

@@ -35,7 +35,7 @@ def get_object(transport, obj_id):
 def get_latest_commit(client, STREAM_ID):
     return client.commit.list(STREAM_ID, limit=1)[0]
 
-def send_to_speckle(HOST, STREAM_ID, data_to_replace = None, data_to_add = None):
+def send_to_speckle(client, transport, STREAM_ID, data_to_replace = None, data_to_add = None, commit_message=''):
     '''
     This function expects a dictionary structured as,
     {
@@ -45,10 +45,6 @@ def send_to_speckle(HOST, STREAM_ID, data_to_replace = None, data_to_add = None)
         }, 
     }
     '''
-
-    client = get_client(HOST, STREAM_ID)
-    transport = get_transport(client, STREAM_ID)
-
     # TODO - get branch that the user is working on and only commit to that branch
     latest_commit = get_latest_commit(client, STREAM_ID)
     latest_commit_obj = get_object(transport, latest_commit.referencedObject)
@@ -98,7 +94,20 @@ def send_to_speckle(HOST, STREAM_ID, data_to_replace = None, data_to_add = None)
     commid_id = client.commit.create(
         STREAM_ID,
         obj_id,
-        message="added mesh instance",
+        message=commit_message,
+    )
+
+def send_to_speckle(client, transport, STREAM_ID):
+
+    latest_commit = get_latest_commit(client, STREAM_ID)
+    latest_commit_obj = get_object(transport, latest_commit.referencedObject)
+
+    obj_id = operations.send(latest_commit_obj, [transport])
+
+    commid_id = client.commit.create(
+        STREAM_ID,
+        obj_id,
+        message='same objects, right?',
     )
 
 def get_obj_ids_in_stream(transport):
