@@ -23,6 +23,7 @@ class SpeckMesh(Base):
         cell_sets=None,
         gmsh_periodic=None,
         info=None,
+        **kwargs
     ):
         self.points = points
         # self.cells = cells
@@ -50,3 +51,5 @@ class SpeckMesh(Base):
         self.cell_sets = {} if cell_sets is None else cell_sets
         self.gmsh_periodic = gmsh_periodic
         self.info = info
+        for key, value in kwargs.items():
+            setattr(self, key, value)

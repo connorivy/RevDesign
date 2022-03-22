@@ -1,0 +1,28 @@
+{% extends "model/analyzeMesh.html" %}
+{% load static %}
+{% block sendToStream %}
+<script type="text/javascript">
+    function sendToStream() {
+        // POST request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'send_to_stream' %}",
+            data: {
+                'coord_list_floor': JSON.stringify(coordArrayFloor),
+                'coord_dict_walls': JSON.stringify(coordDictWalls),
+                'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
+                'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
+                'COMMIT_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].objectId,
+                'FLOOR_ID': v.interactions.selectedObjectsUserData[0].id
+            },
+            success: function (response) {
+                console.log(response)
+                v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['shear_wall_data'])
+            },
+            error: function (response) {
+                console.log('error')
+                console.log(response)
+            }
+        })
+    }
+</script>

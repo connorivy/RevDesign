@@ -1,0 +1,33 @@
+{% extends "model/getMesh.html" %}
+{% load static %}
+{% block analyzeMesh %}
+<script type="text/javascript">
+    function analyzeMesh() {
+        options = {
+            'minus_x_wind_load_curves' : wlc['minus_x_wind_load_curves'],
+            'plus_x_wind_load_curves': wlc['plus_x_wind_load_curves'],
+            'minus_y_wind_load_curves' : wlc['minus_y_wind_load_curves'],
+            'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
+            'vert_shear_walls' : vert_shear_walls.copy(),
+            'horiz_shear_walls' : horiz_shear_walls.copy(),
+            'fixed_nodes': False,
+        }
+        
+        // POST request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'analyze_mesh' %}",
+            data: {
+
+            },
+            success: function (response) {
+                console.log(response)
+                v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['shear_wall_data'])
+            },
+            error: function (response) {
+                console.log('error')
+                console.log(response)
+            }
+        })
+    }
+</script>
