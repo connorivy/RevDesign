@@ -139,7 +139,8 @@
                     </li>
                     <form class="form-inline my-2 my-lg-0">
                         <!-- Distribution of different sized shear walls -->
-                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/484aa60e78c3cd4854e4dc140e46b672">
+                        <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/e6635866f1/objects/8db7c6f02742e574dc0a9e794f4c285c"> -->
+                        <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="20" value="e6635866f1">
                         <!-- Simply Supported Example -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/4c1e4775e1089970482ac754351eeff5"> -->
                         <!-- Cantilever Example -->
@@ -150,7 +151,7 @@
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/218b84525a/objects/0a745e8955895a01c64786e6c93419e5"> -->
                         <!-- TB Floor1 -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="80" value="https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5"> -->
-                        <button class="btn btn-outline-dark my-2 my-sm-0" type="submit" onclick="loadData()">Load</button>
+                        <button class="btn btn-outline-dark my-2 my-sm-0" type="button" onclick="loadData()">Load</button>
                     </form>
                 </div>
             </nav>
@@ -288,6 +289,37 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/malihu-custom-scrollbar-plugin/3.1.5/jquery.mCustomScrollbar.concat.min.js"></script>
     <!-- Custom THREE JS script -->
     <script type="text/javascript" src="{% static 'dist/viewer.js' %}"></script>
+    <script type="text/javascript">
+        async function getLatestCommitURL() {
+            let url;
+
+            try {
+                url = await $.ajax({
+                    type: 'POST',
+                    url: "{% url 'get_latest_commit_url' %}",
+                    data: {
+                    'HOST': 'https://speckle.xyz',
+                    'STREAM_ID': document.getElementById( 'objectUrlInput' ).value,
+                    },
+                });
+
+            return url
+
+            } catch (error) {
+                console.error(error)
+            }
+        }
+        window.loadData = async function LoadData( url ) {
+            var new_url = await getLatestCommitURL()
+            localStorage.setItem( 'prevLoadUrl', new_url['url'] )
+            let t0 = Date.now()
+            console.log(new_url)
+            await v.loadObject( new_url['url'] )
+            console.log(`Finished loading in: ${(Date.now() - t0) / 1000}`)
+        } 
+
+        loadData()
+    </script>
     <!-- Custom get_mesh JS -->
     <!-- <script type="text/javascript" src="{% static 'model/getMesh.js' %}"></script> -->
 

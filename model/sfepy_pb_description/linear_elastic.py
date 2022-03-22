@@ -94,37 +94,6 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
 
     return shear_walls
 
-def send_to_speckle(client, STREAM_ID, data):
-    # shear_wall = client.object.get(stream_id=STREAM_ID, object_id=region_name)
-    base = Base(data=data)
-    print(base, isinstance(base, Base))
-
-    from pprint import pprint
-
-    # for key, value in vars(res['@Analytical Nodes'][5]).items():
-    #     print(key, value)
-
-    #     try:
-    #         if vars(value):
-    #             print('\n\n')
-    #             print(vars(value))
-    #             print('\n\n')
-    #     except:
-    #         continue
-    pprint(vars(base))
-    transport = ServerTransport(STREAM_ID, client)
-    obj_id = operations.send(base, [transport])
-    objs_ids = transport.copt
-
-    # now create a commit on that branch with your updated data!
-    commid_id = client.commit.create(
-        STREAM_ID,
-        obj_id,
-        message="testing123",
-    )
-
-    return commid_id
-
 
 def stress_strain(out, pb, state, extend=False):
     """

@@ -20,21 +20,14 @@ window.addEventListener( 'load', () => {
   v.onWindowResize()
   const prevLoadUrl = localStorage.getItem( 'prevLoadUrl' )
   console.log( prevLoadUrl )
-  if (prevLoadUrl) document.getElementById('objectUrlInput').value = prevLoadUrl;
+  let segments = prevLoadUrl.pathname.split( '/' )
+
+  if ( segments.length < 5 || url.pathname.indexOf( 'streams' ) === -1 || url.pathname.indexOf( 'objects' ) === -1 ) {
+    throw new Error( 'Unexpected object url format.' )
+  }
+
+  if (prevLoadUrl) document.getElementById('objectUrlInput').value = segments[2];
 } )
-
-window.loadData = async function LoadData( url ) {
-  // url = 'https://speckle.xyz/streams/2413489097/objects/4995b1c402ec5c0ce60d2ca0b9d443f8'  // jesuit
-  // url = 'https://speckle.xyz/streams/9250125033/objects/6fa3832f10f42f4b46a7acd66fe5e3d5' // toll brothers floors and shear walls
-  // url = 'https://speckle.xyz/streams/218b84525a/objects/d63d1dc2da9f28f6c6601f45188bcc76' // test floor from notes on date 3-19
-  url = url || document.getElementById( 'objectUrlInput' ).value
-  localStorage.setItem( 'prevLoadUrl', url )
-  let t0 = Date.now()
-  await v.loadObject( url )
-  console.log(`Finished loading in: ${(Date.now() - t0) / 1000}`)
-} 
-
-loadData()
 
 v.on( 'select', objects => {
   console.info( `Selection event. Current selection count: ${objects.length}.` )

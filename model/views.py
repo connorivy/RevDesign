@@ -10,4 +10,4 @@ def home(request):
         # 'nodes': node.objects.all(),
         'local_members': define_local_members()
     }
-    return render(request, 'model/getMesh.html', context) 
+    return render(request, 'model/sendToStream.html', context) 

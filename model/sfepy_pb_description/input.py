@@ -22,7 +22,7 @@ def vert_shear_walls(coors, domain, coords_2d_list):
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
-        # for curve in curve_list:
+        # for curve in point_ids_list:
             if is_equal(x[index],curve[0]) and y[index] <= max(curve[1], curve[3]) + 1e-5 and y[index] >= min(curve[1], curve[3]) - 1e-5:
                 flag = np.append(flag, int(index))
 
@@ -36,7 +36,7 @@ def horiz_shear_walls(coors, domain, coords_2d_list):
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
-        # for curve in curve_list:
+        # for curve in point_ids_list:
             if is_equal(y[index],curve[1]) and x[index] <= max(curve[0], curve[2]) + 1e-5 and x[index] >= min(curve[0], curve[2]) - 1e-5:
                 flag = np.append(flag, int(index))
 
@@ -44,27 +44,27 @@ def horiz_shear_walls(coors, domain, coords_2d_list):
 
     return flag
 
-def get_wind_region(coors, domain, curve_list):
-    # print('\n\n WIND CURVE \n\n', curve_list)
+def get_wind_region(coors, domain, point_ids_list, mesh_points):
+    print('\n\n WIND CURVE \n\n', point_ids_list)
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
-        for curve in curve_list:
+        for point_ids in point_ids_list:
             # only works for vertical or horizontal lines
             # horizontal
-            if is_equal(y[index], curve.points[0].x[1]):
-                # print('horizontal line', [x[index], y[index]], [curve.points[0].x[0], curve.points[0].x[1]])
-                if x[index] <= max(curve.points[0].x[0], curve.points[1].x[0]) + 1e-5 and x[index] >= min(curve.points[0].x[0], curve.points[1].x[0]) - 1e-5:
+            if is_equal(y[index], mesh_points[point_ids[0]][1]):
+                print('horizontal line', [x[index], y[index]], [mesh_points[point_ids[0]][0], mesh_points[point_ids[0]][1]])
+                if x[index] <= max(mesh_points[point_ids[0]][0], mesh_points[point_ids[1]][0]) + 1e-5 and x[index] >= min(mesh_points[point_ids[0]][0], mesh_points[point_ids[1]][0]) - 1e-5:
                     flag = np.append(flag, int(index))
                     # print('added')
                     break
             # vertical
-            elif is_equal(x[index],curve.points[0].x[0]):
-                if y[index] <= max(curve.points[0].x[1], curve.points[1].x[1]) + 1e-5 and y[index] >= min(curve.points[0].x[1], curve.points[1].x[1]) - 1e-5:
+            elif is_equal(x[index], mesh_points[point_ids[0]][0]):
+                if y[index] <= max(mesh_points[point_ids[0]][1], mesh_points[point_ids[1]][1]) + 1e-5 and y[index] >= min(mesh_points[point_ids[0]][1], mesh_points[point_ids[1]][1]) - 1e-5:
                     flag = np.append(flag, int(index))
                     break
 
-    # print('wind_flag', flag)
+    print('wind_flag', flag)
 
     return flag
 
@@ -81,16 +81,16 @@ def define(**kwargs):
 
     functions = {
         'plus_x_wind_region' : (lambda coors, domain=None, **kwargsv:
-                                    get_wind_region(coors, domain, curve_list=kwargs['plus_x_wind_load_curves']),
+                                    get_wind_region(coors, domain, point_ids_list=kwargs['plus_x_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
         'minus_x_wind_region' : (lambda coors, domain=None, **kwargsv:
-                                    get_wind_region(coors, domain, curve_list=kwargs['minus_x_wind_load_curves']),
+                                    get_wind_region(coors, domain, point_ids_list=kwargs['minus_x_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
         'plus_y_wind_region' : (lambda coors, domain=None, **kwargsv:
-                                    get_wind_region(coors, domain, curve_list=kwargs['plus_y_wind_load_curves']),
+                                    get_wind_region(coors, domain, point_ids_list=kwargs['plus_y_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
         'minus_y_wind_region' : (lambda coors, domain=None, **kwargsv:
-                                    get_wind_region(coors, domain, curve_list=kwargs['minus_y_wind_load_curves']),
+                                    get_wind_region(coors, domain, point_ids_list=kwargs['minus_y_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
     }
 
@@ -161,8 +161,6 @@ def define(**kwargs):
         else:
             rhs += f'dw_point_lspring.2.id{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
             lcbcs[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'id{kwargs["vert_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
-
-    print(regions)
 
     equations = {
         'balance_of_forces' :

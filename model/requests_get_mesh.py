@@ -1,7 +1,6 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .models import *
-from .sfepy_pb_description.linear_elastic import *
 import pygmsh
 import numpy as np
 import json
@@ -23,6 +22,7 @@ def get_floor_mesh(request):
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
         COMMIT_ID = request.POST.get('COMMIT_ID')
+        FLOOR_ID = request.POST.get('FLOOR_ID')
 
         # create and authenticate a client
         client = SpeckleClient(host=HOST)
@@ -125,7 +125,7 @@ def get_floor_mesh(request):
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
 
-            wlc = get_wind_load_curves(polygon, surface)
+            wlc = get_wind_load_point_ids(polygon, surface)
             geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
@@ -141,17 +141,14 @@ def get_floor_mesh(request):
         #     except:
         #         break
 
-        # mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
-        # mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
-
-        print(mesh.cells)
-        print(surface, len(surface.curves))
+        mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
+        mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
 
         options = {
-            'minus_x_wind_load_curves' : wlc['minus_x_wind_load_curves'],
-            'plus_x_wind_load_curves': wlc['plus_x_wind_load_curves'],
-            'minus_y_wind_load_curves' : wlc['minus_y_wind_load_curves'],
-            'plus_y_wind_load_curves' : wlc['plus_y_wind_load_curves'],
+            'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
+            'plus_x_wind_load_point_ids': wlc['plus_x_wind_load_point_ids'],
+            'minus_y_wind_load_point_ids' : wlc['minus_y_wind_load_point_ids'],
+            'plus_y_wind_load_point_ids' : wlc['plus_y_wind_load_point_ids'],
             'vert_shear_walls' : vert_shear_walls.copy(),
             'horiz_shear_walls' : horiz_shear_walls.copy(),
             'fixed_nodes': False,
@@ -170,9 +167,15 @@ def get_floor_mesh(request):
             **options
         )
 
+        data_to_replace = {
+            FLOOR_ID: {
+                'speckMesh' : speckMesh
+            }
+        }
 
-        send_to_speckle(HOST, STREAM_ID, speckMesh)
-        print('minus_x', options['minus_x_wind_load_curves'])
+
+        send_to_speckle(HOST, STREAM_ID, data_to_replace = data_to_replace)
+        # print('minus_x', options['minus_x_wind_load_point_ids'])
 
         # pb, state = get_sfepy_pb(**options)
         # create_mesh_reactions(pb)
@@ -184,7 +187,7 @@ def get_floor_mesh(request):
         return JsonResponse({'shear_wall_data': shear_wall_data}, status = 200)
     return JsonResponse({}, status = 400)
 
-def get_wind_load_curves(polygon, surface):
+def get_wind_load_point_ids(polygon, surface):
     np_poly = np.asarray(polygon)
 
     # sort surves in acending order by the avarage x and y values or the curves
@@ -199,18 +202,19 @@ def get_wind_load_curves(polygon, surface):
     wind_line_horiz = [[min_x, max_x]]
 
     wlc = {}
-    wlc['minus_x_wind_load_curves'] = get_curves_from_wind_line(curves_sorted_by_x, wind_line_vert.copy(), 1)
-    wlc['plus_x_wind_load_curves'] = get_curves_from_wind_line(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
-    wlc['minus_y_wind_load_curves'] = get_curves_from_wind_line(curves_sorted_by_y, wind_line_horiz.copy(), 0)
-    wlc['plus_y_wind_load_curves'] = get_curves_from_wind_line(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
+    wlc['minus_x_wind_load_point_ids'] = get_point_ids_from_wind_line(curves_sorted_by_x, wind_line_vert.copy(), 1)
+    wlc['plus_x_wind_load_point_ids'] = get_point_ids_from_wind_line(reversed(curves_sorted_by_x), wind_line_vert.copy(), 1)
+    wlc['minus_y_wind_load_point_ids'] = get_point_ids_from_wind_line(curves_sorted_by_y, wind_line_horiz.copy(), 0)
+    wlc['plus_y_wind_load_point_ids'] = get_point_ids_from_wind_line(reversed(curves_sorted_by_y), wind_line_horiz.copy(), 0)
 
     return wlc
 
-def get_curves_from_wind_line(curves_sorted, wind_line, dir):
+def get_point_ids_from_wind_line(curves_sorted, wind_line, dir):
     '''
     dir = 0 if dealing with the horizontal direction, 1 if dealing with the vertical direction
     '''
     curves = []
+    point_ids = []
     for curve in curves_sorted:
         if not wind_line:
             break
@@ -223,7 +227,11 @@ def get_curves_from_wind_line(curves_sorted, wind_line, dir):
                 curves.append(curve)
                 wind_line = adjust_wind_line(wind_line, segment, curve, dir)
                 break
-    return curves
+
+    for curve in curves:
+        point_ids.append([curve.points[0]._id, curve.points[1]._id])
+
+    return point_ids
 
 def is_nearly_perpendicular(curve, dir, tol):
     '''

@@ -14,8 +14,8 @@ class CellBlock(collections.namedtuple("CellBlock", ["type", "data"])):
 class SpeckMesh(Base):
     def __init__(
         self,
-        points,
-        cells,
+        points=None,
+        cells=None,
         point_data=None,
         cell_data=None,
         field_data=None,
@@ -25,25 +25,14 @@ class SpeckMesh(Base):
         info=None,
         **kwargs
     ):
+        super().__init__(**kwargs)
         self.points = points
-        # self.cells = cells
-        if isinstance(cells, dict):
-            # Let's not deprecate this for now.
-            # import warnings
-            # warnings.warn(
-            #     "cell dictionaries are deprecated, use list of tuples, e.g., "
-            #     '[("triangle", [[0, 1, 2], ...])]',
-            #     DeprecationWarning,
-            # )
-            # old dict, deprecated
-            self.cells = [
-                CellBlock(cell_type, data)
-                for cell_type, data in cells.items()
-            ]
-        else:
+        if cells:
             self.cells = [
                 CellBlock(cell_type, data.tolist()) for cell_type, data in cells
             ]
+        else:
+            self.cells = cells
         self.point_data = {} if point_data is None else point_data
         self.cell_data = {} if cell_data is None else cell_data
         self.field_data = {} if field_data is None else field_data
@@ -52,4 +41,4 @@ class SpeckMesh(Base):
         self.gmsh_periodic = gmsh_periodic
         self.info = info
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            self[key] = value

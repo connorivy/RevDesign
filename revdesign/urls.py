@@ -28,4 +28,7 @@ urlpatterns = [
 
     # AJAX requests
     path('post/ajax/validate/get_floor_mesh', model_requests.get_floor_mesh, name = "get_floor_mesh"),
+    path('post/ajax/validate/analyze_mesh', model_requests.analyze_mesh, name = "analyze_mesh"),
+    path('post/ajax/validate/send_to_stream', model_requests.send_to_stream, name = "send_to_stream"),
+    path('post/ajax/validate/get_latest_commit_url', model_requests.get_latest_commit_url, name = "get_latest_commit_url"),
 ]
