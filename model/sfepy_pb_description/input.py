@@ -45,31 +45,40 @@ def horiz_shear_walls(coors, domain, coords_2d_list):
     return flag
 
 def get_wind_region(coors, domain, point_ids_list, mesh_points):
-    print('\n\n WIND CURVE \n\n', point_ids_list)
+    # print('\n\n WIND CURVE \n\n', point_ids_list)
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
         for point_ids in point_ids_list:
             # only works for vertical or horizontal lines
             # horizontal
-            if is_equal(y[index], mesh_points[point_ids[0]][1]):
-                print('horizontal line', [x[index], y[index]], [mesh_points[point_ids[0]][0], mesh_points[point_ids[0]][1]])
-                if x[index] <= max(mesh_points[point_ids[0]][0], mesh_points[point_ids[1]][0]) + 1e-5 and x[index] >= min(mesh_points[point_ids[0]][0], mesh_points[point_ids[1]][0]) - 1e-5:
+
+            # need to subtract one from the point id because the point ids start at 1 while the index starts at 0
+            if is_equal(y[index], mesh_points[int(point_ids[0])-1][1]):
+                if x[index] <= max(mesh_points[int(point_ids[0])-1][0], mesh_points[int(point_ids[1])-1][0]) + 1e-5 and x[index] >= min(mesh_points[int(point_ids[0])-1][0], mesh_points[int(point_ids[1])-1][0]) - 1e-5:
                     flag = np.append(flag, int(index))
                     # print('added')
                     break
             # vertical
-            elif is_equal(x[index], mesh_points[point_ids[0]][0]):
-                if y[index] <= max(mesh_points[point_ids[0]][1], mesh_points[point_ids[1]][1]) + 1e-5 and y[index] >= min(mesh_points[point_ids[0]][1], mesh_points[point_ids[1]][1]) - 1e-5:
+            elif is_equal(x[index], mesh_points[int(point_ids[0])-1][0]):
+                if y[index] <= max(mesh_points[int(point_ids[0])-1][1], mesh_points[int(point_ids[1])-1][1]) + 1e-5 and y[index] >= min(mesh_points[int(point_ids[0])-1][1], mesh_points[int(point_ids[1])-1][1]) - 1e-5:
                     flag = np.append(flag, int(index))
                     break
 
-    print('wind_flag', flag)
+    # print('wind_flag', flag)
 
     return flag
 
 def get_length_of_sw(curve):
     return math.sqrt((curve[0] - curve[2])**2 + (curve[1] - curve[3])**2)
+
+def linear_tension(ts, coor, mode=None, **kwargs):
+    if mode == 'qp':
+        val = np.tile(1.0, (coor.shape[0], 1, 1))
+
+        print('COOR.SHAPE, VAL ', coor.shape, val)
+
+        return {'val' : val}
 
 def define(**kwargs):
     
@@ -92,6 +101,7 @@ def define(**kwargs):
         'minus_y_wind_region' : (lambda coors, domain=None, **kwargsv:
                                     get_wind_region(coors, domain, point_ids_list=kwargs['minus_y_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
+        'linear_tension' : (linear_tension,),
     }
 
     regions = {
@@ -105,7 +115,8 @@ def define(**kwargs):
     materials = {
         'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
-        'load' : ({'val' : -1},),
+        'load' : ({'val' : [[.2],[-.8]]},),
+        # 'load' : (None, 'linear_tension'),
     }
 
     fields = {

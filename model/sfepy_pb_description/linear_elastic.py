@@ -4,14 +4,10 @@ from sfepy.base.conf import ProblemConf
 from sfepy.discrete import Problem
 from sfepy.applications import PDESolverApp, EVPSolverApp, solve_pde
 try:
-    from . import input
+    from . import input, input_for_applied_loads
 except:
     import input
-
-try:
-    from . import biot_npbc
-except:
-    import biot_npbc
+    import input_for_applied_loads
 
 import numpy as np
 import meshio
@@ -32,6 +28,23 @@ def get_sfepy_pb(**kwargs):
     pb.save_state('mesh_displacements.vtk', state=state)
 
     return pb, state
+
+def create_mesh_applied_loads(**kwargs):
+    conf = ProblemConf.from_dict(input_for_applied_loads.define(**kwargs), input_for_applied_loads)
+    pb, state = solve_pde(conf)
+
+    # https://sfepy.org/doc-devel/primer.html#table-of-contents
+    variables = pb.get_variables()
+    u = variables.get_state_parts()['u']
+    pb.remove_bcs()
+
+    f = pb.evaluator.eval_residual(u)
+
+    pb.time_update()
+    fvars = variables.copy()
+    fvars.set_state(f, reduced=False)
+    out = variables.create_output()
+    pb.save_state('mesh_applied_loads.vtk', out=out)
     
 def create_mesh_reactions(pb):
     # https://sfepy.org/doc-devel/primer.html#table-of-contents
@@ -69,10 +82,8 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
             for rxn in reactions:
                 total_shear += rxn
 
-            print(total_shear, type(total_shear), type(max(abs(total_shear))), max(abs(total_shear)))
             shear_walls[region_name] = {
                 'totalReaction': max(abs(total_shear)),
-                # 'edited': True
             }
     else:
         for region_name in regions:
@@ -85,11 +96,8 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
             reactions_list = u[dofs] * spring.get_data('special', 'stiffness')
             total_shear = np.fromiter(map(sum,zip(*reactions_list)),dtype='float64')
 
-            print(total_shear, type(total_shear), type(max(abs(total_shear))), max(abs(total_shear)))
-
             shear_walls[region_name] = {
                 'totalReaction': max(abs(total_shear)),
-                # 'edited': True
             }
 
     return shear_walls

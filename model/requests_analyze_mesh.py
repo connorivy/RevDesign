@@ -41,12 +41,14 @@ def analyze_mesh(request):
         #         'fixed_nodes': floor_obj.speckMesh.fixed_nodes,
         #     }
 
+        shear_wall_data = {}
+        create_mesh_applied_loads(**options)
         pb, state = get_sfepy_pb(**options)
         # # create_mesh_reactions(pb)
         shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in floor_obj['speckMesh'].vert_shear_walls] + [row[-1] for row in floor_obj['speckMesh'].horiz_shear_walls], options['fixed_nodes'])
         print('SHEAR WALL DATA', shear_wall_data)
         edit_data_in_obj(globals_obj, shear_wall_data.copy())
-        send_to_speckle(client, transport, STREAM_ID, obj=globals_obj, branch_name='globals', commit_message='edits to shearwall data')
+        # send_to_speckle(client, transport, STREAM_ID, obj=globals_obj, branch_name='globals', commit_message='edits to shearwall data')
 
         return JsonResponse({'shear_wall_data': shear_wall_data}, status = 200)
     return JsonResponse({}, status = 400)
