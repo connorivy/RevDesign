@@ -35,7 +35,34 @@ def get_object(transport, obj_id):
 def get_latest_commit(client, STREAM_ID):
     return client.commit.list(STREAM_ID, limit=1)[0]
 
-def send_to_speckle(client, transport, STREAM_ID, data_to_replace = None, data_to_add = None, commit_message=''):
+def get_globals_obj(client, transport, STREAM_ID):
+    # get the `globals` branch
+    branch = client.branch.get(STREAM_ID, "globals")
+
+    # get the latest commit if globals branch exists
+    try:
+        latest_commit = branch.commits.items[0]
+    # if the globlas branch doesn't exist, create it and return empty base object
+    except:
+        client.branch.create(STREAM_ID, "globals", "Global Variables")
+        return Base()
+
+    # receive the globals object
+    return operations.receive(latest_commit.referencedObject, transport)
+
+def send_to_speckle(client, transport, STREAM_ID, obj, branch_name='main', commit_message=''):
+    # TODO this isn't recognizing that the data is already in the server so it's storing multiple copies
+    obj_id = operations.send(obj, [transport])
+
+    # now create a commit on that branch with your updated data!
+    commid_id = client.commit.create(
+        STREAM_ID,
+        obj_id,
+        branch_name=branch_name,
+        message=commit_message,
+    )
+
+def edit_data_in_obj(obj, data_to_edit):
     '''
     This function expects a dictionary structured as,
     {
@@ -45,83 +72,47 @@ def send_to_speckle(client, transport, STREAM_ID, data_to_replace = None, data_t
         }, 
     }
     '''
-    # TODO - get branch that the user is working on and only commit to that branch
-    latest_commit = get_latest_commit(client, STREAM_ID)
-    latest_commit_obj = get_object(transport, latest_commit.referencedObject)
 
-    # if isinstance(data_to_add, Base):
-    #     if not hasattr(latest_commit_obj, f'@{data_to_add.speckle_type}'):
-    #         latest_commit_obj[f'@{data_to_add.speckle_type}'] = data_to_add
-    #     elif isinstance(latest_commit_obj[f'@{data_to_add.speckle_type}'], list):
-    #         latest_commit_obj[f'@{data_to_add.speckle_type}'].append(data_to_add)
-    #     else:
-    #         temp = latest_commit_obj[f'@{data_to_add.speckle_type}']
-    #         latest_commit_obj[f'@{data_to_add.speckle_type}'] = [temp, data_to_add]
-
-    prop_names = latest_commit_obj.get_member_names()
+    prop_names = obj.get_member_names()
     for name in prop_names:
         try:
-            dummy = latest_commit_obj[name]
+            dummy = obj[name]
         except:
             continue
-        if isinstance(latest_commit_obj[name], list):
-            for obj in latest_commit_obj[name]:
-                if obj.id in data_to_replace.keys():
-                    for key, value in data_to_replace[obj.id].copy().items():
+        if isinstance(obj[name], list):
+            for obj in obj[name]:
+                if obj.id in data_to_edit.keys():
+                    for key, value in data_to_edit[obj.id].copy().items():
                         obj[key] = value
-                        data_to_replace[obj.id].pop(key)
-                        if data_to_replace[obj.id] == {}:
-                            data_to_replace.pop(obj.id)
-                            if data_to_replace == {}:
+                        data_to_edit[obj.id].pop(key)
+                        if data_to_edit[obj.id] == {}:
+                            data_to_edit.pop(obj.id)
+                            if data_to_edit == {}:
                                 break
 
         # not a list
         else:
-            if hasattr(latest_commit_obj[name], 'id'):
-                if latest_commit_obj[name].id in data_to_replace.keys():
-                    for key, value in data_to_replace[obj.id].copy().items():
+            if hasattr(obj[name], 'id'):
+                if obj[name].id in data_to_edit.keys():
+                    for key, value in data_to_edit[obj.id].copy().items():
                         obj[key] = value
-                        data_to_replace[obj.id].pop(key)
-                        if data_to_replace[obj.id] == {}:
-                            data_to_replace.pop(obj.id)
-                        if data_to_replace == {}:
+                        data_to_edit[obj.id].pop(key)
+                        if data_to_edit[obj.id] == {}:
+                            data_to_edit.pop(obj.id)
+                        if data_to_edit == {}:
                                 break
+    
+    for key, value in data_to_edit.copy().items():
+        obj[key] = value
+        data_to_edit.pop(key)
 
-    # TODO this isn't recognizing that the data is already in the server so it's storing multiple copies
-    obj_id = operations.send(latest_commit_obj, [transport])
+    # if isinstance(data_to_add, Base):
+    #     if not hasattr(obj, f'@{data_to_add.speckle_type}'):
+    #         obj[f'@{data_to_add.speckle_type}'] = data_to_add
+    #     elif isinstance(obj[f'@{data_to_add.speckle_type}'], list):
+    #         obj[f'@{data_to_add.speckle_type}'].append(data_to_add)
+    #     elif isinstance(obj[f'@{data_to_add.speckle_type}'], Base):
+    #         temp = obj[f'@{data_to_add.speckle_type}']
+    #         obj[f'@{data_to_add.speckle_type}'] = [temp, data_to_add]
 
-    # now create a commit on that branch with your updated data!
-    commid_id = client.commit.create(
-        STREAM_ID,
-        obj_id,
-        message=commit_message,
-    )
-
-def send_to_speckle(client, transport, STREAM_ID):
-
-    latest_commit = get_latest_commit(client, STREAM_ID)
-    latest_commit_obj = get_object(transport, latest_commit.referencedObject)
-
-    obj_id = operations.send(latest_commit_obj, [transport])
-
-    commid_id = client.commit.create(
-        STREAM_ID,
-        obj_id,
-        message='same objects, right?',
-    )
-
-def get_obj_ids_in_stream(transport):
-    # Get the new children
-        endpoint = f"{transport.url}/api/getobjects/{transport.stream_id}"
-        r = transport.session.post(
-            endpoint, data={'objects': ''}, stream=True
-        )
-        r.encoding = "utf-8"
-        lines = r.iter_lines(decode_unicode=True)
-
-        # iter through returned objects saving them as we go
-        for line in lines:
-            if line:
-                print(line)
-                # hash, obj = line.split("\t")
-                # print('HASH, OBJ, ', hash, obj)
+    print('DATA TO EDIT', data_to_edit)
