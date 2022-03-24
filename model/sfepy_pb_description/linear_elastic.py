@@ -17,7 +17,6 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.transports.server import ServerTransport
 from specklepy.objects import Base
-from gql import gql
 
 def get_sfepy_pb(**kwargs):
     conf = ProblemConf.from_dict(input.define(**kwargs), input)

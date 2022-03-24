@@ -1,6 +1,5 @@
 import numpy as np
 from sfepy.mechanics.matcoefs import stiffness_from_youngpoisson
-import math
 
 def is_equal(p1, p2):
     tol = 1e-5

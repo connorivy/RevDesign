@@ -4,6 +4,7 @@ from .models import *
 import pygmsh
 import numpy as np
 import json
+import math
 
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
 from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle
@@ -13,7 +14,7 @@ from specklepy.api.client import SpeckleClient
 from specklepy.api.credentials import get_default_account
 from specklepy.transports.server import ServerTransport
 from specklepy.objects import Base
-from gql import gql
+from gql.gql import gql
 
 
 @csrf_exempt
@@ -21,19 +22,32 @@ def get_floor_mesh(request):
     if request.is_ajax and request.method == "POST":
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
+        OBJECT_ID = request.POST.get('OBJECT_ID')
         FLOOR_ID = request.POST.get('FLOOR_ID')
+
+        print('OBJECT_ID', OBJECT_ID)
 
         # create and authenticate a client
         client = SpeckleClient(host=HOST)
         account = get_default_account()
         client.authenticate(token=account.token)
 
-        # create an authenticated server transport from the client and receive the commit obj
+        # create an authenticated server transport from the client
         transport = ServerTransport(STREAM_ID, client)
 
+        floor_obj = get_object(transport, FLOOR_ID)
+        coord_list_floor = get_coords_list(floor_obj=floor_obj)
+        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID)
+        add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
+        print('NEW_COORD_LIST', coord_list_floor)
+        print('REF_COORD_LIST', json.loads(request.POST.get('coord_list_floor')))
+
+        print('NEW_DICT_WALLS', coord_dict_walls)
+        print('REF_DICT_WALLS', json.loads(request.POST.get('coord_dict_walls')))
+
         # get the floor coord_list from the client side.
-        coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
-        coord_dict_walls = json.loads(request.POST.get('coord_dict_walls'))
+        # coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
+        # coord_dict_walls = json.loads(request.POST.get('coord_dict_walls'))
         # print(coord_list_floor, coord_list_walls, request.POST)
 
         # This will be a huge job, but eventually I need to combine my Django and speckle servers
@@ -84,12 +98,12 @@ def get_floor_mesh(request):
 
                 # maybe make this loop a little more clever
                 for point in surface.points:
-                    if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0]):
+                    if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0], tol = 4.16e-2):
                         p0 = point
                         if p0 and p1:
                             break
 
-                    elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1]):
+                    elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1], tol = 4.16e-2):
                         p1 = point
                         if p0 and p1:
                             break
@@ -171,7 +185,7 @@ def get_floor_mesh(request):
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
-        send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
+        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         # pb, state = get_sfepy_pb(**options)
         # create_mesh_reactions(pb)
@@ -289,9 +303,275 @@ def adjust_wind_line(wind_line, segment, curve, dir):
     # print('adjust_wind_line', wind_line)
     return wind_line
 
-def is_equal_2d_list(p1, p2):
-    tol = 1e-5
+def is_equal_2d_list(p1, p2, tol=3.33e-1):
     if abs(p2[0] - p1[0]) < tol and abs(p2[1] - p1[1]) < tol:
         return True
     else:
         return False
+
+def get_coords_list(floor_obj):
+    coords = []
+    seen_coords = set()
+    for segment in floor_obj.outline.segments:
+        x0 = round(segment.start.x, 6)
+        y0 = round(segment.start.y, 6)
+        x1 = round(segment.end.x, 6)
+        y1 = round(segment.end.y, 6)
+        if (x0, y0) not in seen_coords:
+            seen_coords.add((x0, y0))
+            coords.append((x0, y0))
+        if (x1, y1) not in seen_coords:
+            seen_coords.add((x1, y1))
+            coords.append((x1, y1))
+
+    if len(coords) != len(floor_obj.outline.segments):
+        print('WARNING: # of coords != # 0f segments')
+
+    return coords
+
+def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
+    # we have to 'close' the polygon for the function to work
+    coord_list_floor.append(coord_list_floor[0])
+
+    for wall_id in coord_dict_walls:
+        x0 = round(float(coord_dict_walls[wall_id][0]),6)
+        y0 = round(float(coord_dict_walls[wall_id][1]),6)
+        x1 = round(float(coord_dict_walls[wall_id][2]),6)
+        y1 = round(float(coord_dict_walls[wall_id][3]),6)
+
+        if distance_formula((x0, y0), (x1, y1)) < 1:
+            print('short wall')
+            tol = 4.16e-2
+            num_decimals = 2
+        else:
+            tol = 3.33e-1
+            num_decimals = 0
+
+        p0inPoly = point_in_poly((x0, y0), (coord_list_floor,), num_decimals)
+        p1inPoly = point_in_poly((x1, y1), (coord_list_floor,), num_decimals)
+
+        print('pinpoly', p0inPoly, p1inPoly)
+
+        # one or both of the points is outside the slab, don't count it.
+        if p0inPoly[0] == 0 or p1inPoly[0] == 0:
+            print('outside slab')
+            continue
+        # both points are inside the slab, yay
+        if p0inPoly[0] == 1 and p1inPoly[0] == 1:
+            print('inside slab')
+        # both points are on the border of the polygon
+        elif p0inPoly[0] == 2 and p1inPoly[0] == 2:
+            print('on perim')
+            print(f'comparing {coord_list_floor[p0inPoly[1]]} and {coord_list_floor[p0inPoly[1]+1]} to {(x0, y0)}')
+            print(f'comparing {coord_list_floor[p1inPoly[1]]} and {coord_list_floor[p1inPoly[1]+1]} to {(x1, y1)}')
+            print('len of wall', distance_formula((x0, y0), (x1, y1)))
+
+            p0IsCorner = is_equal_2d_list(coord_list_floor[p0inPoly[1]],(x0, y0), tol) or is_equal_2d_list(coord_list_floor[p0inPoly[1]+1],(x0, y0), tol)
+            p1IsCorner = is_equal_2d_list(coord_list_floor[p1inPoly[1]],(x1, y1), tol) or is_equal_2d_list(coord_list_floor[p1inPoly[1]+1],(x1, y1), tol)
+
+            # if both are corners, just add to coord array walls
+            if p0IsCorner and p1IsCorner:
+                print('both corners')
+            elif p0IsCorner:
+                print('p0 is corner')
+                coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+            elif p1IsCorner:
+                print('p1 is corner')
+                coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+            # neither point is on a corner
+            else:
+                print('no corners')
+                # find the point that has the largest index in the list, insert there, and then insert the new point into the smaller index
+                if p0inPoly[1] > p1inPoly[1]:
+                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+                elif p0inPoly[1] < p1inPoly[1]:
+                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                # if the indicies are the same, then the points are on the same line. Find the one furthest away from the corner point and insert that right after the point,
+                # then insert the closer point right after the corner point in the coodArrayFloor
+                else:
+                    distOfP0 = distance_formula((x0, y0), coord_list_floor[p0inPoly[1]])
+                    distOfP1 = distance_formula((x1, y1), coord_list_floor[p0inPoly[1]])
+                    # if p0 is closer, insert p1 then p0
+                    if distOfP0 < distOfP1:
+                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                    else:
+                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1))
+        elif p0inPoly[0] == 2:
+            #   print('p0 on perim')
+            coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+        elif p1inPoly[0] == 2:
+            #   print('p1 on perim')
+            coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+
+    # remove the last item of the coord_list because pygmsh likes 'open' polygons
+    coord_list_floor.pop()
+
+def query_shearwalls(client, STREAM_ID, obj_id):
+    query = gql(
+        """
+            query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
+                stream(id:$stream_id){
+                    object(id:$object_id){
+                        children(query: $myQuery select:["start.x","start.y","start.z","end.x","end.y","end.z"]){
+                            totalCount
+                            objects{
+                                id
+                                data
+                            }
+                        }
+                    }
+                }
+            }
+        """)
+
+    params = {
+        "myQuery": [
+            {
+                "field":"lineType",
+                "value":"shearWall",
+                "operator":"="
+            }
+        ],
+        "stream_id": STREAM_ID, 
+        "object_id": obj_id
+    }
+
+    dict_from_server = client.httpclient.execute(query, variable_values=params)
+    print(dict_from_server)
+    coord_dict_walls = {}
+    for wall in dict_from_server['stream']['object']['children']['objects']:
+        coord_dict_walls[wall['id']] = (
+            round(wall['data']['start']['x'], 6),
+            round(wall['data']['start']['y'], 6),
+            round(wall['data']['end']['x'], 6),
+            round(wall['data']['end']['y'], 6), 
+        )
+    
+    print('coord_dict_walls', coord_dict_walls)
+    return coord_dict_walls
+
+
+# https:#github.com/sasamil/PointInPolygon_Py/blob/master/pointInside.py
+# arguments:
+# Polygon - searched polygon
+# Point - an arbitrary point that can be inside or outside the polygon
+# length - the number of point in polygon (Attention! The list itself has an additional member - the last point coincides with the first)
+
+# return value:
+# 0 - the point is outside the polygon
+# 1 - the point is inside the polygon 
+# 2 - the point is one edge (boundary)
+
+# def is_inside_sm(polygon, point):
+#   length = len(polygon)-1
+#   dy2 = point[1] - polygon[0][1]
+#   intersections = 0
+#   ii = 0
+#   jj = 1
+
+#   while ii<length:
+#     dy  = dy2
+#     dy2 = point[1] - polygon[jj][1]
+
+#     # consider only lines which are not completely above/bellow/right from the point
+#     if dy*dy2 <= 0.0 and (point[0] >= polygon[ii][0] or point[0] >= polygon[jj][0]):
+        
+#       # non-horizontal line
+#       if dy<0 or dy2<0:
+#         F = dy*(polygon[jj][0] - polygon[ii][0])/(dy-dy2) + polygon[ii][0]
+
+#         if point[0] > F: # if line is left from the point - the ray moving towards left, will intersect it
+#           intersections += 1
+#         elif point[0] == F: # point on line
+#           return 2
+
+#       # point on upper peak (dy2=dx2=0) or horizontal line (dy=dy2=0 and dx*dx2<=0)
+#       elif dy2==0 and (point[0]==polygon[jj][0] or (dy==0 and (point[0]-polygon[ii][0])*(point[0]-polygon[jj][0])<=0)):
+#         return 2
+
+#       # there is another posibility: (dy=0 and dy2>0) or (dy>0 and dy2=0). It is skipped 
+#       # deliberately to prevent break-points intersections to be counted twice.
+    
+#     ii = jj
+#     jj += 1
+            
+#   #print 'intersections =', intersections
+#   return intersections & 1 
+
+
+
+# return value:
+# 0 - the point is outside the polygon
+# 1 - the point is inside the polygon 
+# 2 - the point is on edge (boundary)
+def point_in_poly(p, polygon, num_decimals=0):
+    x = round(p[0],num_decimals)
+    y = round(p[1], num_decimals)
+
+    numContours = len(polygon)
+    for i in range(numContours):
+        ii = 0
+        contourLen = len(polygon[i]) - 1
+        contour = polygon[i]
+
+        currentP = contour[0]
+        if currentP[0] != contour[contourLen][0] and currentP[1] != contour[contourLen][1]:
+            print('First and last coordinates in a ring must be the same')
+
+        u1 = round(currentP[0], num_decimals) - x
+        v1 = round(currentP[1], num_decimals) - y
+
+        for ii in range(contourLen):
+            print('ii, u1, v1', ii, u1, v1)
+            nextP = contour[ii + 1]
+
+            v2 = round(nextP[1], num_decimals) - y
+
+            if (v1 < 0 and v2 < 0) or (v1 > 0 and v2 > 0):
+                currentP = nextP
+                v1 = v2
+                u1 = round(currentP[0], num_decimals) - x
+                continue
+
+            u2 = round(nextP[0], num_decimals) - x
+
+            if v2 > 0 and v1 <= 0:
+                f = (u1 * v2) - (u2 * v1)
+                if f > 0:
+                    k = k + 1
+                elif f == 0:
+                    return [2, ii]
+            elif v1 > 0 and v2 <= 0:
+                f = (u1 * v2) - (u2 * v1)
+                if f < 0: 
+                    k = k + 1
+                elif f == 0:
+                    return [2, ii]
+            elif v2 == 0 and v1 < 0:
+                f = (u1 * v2) - (u2 * v1)
+                if f == 0:
+                    return [2, ii]
+            elif v1 == 0 and v2 < 0:
+                f = u1 * v2 - u2 * v1
+                if f == 0:
+                    return [2, ii]
+            elif v1 == 0 and v2 == 0:
+                if u2 <= 0 and u1 >= 0:
+                    return [2, ii]
+                elif u1 <= 0 and u2 >= 0:
+                    return [2, ii]
+
+            currentP = nextP
+            v1 = v2
+            u1 = u2
+
+    if k % 2 == 0:
+        return [2, None]
+    return [1, None]
+
+def distance_formula(p0, p1):
+    return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)

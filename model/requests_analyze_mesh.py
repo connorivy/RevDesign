@@ -1,4 +1,3 @@
-from asyncio import transports
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .sfepy_pb_description.linear_elastic import *
