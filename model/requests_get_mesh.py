@@ -25,8 +25,6 @@ def get_floor_mesh(request):
         OBJECT_ID = request.POST.get('OBJECT_ID')
         FLOOR_ID = request.POST.get('FLOOR_ID')
 
-        print('OBJECT_ID', OBJECT_ID)
-
         # create and authenticate a client
         client = SpeckleClient(host=HOST)
         account = get_default_account()
@@ -38,12 +36,10 @@ def get_floor_mesh(request):
         floor_obj = get_object(transport, FLOOR_ID)
         coord_list_floor = get_coords_list(floor_obj=floor_obj)
         coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID)
-        add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
+        coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
         print('NEW_COORD_LIST', coord_list_floor)
-        print('REF_COORD_LIST', json.loads(request.POST.get('coord_list_floor')))
 
         print('NEW_DICT_WALLS', coord_dict_walls)
-        print('REF_DICT_WALLS', json.loads(request.POST.get('coord_dict_walls')))
 
         # get the floor coord_list from the client side.
         # coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
@@ -187,14 +183,7 @@ def get_floor_mesh(request):
         edit_data_in_obj(globals_obj, data_to_edit)
         # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
-        # pb, state = get_sfepy_pb(**options)
-        # create_mesh_reactions(pb)
-        # print(get_reactions_in_region(pb, state, vert_shear_walls.keys() + horiz_shear_walls.keys(), options['fixed_nodes']))
-        # shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in vert_shear_walls] + [row[-1] for row in horiz_shear_walls], options['fixed_nodes'])
-        # send_to_speckle(client, STREAM_ID, shear_walls)
-        shear_wall_data = {}
-
-        return JsonResponse({'shear_wall_data': shear_wall_data}, status = 200)
+        return JsonResponse({'success': 'yee'}, status = 200)
     return JsonResponse({}, status = 400)
 
 def get_wind_load_point_ids(polygon, surface):
@@ -342,10 +331,10 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
         if distance_formula((x0, y0), (x1, y1)) < 1:
             print('short wall')
             tol = 4.16e-2
-            num_decimals = 2
+            num_decimals = 1
         else:
             tol = 3.33e-1
-            num_decimals = 0
+            num_decimals = 1
 
         p0inPoly = point_in_poly((x0, y0), (coord_list_floor,), num_decimals)
         p1inPoly = point_in_poly((x1, y1), (coord_list_floor,), num_decimals)
@@ -409,6 +398,8 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
 
     # remove the last item of the coord_list because pygmsh likes 'open' polygons
     coord_list_floor.pop()
+
+    return coord_list_floor
 
 def query_shearwalls(client, STREAM_ID, obj_id):
     query = gql(
@@ -526,7 +517,6 @@ def point_in_poly(p, polygon, num_decimals=0):
         v1 = round(currentP[1], num_decimals) - y
 
         for ii in range(contourLen):
-            print('ii, u1, v1', ii, u1, v1)
             nextP = contour[ii + 1]
 
             v2 = round(nextP[1], num_decimals) - y
