@@ -18,11 +18,11 @@ def edit_object(transport, data):
     }
     '''
 
-def get_client(HOST, STREAM_ID):
+def get_client(HOST):
     # create and authenticate a client
     client = SpeckleClient(host=HOST)
     account = get_default_account()
-    client.authenticate(token=account.token)
+    client.authenticate_with_account(account)
 
     return client
 

@@ -26,9 +26,7 @@ def get_floor_mesh(request):
         FLOOR_ID = request.POST.get('FLOOR_ID')
 
         # create and authenticate a client
-        client = SpeckleClient(host=HOST)
-        account = get_default_account()
-        client.authenticate(token=account.token)
+        client = get_client(HOST)
 
         # create an authenticated server transport from the client
         transport = ServerTransport(STREAM_ID, client)
@@ -137,8 +135,8 @@ def get_floor_mesh(request):
         mesh.remove_orphaned_nodes()
         mesh.remove_lower_dimensional_cells()
 
-        mesh.write('.\model\sfepy_pb_description\RevDesign.vtk')
-        mesh.write('.\model\sfepy_pb_description\RevDesign.mesh')
+        mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
+        mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
 
         options = {
             'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
@@ -401,14 +399,13 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
 
     return coord_list_floor
 
-def query_shearwalls(client, STREAM_ID, obj_id):
+def query_shearwalls(client, STREAM_ID, OBJECT_ID):
     query = gql(
         """
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
                 stream(id:$stream_id){
                     object(id:$object_id){
                         children(query: $myQuery select:["start.x","start.y","start.z","end.x","end.y","end.z"]){
-                            totalCount
                             objects{
                                 id
                                 data
@@ -428,7 +425,7 @@ def query_shearwalls(client, STREAM_ID, obj_id):
             }
         ],
         "stream_id": STREAM_ID, 
-        "object_id": obj_id
+        "object_id": OBJECT_ID
     }
 
     dict_from_server = client.httpclient.execute(query, variable_values=params)
