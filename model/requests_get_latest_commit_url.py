@@ -12,7 +12,7 @@ def get_latest_commit_url(request):
         print('HOST URL', HOST, STREAM_ID)
         
         
-        client = get_client(HOST=HOST, STREAM_ID=STREAM_ID)
+        client = get_client(HOST=HOST)
         latest_commit = get_latest_commit(client, STREAM_ID)
 
         # example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`

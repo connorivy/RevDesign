@@ -35,9 +35,9 @@ def get_floor_mesh(request):
         coord_list_floor = get_coords_list(floor_obj=floor_obj)
         coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID)
         coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
-        print('NEW_COORD_LIST', coord_list_floor)
+        # print('NEW_COORD_LIST', coord_list_floor)
 
-        print('NEW_DICT_WALLS', coord_dict_walls)
+        # print('NEW_DICT_WALLS', coord_dict_walls)
 
         # get the floor coord_list from the client side.
         # coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
@@ -56,11 +56,11 @@ def get_floor_mesh(request):
         boundary_layers = []
         with pygmsh.geo.Geometry() as geom:
             # add lines from floor
-            for coord in coord_list_floor:
-                # round to nearest 6 decimal places bc revit is only accurate to 5 (I think?)
-                polygon.append([round(coord[0],6), round(coord[1],6)])
+            # for coord in coord_list_floor:
+            #     # round to nearest 6 decimal places bc revit is only accurate to 5 (I think?)
+            #     polygon.append([coord[0], coord[1]])
 
-            surface = geom.add_polygon(polygon, mesh_size=mesh_size)
+            surface = geom.add_polygon(coord_list_floor, mesh_size=mesh_size)
             # boundary_layers.append(geom.add_boundary_layer(
             #         edges_list = surface.curves,
             #         lcmin = mesh_size / 5,
@@ -79,10 +79,10 @@ def get_floor_mesh(request):
             for wall_id in coord_dict_walls:
                 p0 = None
                 p1 = None
-                x0 = round(float(coord_dict_walls[wall_id][0]),6)
-                y0 = round(float(coord_dict_walls[wall_id][1]),6)
-                x1 = round(float(coord_dict_walls[wall_id][2]),6)
-                y1 = round(float(coord_dict_walls[wall_id][3]),6)
+                x0 = coord_dict_walls[wall_id][0]
+                y0 = coord_dict_walls[wall_id][1]
+                x1 = coord_dict_walls[wall_id][2]
+                y1 = coord_dict_walls[wall_id][3]
 
                 # create lists of shear wall objects 
                 if abs(x1 - x0) < 1e-4:
@@ -92,12 +92,12 @@ def get_floor_mesh(request):
 
                 # maybe make this loop a little more clever
                 for point in surface.points:
-                    if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0], tol = 4.16e-2):
+                    if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0], tol = 1e-4):
                         p0 = point
                         if p0 and p1:
                             break
 
-                    elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1], tol = 4.16e-2):
+                    elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1], tol = 1e-4):
                         p1 = point
                         if p0 and p1:
                             break
@@ -127,7 +127,7 @@ def get_floor_mesh(request):
                 ))
                 # geom.add_physical(line, label=f'SW{index}')
 
-            wlc = get_wind_load_point_ids(polygon, surface)
+            wlc = get_wind_load_point_ids(coord_list_floor, surface)
             geom.set_background_mesh(boundary_layers, operator="Min")
             mesh = geom.generate_mesh()
 
@@ -137,6 +137,8 @@ def get_floor_mesh(request):
 
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
+
+        print(wlc)
 
         options = {
             'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
@@ -226,7 +228,7 @@ def get_point_ids_from_wind_line(curves_sorted, wind_line, dir):
                 break
 
     for curve in curves:
-        point_ids.append([curve.points[0]._id, curve.points[1]._id])
+        point_ids.append((curve.points[0]._id, curve.points[1]._id))
 
     return point_ids
 
@@ -250,9 +252,9 @@ def is_nearly_perpendicular(curve, dir, tol):
         # print('is_nearly_perpendicular', not dir)
         return not dir
 
-def lines_overlap(wind_line, curve, dir):
+def lines_overlap(segment, curve, dir):
     # print('lines overlap', wind_line, curve, dir)
-    if max(wind_line) < min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(wind_line) > max(curve.points[0].x[dir], curve.points[1].x[dir]):
+    if max(segment) <= min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(segment) >= max(curve.points[0].x[dir], curve.points[1].x[dir]):
         # print('lines overlap', 'False')
         return False
     else:
@@ -260,6 +262,11 @@ def lines_overlap(wind_line, curve, dir):
         return True
 
 def adjust_wind_line(wind_line, segment, curve, dir):
+    '''
+    wind line = [[min_value, max_value]]
+    segment = [min_value, max_value]
+    curve = pygmsh curve object
+    '''
     min_segment = min(segment)
     max_segment = max(segment)
     min_curve = min(curve.points[0].x[dir], curve.points[1].x[dir])
@@ -269,17 +276,17 @@ def adjust_wind_line(wind_line, segment, curve, dir):
     #     -----------------------------       segment
     if min_segment < min_curve and max_segment > max_curve:
         wind_line.append([min_segment, min_curve])
-        wind_line.append([max_segment, max_curve])
+        wind_line.append([max_curve, max_segment])
 
     # --------------                          curve
     #        -----------------------------    segment
     elif min_segment >= min_curve and max_segment > max_curve:
-        wind_line.append([max_segment, max_curve])
+        wind_line.append([max_curve, max_segment])
 
     #                       --------------    curve
     # -----------------------------           segment
     elif min_segment < min_curve and max_segment <= max_curve:
-        wind_line.append([min_curve, min_segment])
+        wind_line.append([min_segment, min_curve])
 
     #         --------------                  curve
     #            -------                      segment
@@ -287,7 +294,6 @@ def adjust_wind_line(wind_line, segment, curve, dir):
         pass
 
     wind_line.remove(segment)
-    # print('adjust_wind_line', wind_line)
     return wind_line
 
 def is_equal_2d_list(p1, p2, tol=3.33e-1):

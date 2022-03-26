@@ -1,9 +1,11 @@
 from dotmap import DotMap
+import pygmsh
 
 def define():
     HOST = 'https://speckle.xyz'
     STREAM_ID = 'd059f9a269'
     OBJECT_ID = '18ae0461a7aba309b8eecde65f887fca'
+    mesh_size = 5
     outline = DotMap({
         'segments' : [
             {
@@ -75,5 +77,12 @@ def define():
         '890059336dacebda25cdc85ef5630b42': (-5.311838, 41.635401, -5.061838, 41.635401), 
         'f7a242d3af70728d2381e9c4a09b7396': (-5.311838, 42.639964, -5.061838, 42.639964)
     }
+    with pygmsh.geo.Geometry() as geom:
+        surface = geom.add_polygon(coords_after_adding_shearwalls, mesh_size=mesh_size)
+
+    minus_x_wind_load_point_ids = [(3,4)]
+    plus_x_wind_load_point_ids = [(6,1)]
+    minus_y_wind_load_point_ids = [(4, 5), (5, 6)]
+    plus_y_wind_load_point_ids = [(2, 3), (1, 2)]
 
     return locals()
