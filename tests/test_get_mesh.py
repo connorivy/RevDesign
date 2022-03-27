@@ -50,6 +50,14 @@ class TestGetMesh:
         assert wlpi['minus_y_wind_load_point_ids'] == example_obj.minus_y_wind_load_point_ids
         assert wlpi['plus_y_wind_load_point_ids'] == example_obj.plus_y_wind_load_point_ids
 
+    def test_generate_mesh(self, example_obj):
+        mesh, wlc, vert_shear_walls, horiz_shear_walls = \
+            generate_mesh_for_user(example_obj.coords_after_adding_shearwalls, example_obj.coord_dict_walls, example_obj.mesh_size)
+        mesh.remove_orphaned_nodes()
+        mesh.remove_lower_dimensional_cells()
+        
+        assert mesh.points.tolist() == example_obj.mesh.points
+
 def test_adjust_wind_line():
     '''
     case 1:
