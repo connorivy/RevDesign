@@ -1,19 +1,7 @@
-{% extends "model/base.html" %}
+{% extends "model/sidebar.html" %}
 {% load static %}
 {% block getMesh %}
 <script type="text/javascript">
-    $(document).ready(function () {
-        $("#sidebar").mCustomScrollbar({
-            theme: "minimal"
-        });
-
-        $('#sidebarCollapse').on('click', function () {
-            $('#sidebar, #content').toggleClass('active');
-            $('.collapse.in').toggleClass('in');
-            $('a[aria-expanded=true]').attr('aria-expanded', 'false');
-        });
-    });
-
     function getFloorMesh() {
       // POST request
       $.ajax({

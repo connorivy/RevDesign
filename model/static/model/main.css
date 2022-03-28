@@ -84,8 +84,8 @@ li.active a {
     top: var(--navbar-height);
     bottom: 0px;
     left: 0;
-    height: 100vh;
     z-index: 999;
+    overflow-y: scroll;
     background: #fafafa;
     color: #fff;
     transition: all 0.3s;
@@ -139,7 +139,24 @@ li.active a {
 
 #sidebar ul p {
     color: #54565B;
-    padding: 10px;
+}
+
+#sidebar td {
+    color:#000000;
+    padding: 2px 10px;
+}
+
+#sidebar table {
+    width: 100%;
+}
+
+.spacer {
+    height: 5px;
+}
+
+#sidebar tr {
+    background-color: #eff2f5;
+    border-radius: 10px;
 }
 
 #sidebar ul li a {
@@ -164,11 +181,7 @@ a[data-toggle="collapse"] {
 }
 
 .dropdown-toggle::after {
-    display: block;
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
+    float: right;
 }
 
 ul ul a {

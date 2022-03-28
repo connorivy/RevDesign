@@ -1,0 +1,127 @@
+{% extends "model/base.html" %}
+{% load static %}
+{% block sidebar %}
+<!-- <nav id="sidebar">
+    <div class="sidebar-header">
+        <h3 id="sidebar-header">Bootstrap Sidebar</h3>
+    </div>
+
+    <table class="list-unstyled components">
+        <tbody id="sidebar-table-body">
+            <tr>
+                <td>
+                    <a href="#">Home 1</a>
+                </td>
+                <td>
+                    <input id="cell" class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value= "hey" onfocus=this.select();>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ul class="list-unstyled CTAs">
+        <li>
+            <a href="https://bootstrapious.com/tutorial/files/sidebar.zip" class="download">Download source</a>
+        </li>
+        <li>
+            <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Back to article</a>
+        </li>
+    </ul>
+</nav> -->
+
+<nav id="sidebar">
+    <div class="sidebar-header">
+        <h3 id="sidebar-header">Bootstrap Sidebar</h3>
+    </div>
+
+    <!-- <p>Dummy Heading</p> -->
+    <table style="width: 100%;">
+        <tbody>
+            <!-- <tr>
+                <td>
+                    DataToggle
+                </td>
+                <td>
+                    <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle"></a>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <table class="collapse list-unstyled" id="homeSubmenu">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <a href="#">Home 1</a>
+                                </td>
+                                <td>
+                                    <input id="cell" class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + objects[i][key] + `" onfocus=this.select();>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a href="#">Home 2</a>
+                                </td>
+                                <td>
+                                    <input id="cell" class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + objects[i][key] + `" onfocus=this.select();>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </td>
+            </tr> -->
+           
+            <tr id="last-table-property">
+            </tr>
+        </tbody>
+    </table>
+    
+    <!-- <ul class="list-unstyled components">
+        <li class="active">
+            <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Home</a>
+            <table class="collapse list-unstyled" id="homeSubmenu">
+                <tbody>
+                    <tr>
+                        <td>
+                            <a href="#">Home 1</a>
+                        </td>
+                        <td>
+                            <input id="cell" class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + objects[i][key] + `" onfocus=this.select();>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </li>
+        <li>
+            <p href="#">About</p>
+        </li>
+        <li>
+            <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Pages</a>
+            <ul class="collapse list-unstyled" id="pageSubmenu">
+                <li>
+                    <a href="#">Page 1</a>
+                </li>
+                <li>
+                    <a href="#">Page 2</a>
+                </li>
+                <li>
+                    <a href="#">Page 3</a>
+                </li>
+            </ul>
+        </li>
+        <li>
+            <a href="#">Portfolio</a>
+        </li>
+        <li>
+            <a href="#">Contact</a>
+        </li>
+        <li id="last-property">
+        </li>
+    </ul> -->
+
+    <ul class="list-unstyled CTAs">
+        <li>
+            <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Discard Changes</a>
+        </li>
+    </ul>
+</nav>
+{% endblock sidebar %}

@@ -20,9 +20,9 @@ window.addEventListener( 'load', () => {
   v.onWindowResize()
   const prevLoadUrl = localStorage.getItem( 'prevLoadUrl' )
   console.log( prevLoadUrl )
-  let segments = prevLoadUrl.pathname.split( '/' )
+  let segments = prevLoadUrl.split( '/' )
 
-  if ( segments.length < 5 || url.pathname.indexOf( 'streams' ) === -1 || url.pathname.indexOf( 'objects' ) === -1 ) {
+  if ( segments.length < 5 ) {
     throw new Error( 'Unexpected object url format.' )
   }
 
