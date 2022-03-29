@@ -137,6 +137,9 @@
                     <li class="nav-item">
                         <button onclick="sendToStream()">Send To Stream</button>
                     </li>
+                    <li class="nav-item">
+                        <button onclick="showLevels()">Show Levels</button>
+                    </li>
                     <form class="form-inline my-2 my-lg-0">
                         <!-- Distribution of different sized shear walls -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="20" value="e6635866f1"> -->
@@ -303,7 +306,6 @@
         } )
 
         function traverse(o, str, depth) {
-            console.log(depth)
             depth++;
             var id = '';
             var readonly = ''
@@ -379,15 +381,68 @@
             })
         }
 
-        function showFloors() {
-            document.getElementById('sidebar-header').innerHTML = splitType
-
+        function showLevels() {
+            document.getElementById('sidebar-header').innerHTML = 'Floor Elevations'
             document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
+
+            if (v.hasOwnProperty('floors')) {
+
+            } else {
+                v.floors = {}
+                floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {'userData.speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'})
+                for (var index in floor_objs) {
+                    var floor_ids = Object.keys(v.floors)
+                    if (!floor_ids.includes(floor_objs[index].uuid)) {
+                        v.floors[floor_objs[index].userData.level.name] = {
+                            'name' : floor_objs[index].userData.level.name,
+                            'elevation' : floor_objs[index].userData.level.elevation + ' ' + floor_objs[index].userData.level.units,
+                            'stud length of walls above' : null,
+                            'shear force at floor' : null
+                        }
+                    }
+                }
+            }
+            console.log(v.floors)
             
             var str = ''
-            str = traverse(objects[0], str, -1)
+            str = traverse(v.floors, str, -1)
+            str = str + `
+                <li id="last-button">
+                    <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Discard Changes</a>
+                </li>
+            `
             var newrow = $(str)
             newrow.insertBefore(document.getElementById('last-table-property'));
+
+            const prevLoadUrl = localStorage.getItem( 'prevLoadUrl' )
+            let segments = prevLoadUrl.split( '/' )
+            console.log( prevLoadUrl, segments )
+        }
+
+        // Calls the GraphQL endpoint of the Speckle server with a specific query.
+        async function speckleFetch(query, vars) {
+        // let token = localStorage.getItem(TOKEN)
+        // if (token)
+            try {
+            var res = await fetch(
+                `${SERVER_URL}/graphql`,
+                {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: query,
+                    variables: vars || null
+                })
+                })
+            return await res.json()
+            } catch (err) {
+            console.error("API call failed", err)
+            }
+        // else
+        //     return Promise.reject("You are not logged in (token does not exist)")
         }
     </script>
     <!-- Custom get_mesh JS -->

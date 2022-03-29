@@ -5,6 +5,7 @@ def define():
     HOST = 'https://speckle.xyz'
     STREAM_ID = 'd059f9a269'
     OBJECT_ID = '18ae0461a7aba309b8eecde65f887fca'
+    FLOOR_ID = '4ada34bb3b9754b337b75d6fd470a333'
     mesh_size = 5
     outline = DotMap({
         'segments' : [
@@ -90,9 +91,9 @@ def define():
     vert_shear_walls = [[-5.311838, 42.635401, -5.311838, 41.635401, '40f7df8aa3ad19c457a5d71239c79209']]
     horiz_shear_walls = [[-5.311838, 41.635401, -5.061838, 41.635401, '890059336dacebda25cdc85ef5630b42'], [-5.311838, 42.639964, -5.061838, 42.639964, 'f7a242d3af70728d2381e9c4a09b7396']]
 
-    minus_x_wind_load_point_ids = [(3,4)]
-    plus_x_wind_load_point_ids = [(6,1)]
-    minus_y_wind_load_point_ids = [(4, 5), (5, 6)]
-    plus_y_wind_load_point_ids = [(2, 3), (1, 2)]
+    minus_x_wind_load_point_ids = [[3,4]]
+    plus_x_wind_load_point_ids = [[6,1]]
+    minus_y_wind_load_point_ids = [[4, 5], [5, 6]]
+    plus_y_wind_load_point_ids = [[2, 3], [1, 2]]
 
     return locals()

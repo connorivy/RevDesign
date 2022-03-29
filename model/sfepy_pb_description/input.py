@@ -3,7 +3,7 @@ from sfepy.mechanics.matcoefs import stiffness_from_youngpoisson
 import math
 
 def is_equal(p1, p2):
-    tol = 1e-5
+    tol = 1e-2
     if abs(p2 - p1) < tol:
         return True
     else:
@@ -65,7 +65,7 @@ def get_wind_region(coors, domain, point_ids_list, mesh_points):
                     flag = np.append(flag, int(index))
                     break
 
-    # print('wind_flag', flag)
+    print('wind_flag', flag)
 
     return flag
 
@@ -115,7 +115,7 @@ def define(**kwargs):
     materials = {
         'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
-        'load' : ({'val' : [[.2],[-.8]]},),
+        'load' : ({'val' : [[0],[-1]]},),
         # 'load' : (None, 'linear_tension'),
     }
 

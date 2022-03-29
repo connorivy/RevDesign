@@ -2,13 +2,14 @@ import numpy as np
 from sfepy.mechanics.matcoefs import stiffness_from_youngpoisson
 
 def is_equal(p1, p2):
-    tol = 1e-5
+    tol = 1e-2
     if abs(p2 - p1) < tol:
         return True
     else:
         return False
 
 def get_wind_region(coors, domain, point_ids_list, mesh_points):
+    print('\n\n WIND CURVE \n\n', point_ids_list)
     flag = np.array([ ], dtype='int16')
     x, y = coors[:, 0], coors[:, 1]
     for index in range(len(x)):
@@ -27,7 +28,7 @@ def get_wind_region(coors, domain, point_ids_list, mesh_points):
                 if y[index] <= max(mesh_points[int(point_ids[0])-1][1], mesh_points[int(point_ids[1])-1][1]) + 1e-5 and y[index] >= min(mesh_points[int(point_ids[0])-1][1], mesh_points[int(point_ids[1])-1][1]) - 1e-5:
                     flag = np.append(flag, int(index))
                     break
-
+    print('wind_flag', flag)
     return flag
 
 def linear_tension(ts, coor, mode=None, **kwargs):

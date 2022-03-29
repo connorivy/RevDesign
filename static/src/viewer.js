@@ -22,11 +22,11 @@ window.addEventListener( 'load', () => {
   console.log( prevLoadUrl )
   let segments = prevLoadUrl.split( '/' )
 
-  if ( segments.length < 5 ) {
+  if ( segments.length < 7 ) {
     throw new Error( 'Unexpected object url format.' )
   }
 
-  if (prevLoadUrl) document.getElementById('objectUrlInput').value = segments[2];
+  if (prevLoadUrl) document.getElementById('objectUrlInput').value = segments[4];
 } )
 
 v.on( 'select', objects => {

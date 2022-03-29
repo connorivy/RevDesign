@@ -44,6 +44,8 @@ def create_mesh_applied_loads(**kwargs):
     fvars.set_state(f, reduced=False)
     out = variables.create_output()
     pb.save_state('mesh_applied_loads.vtk', out=out)
+
+    return f
     
 def create_mesh_reactions(pb):
     # https://sfepy.org/doc-devel/primer.html#table-of-contents
@@ -55,7 +57,6 @@ def create_mesh_reactions(pb):
 
     pb.time_update()
     fvars = variables.copy()
-    print('f', f, f.shape)
     fvars.set_state(f, reduced=False)
     out = variables.create_output()
     pb.save_state('mesh_reactions.vtk', out=out)

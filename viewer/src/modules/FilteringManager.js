@@ -91,6 +91,17 @@ export default class FilteringManager {
       let attributeName = keyParts[ keyParts.length - 1 ]
       return crtObj[ attributeName ]
   }
+
+  getObjsInGroupThatPassFilter(group, filter) {
+    var objsToReturn = []
+    for ( let obj of group.children ) {
+      var passes = this.passesFilter(obj, filter)
+      if (passes) {
+        objsToReturn.push(obj)
+      }
+    }
+    return objsToReturn
+  }
   
   colorWithCategory( threejsObj, colors ) {
     let obj = threejsObj.userData

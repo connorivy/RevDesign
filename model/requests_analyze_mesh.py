@@ -11,12 +11,14 @@ def analyze_mesh(request):
         STREAM_ID = request.POST.get('STREAM_ID')
         FLOOR_ID = request.POST.get('FLOOR_ID')
         
-        client = get_client(HOST=HOST, STREAM_ID=STREAM_ID)
+        client = get_client(HOST=HOST)
         transport = get_transport(client, STREAM_ID)
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         floor_obj = DotMap(globals_obj[FLOOR_ID])
         # floor_obj = get_object(transport, FLOOR_ID)
+
+        print('plus y', floor_obj.speckMesh.plus_y_wind_load_point_ids)
 
         options = {
                 'mesh_points' : floor_obj.speckMesh.points,

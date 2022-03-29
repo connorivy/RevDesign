@@ -56,15 +56,6 @@ def get_floor_mesh(request):
         mesh.remove_orphaned_nodes()
         mesh.remove_lower_dimensional_cells()
 
-        print('MESH CELLS', mesh.points.tolist())
-        # for y in mesh.cells:
-        #     if y[0] =='triangle':
-        #         print(y)
-        #         for x in y:
-        #             print(x)
-
-        # print('VERT_SHEAR_WALLS', vert_shear_walls)
-        # print('HORIZ_SHEAR_WALLS', horiz_shear_walls)
 
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
@@ -110,7 +101,7 @@ def get_floor_mesh(request):
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
-        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
+        send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         return JsonResponse({'success': 'yee'}, status = 200)
     return JsonResponse({}, status = 400)
@@ -240,7 +231,7 @@ def get_point_ids_from_wind_line(curves_sorted, wind_line, dir):
                 break
 
     for curve in curves:
-        point_ids.append((curve.points[0]._id, curve.points[1]._id))
+        point_ids.append([curve.points[0]._id, curve.points[1]._id])
 
     return point_ids
 
