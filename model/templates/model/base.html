@@ -288,62 +288,54 @@
 
             if (type != null) {
                 splitType= type.split('.').pop()
-                console.log('type', splitType)
                 // document.getElementById('sidebar-header').innerHTML = objects[0]['speckle_type']
                 document.getElementById('sidebar-header').innerHTML = splitType
+
+                document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
                 
                 var str = ''
                 str = traverse(objects[0], str, -1)
-                console.log(str)
                 var newrow = $(str)
                 newrow.insertBefore(document.getElementById('last-table-property'));
-                // for (var i in objects) {
-                //     for (var key in objects[i]) {
-
-                //         var newrow = $(`
-                //             <tr>
-                //                 <td>
-                //                     <a href="#">` + key + `</a>
-                //                 </td>
-                //                 <td>
-                //                     <input id="cell" class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + objects[i][key] + `" onfocus=this.select();>
-                //                 </td>
-                //             </tr>
-                //             <tr class="spacer"></tr>
-                //         `);
-                //         newrow.insertBefore(document.getElementById('last-property'));
-                //     }
-                // }
             } else {
 
             }
-            // // console.log(type)
-            // for (var i in objects) {
-            //     for (var key in objects[i]) {
-            //         console.log('typeof key', key, typeof(key))
-            //         console.log('KEY', objects[i][key])
-            //     }
-            // }
-            
-            // console.log( 'this works' , JSON.stringify(objects[0]['renderMaterial']))
-            // console.log( 'this works' , JSON.stringify(objects[0]))
-            // document.getElementById('sidebar-header').innerHTML = objects[0]['speckle_type']
         } )
 
-        function traverse(o, str, index) {
-            // console.log(str, index)
-            index++;
+        function traverse(o, str, depth) {
+            console.log(depth)
+            depth++;
+            var id = '';
+            var readonly = ''
             for (var i in o) {
+                if (i == 'id' && depth === 0) {
+                    id = 'id="selected-object-id"'
+                    readonly = 'disabled'
+                } else if (i == 'floorTrib' && depth === 0) {
+                    id = 'id="floor-trib-id"'
+                } else {
+                    id = ''
+                    readonly = ''
+                }
                 if (o[i] === null) {
-                    continue
+                    str = str.concat(`
+                        <tr>
+                            <td>
+                                ` + i + `
+                            </td>
+                            <td>
+                                <input ` + id + ` class="form-control form-control-sm bg-transparent border-transparent sidebar-input " value="" onfocus=this.select() onfocusout=addAttribute()>
+                            </td>
+                        </tr>
+                    `)
                 } else if (typeof(o[i]) !== 'object')  {
                     str = str.concat(`
                         <tr>
                             <td>
                                 ` + i + `
                             </td>
-                            <td colspan='2'>
-                                <input class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + o[i] + `" onfocus=this.select();>
+                            <td>
+                                <input ` + id + ` class="form-control form-control-sm bg-transparent border-transparent sidebar-input" value="` + o[i] + `" onfocus=this.select(); ` + readonly + `>
                             </td>
                         </tr>
                     `)
@@ -362,7 +354,7 @@
                                 <table class="collapse" id="` + String(i) + `">
                                     <tbody>      
                     `)
-                    str = traverse(o[i], str, index)
+                    str = traverse(o[i], str, depth)
                     str = str.concat(`
                                     </td>
                                 </tbody>
@@ -375,41 +367,27 @@
             return str
         }
 
-        function traverseCustom(o, str, index) {
-            // console.log(str, index)
-            index++;
-            for (var i in o) {
-                if (o[i] === null) {
-                    continue
-                } else if (typeof(o[i]) !== 'object')  {
-                    str = str.concat(`
-                        <tr>
-                            <td>
-                                ` + i + `
-                            </td>
-                            <td>
-                                <input class="form-control form-control-sm bg-transparent border-transparent load-table-input numberinput" value="` + o[i] + `" onfocus=this.select();>
-                            </td>
-                        </tr>
-                        <tr class="spacer"></tr>
-                    `)
-                } else {
-                    str = str.concat(`
-                        <li>
-                            <a href="#` + String(i) + `" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">` + String(i) + `</a>
-                            <ul class="collapse list-unstyled" id="` + String(i) + `">
-                                
-                    `)
-                    str = traverseCustom(o[i], str, index)
-                    str = str.concat(`
-                                
-                            </ul>
-                        </li>
-                    `)
-                }
-            }
+        function addAttribute() {
+            var shearwallId = document.getElementById('selected-object-id').value
 
-            return str
+            console.log(shearwallId, floorTrib)
+
+            v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, {
+                [shearwallId] : {
+                    'floorTrib' : document.getElementById('floor-trib-id').value
+                }
+            })
+        }
+
+        function showFloors() {
+            document.getElementById('sidebar-header').innerHTML = splitType
+
+            document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
+            
+            var str = ''
+            str = traverse(objects[0], str, -1)
+            var newrow = $(str)
+            newrow.insertBefore(document.getElementById('last-table-property'));
         }
     </script>
     <!-- Custom get_mesh JS -->

@@ -5,7 +5,7 @@ setInterval(() => {
   document.getElementById('info-mem').innerText = '' + Math.round(performance.memory.usedJSHeapSize / 1024 / 1024)
 }, 100 )
 
-let v = new Viewer( { container: document.getElementById( 'threejs-container' ), showStats: true } )
+let v = new Viewer( { container: document.getElementById( 'threejs-container' ), showStats: false } )
 v.on( 'load-progress', args => {
   document.getElementById('info-progress').innerText = `${Math.round(1000 * args.progress) / 1000 }`
 } )

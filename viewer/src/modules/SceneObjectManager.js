@@ -175,6 +175,7 @@ export default class SceneObjectManager {
   addLine( wrapper, addToScene = true ) {
     var line = null
     if (wrapper.meta.lineType == 'shearWall') {
+      wrapper.meta.floorTrib = null
       line = new THREE.Line( wrapper.bufferGeometry, this.lineDashedMaterial )
       this.shearWalls.push(line)
     } else {

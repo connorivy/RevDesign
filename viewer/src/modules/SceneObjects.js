@@ -10,7 +10,7 @@ export default class SceneObjects {
   constructor( viewer ) {
     this.viewer = viewer
     this.scene = viewer.scene
-    this.editedObjects = []
+    this.editedObjects = {}
 
     this.allObjects = new THREE.Group()
     this.allObjects.name = 'allObjects'

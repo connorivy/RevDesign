@@ -218,14 +218,22 @@ export default class Viewer extends EventEmitter {
 
   addAttributesToObjects(group, attributes) {
     var uuids = Object.keys(attributes)
+    var copy = uuids
     for ( let obj of group.children ) {
       var passes = this.sceneManager.sceneObjects.filteringManager.passesFilter(obj, {'uuid': uuids} )
       if (passes) {
         for (var key in attributes[obj.uuid]){
           obj.userData[key] = attributes[obj.uuid][key]
         }
-        this.sceneManager.sceneObjects.editedObjects.push(obj)
+        var index = uuids.indexOf(obj.uuid);
+        if (index > -1) {
+          uuids.splice(index, 1); // 2nd parameter means remove one item only
+        }
+        this.sceneManager.sceneObjects.editedObjects[obj.uuid] = attributes[obj.uuid]
       }
+    }
+    if ( uuids.length !== 0 ) {
+      console.log('The following object IDs were not found in the provided group, ', uuids)
     }
   }
 
