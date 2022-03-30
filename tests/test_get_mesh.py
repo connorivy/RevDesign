@@ -31,17 +31,17 @@ class TestGetMesh:
         assert hasattr(example_obj, 'coord_dict_walls')
 
     def test_get_coords_list(self, example_obj):
-        assert get_coords_list(example_obj) == \
+        assert get_coords_list(example_obj, num_decimals=1) == \
                 example_obj.coords_before_adding_shearwalls
+
+    # @pytest.mark.skip(reason="I don't want to query the server too many times")
+    def test_query_shearwalls(self, client, example_obj):
+        assert query_shearwalls(client=client, STREAM_ID=example_obj.STREAM_ID, OBJECT_ID=example_obj.OBJECT_ID, num_decimals=1) == \
+                example_obj.coord_dict_walls
 
     def test_add_coords_for_shear_walls(self, example_obj):
         assert add_coords_for_shear_walls(coord_dict_walls=example_obj.coord_dict_walls, coord_list_floor=example_obj.coords_before_adding_shearwalls) == \
                 example_obj.coords_after_adding_shearwalls
-
-    @pytest.mark.skip(reason="I don't want to query the server too many times")
-    def test_query_shearwalls(self, client, example_obj):
-        assert query_shearwalls(client=client, STREAM_ID=example_obj.STREAM_ID, OBJECT_ID=example_obj.OBJECT_ID) == \
-                example_obj.coord_dict_walls
 
     def test_get_wind_load_point_ids(self, example_obj):
         wlpi = get_wind_load_point_ids(example_obj.coords_after_adding_shearwalls, example_obj.surface)
@@ -57,6 +57,12 @@ class TestGetMesh:
         mesh.remove_lower_dimensional_cells()
         
         assert mesh.points.tolist() == example_obj.mesh.points
+        assert wlc['minus_x_wind_load_point_ids'] == example_obj.minus_x_wind_load_point_ids
+        assert wlc['plus_x_wind_load_point_ids'] == example_obj.plus_x_wind_load_point_ids
+        assert wlc['minus_y_wind_load_point_ids'] == example_obj.minus_y_wind_load_point_ids
+        assert wlc['plus_y_wind_load_point_ids'] == example_obj.plus_y_wind_load_point_ids
+        assert vert_shear_walls == example_obj.vert_shear_walls
+        assert horiz_shear_walls == example_obj.horiz_shear_walls
 
 def test_adjust_wind_line():
     '''

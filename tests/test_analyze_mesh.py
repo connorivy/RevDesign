@@ -41,14 +41,15 @@ class TestAnalyzeMesh:
 
     def test_reactions(self, example_obj):
         options = {
-                'mesh_points' : example_obj.mesh.points,
-                'minus_x_wind_load_point_ids' : example_obj.minus_x_wind_load_point_ids,
-                'plus_x_wind_load_point_ids': example_obj.plus_x_wind_load_point_ids,
-                'minus_y_wind_load_point_ids' : example_obj.minus_y_wind_load_point_ids,
-                'plus_y_wind_load_point_ids' : example_obj.plus_y_wind_load_point_ids,
-                'vert_shear_walls' : example_obj.vert_shear_walls.copy(),
-                'horiz_shear_walls' : example_obj.horiz_shear_walls.copy(),
-            }
+            'mesh_points' : example_obj.mesh.points,
+            'minus_x_wind_load_point_ids' : example_obj.minus_x_wind_load_point_ids,
+            'plus_x_wind_load_point_ids': example_obj.plus_x_wind_load_point_ids,
+            'minus_y_wind_load_point_ids' : example_obj.minus_y_wind_load_point_ids,
+            'plus_y_wind_load_point_ids' : example_obj.plus_y_wind_load_point_ids,
+            'vert_shear_walls' : example_obj.vert_shear_walls.copy(),
+            'horiz_shear_walls' : example_obj.horiz_shear_walls.copy(),
+        }
         f = create_mesh_applied_loads(**options)
         print(f, f.shape)
-        assert f.shape() == 1
+        assert f.shape == ( 2 * len(example_obj.mesh.points),) # if this doesn't pass then there are likely multiple nodes in almost an identical location
+

@@ -32,9 +32,11 @@ def get_floor_mesh(request):
         transport = ServerTransport(STREAM_ID, client)
 
         floor_obj = get_object(transport, FLOOR_ID)
-        coord_list_floor = get_coords_list(floor_obj=floor_obj)
-        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID)
+        coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
+        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals = 1)
         coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
+
+        print(coord_list_floor)
 
         mesh_size = 5
         # print('NEW_COORD_LIST', coord_list_floor)
@@ -56,6 +58,12 @@ def get_floor_mesh(request):
         mesh.remove_orphaned_nodes()
         mesh.remove_lower_dimensional_cells()
 
+        print(mesh.points.tolist())
+        for x in mesh.cells:
+            print(x, x[0])
+            if x[0] == 'triangle':
+                for y in x[1]:
+                    print(y)
 
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
@@ -305,14 +313,14 @@ def is_equal_2d_list(p1, p2, tol=3.33e-1):
     else:
         return False
 
-def get_coords_list(floor_obj):
+def get_coords_list(floor_obj, num_decimals):
     coords = []
     seen_coords = set()
     for segment in floor_obj.outline.segments:
-        x0 = round(segment.start.x, 6)
-        y0 = round(segment.start.y, 6)
-        x1 = round(segment.end.x, 6)
-        y1 = round(segment.end.y, 6)
+        x0 = round(segment.start.x, num_decimals)
+        y0 = round(segment.start.y, num_decimals)
+        x1 = round(segment.end.x, num_decimals)
+        y1 = round(segment.end.y, num_decimals)
         if (x0, y0) not in seen_coords:
             seen_coords.add((x0, y0))
             coords.append((x0, y0))
@@ -330,10 +338,10 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
     coord_list_floor.append(coord_list_floor[0])
 
     for wall_id in coord_dict_walls:
-        x0 = round(float(coord_dict_walls[wall_id][0]),6)
-        y0 = round(float(coord_dict_walls[wall_id][1]),6)
-        x1 = round(float(coord_dict_walls[wall_id][2]),6)
-        y1 = round(float(coord_dict_walls[wall_id][3]),6)
+        x0 = coord_dict_walls[wall_id][0]
+        y0 = coord_dict_walls[wall_id][1]
+        x1 = coord_dict_walls[wall_id][2]
+        y1 = coord_dict_walls[wall_id][3]
 
         if distance_formula((x0, y0), (x1, y1)) < 1:
             print('short wall')
@@ -345,8 +353,8 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
 
         p0inPoly = point_in_poly((x0, y0), (coord_list_floor,), num_decimals)
         p1inPoly = point_in_poly((x1, y1), (coord_list_floor,), num_decimals)
-
-        print('pinpoly', p0inPoly, p1inPoly)
+        # print((x0, y0), (x1, y1))
+        # print('pinpoly', p0inPoly, p1inPoly)
 
         # one or both of the points is outside the slab, don't count it.
         if p0inPoly[0] == 0 or p1inPoly[0] == 0:
@@ -408,7 +416,7 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
 
     return coord_list_floor
 
-def query_shearwalls(client, STREAM_ID, OBJECT_ID):
+def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
     query = gql(
         """
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
@@ -442,10 +450,10 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID):
     coord_dict_walls = {}
     for wall in dict_from_server['stream']['object']['children']['objects']:
         coord_dict_walls[wall['id']] = (
-            round(wall['data']['start']['x'], 6),
-            round(wall['data']['start']['y'], 6),
-            round(wall['data']['end']['x'], 6),
-            round(wall['data']['end']['y'], 6), 
+            round(wall['data']['start']['x'], num_decimals),
+            round(wall['data']['start']['y'], num_decimals),
+            round(wall['data']['end']['x'], num_decimals),
+            round(wall['data']['end']['y'], num_decimals), 
         )
     
     print('coord_dict_walls', coord_dict_walls)
@@ -505,7 +513,16 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID):
 # 0 - the point is outside the polygon
 # 1 - the point is inside the polygon 
 # 2 - the point is on edge (boundary)
-def point_in_poly(p, polygon, num_decimals=0):
+def point_in_poly(p, polygon, num_decimals=1):
+    i = 0
+    ii = 0
+    k = 0
+    f = 0
+    u1 = 0
+    v1 = 0
+    u2 = 0
+    v2 = 0
+
     x = round(p[0],num_decimals)
     y = round(p[1], num_decimals)
 
@@ -566,7 +583,7 @@ def point_in_poly(p, polygon, num_decimals=0):
             u1 = u2
 
     if k % 2 == 0:
-        return [2, None]
+        return [0, None]
     return [1, None]
 
 def distance_formula(p0, p1):

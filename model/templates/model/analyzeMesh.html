@@ -11,6 +11,8 @@
               'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
               'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
               'FLOOR_ID': v.interactions.selectedObjectsUserData[0].id,
+              'WIND_DIR': v.gui.children[0].object['wind direction'],
+              'FIXED_NODES': v.gui.children[0].object['fixed nodes'],
           },
             success: function (response) {
                 console.log(response)

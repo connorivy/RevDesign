@@ -10,6 +10,8 @@ def analyze_mesh(request):
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
         FLOOR_ID = request.POST.get('FLOOR_ID')
+        WIND_DIR = request.POST.get('WIND_DIR')
+        FIXED_NODES = request.POST.get('FIXED_NODES')
         
         client = get_client(HOST=HOST)
         transport = get_transport(client, STREAM_ID)
@@ -28,12 +30,16 @@ def analyze_mesh(request):
                 'plus_y_wind_load_point_ids' : floor_obj.speckMesh.plus_y_wind_load_point_ids,
                 'vert_shear_walls' : floor_obj.speckMesh.vert_shear_walls.copy(),
                 'horiz_shear_walls' : floor_obj.speckMesh.horiz_shear_walls.copy(),
-                'fixed_nodes': floor_obj.speckMesh.fixed_nodes,
+                'fixed_nodes': FIXED_NODES,
+                'wind_dir' : WIND_DIR,
             }
 
         # shear_wall_data = {}
         create_mesh_applied_loads(**options)
         pb, state = get_sfepy_pb(**options)
+
+        print(pb)
+        print(state)
 
         shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in floor_obj.speckMesh.vert_shear_walls] + \
             [row[-1] for row in floor_obj.speckMesh.horiz_shear_walls], options['fixed_nodes'])

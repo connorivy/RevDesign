@@ -146,8 +146,6 @@ export default class Viewer extends EventEmitter {
       this.value = val
     } );
 
-    console.log(this)
-
     this.gui.add( param, 'wind direction', { '+x <---': 0, '+y': 1, '-x --->': 2, '-y ^': 3 } ).onChange( function ( val ) {
       this.value = val
     } );
