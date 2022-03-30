@@ -46,20 +46,6 @@ def create_mesh_applied_loads(**kwargs):
     pb.save_state('mesh_applied_loads.vtk', out=out)
 
     return f
-    
-def create_mesh_reactions(pb):
-    # https://sfepy.org/doc-devel/primer.html#table-of-contents
-    variables = pb.get_variables()
-    u = variables.get_state_parts()['u']
-    pb.remove_bcs()
-
-    f = pb.evaluator.eval_residual(u)
-
-    pb.time_update()
-    fvars = variables.copy()
-    fvars.set_state(f, reduced=False)
-    out = variables.create_output()
-    pb.save_state('mesh_reactions.vtk', out=out)
 
 def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/

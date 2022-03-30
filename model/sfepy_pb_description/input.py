@@ -72,14 +72,6 @@ def get_wind_region(coors, domain, point_ids_list, mesh_points):
 def get_length_of_sw(curve):
     return math.sqrt((curve[0] - curve[2])**2 + (curve[1] - curve[3])**2)
 
-def linear_tension(ts, coor, mode=None, **kwargs):
-    if mode == 'qp':
-        val = np.tile(1.0, (coor.shape[0], 1, 1))
-
-        print('COOR.SHAPE, VAL ', coor.shape, val)
-
-        return {'val' : val}
-
 def define(**kwargs):
     
     filename_mesh = 'RevDesign.mesh'
@@ -101,7 +93,6 @@ def define(**kwargs):
         'minus_y_wind_region' : (lambda coors, domain=None, **kwargsv:
                                     get_wind_region(coors, domain, point_ids_list=kwargs['minus_y_wind_load_point_ids'], mesh_points=kwargs['mesh_points']),
                                 ),
-        'linear_tension' : (linear_tension,),
     }
 
     regions = {
@@ -112,10 +103,23 @@ def define(**kwargs):
         'minus_y_wind_region' : ('vertices by minus_y_wind_region', 'facet'),
     }
 
+    if int(kwargs['wind_dir']) == 0:
+        wind_region = 'plus_x_wind_region'
+        load_val = [[-1],[0]]
+    elif int(kwargs['wind_dir']) == 1:
+        wind_region = 'plus_y_wind_region'
+        load_val = [[0],[-1]]
+    elif int(kwargs['wind_dir']) == 2:
+        wind_region = 'minus_x_wind_region'
+        load_val = [[1],[0]]
+    elif int(kwargs['wind_dir']) == 3:
+        wind_region = 'minus_y_wind_region'
+        load_val = [[0],[1]]
+
     materials = {
         'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
-        'load' : ({'val' : [[0],[-1]]},),
+        'load' : ({'val' : load_val},),
         # 'load' : (None, 'linear_tension'),
     }
 
@@ -176,7 +180,7 @@ def define(**kwargs):
     equations = {
         'balance_of_forces' :
         f"""dw_lin_elastic.2.Omega(solid.D, v, u) = {rhs}
-        dw_surface_ltr.2.plus_y_wind_region(load.val, v)""",
+        dw_surface_ltr.2.{wind_region}(load.val, v)""",
     }
 
     solvers = {

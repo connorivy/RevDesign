@@ -2,7 +2,7 @@ from math import floor
 from dotmap import DotMap
 import pytest
 
-from model.sfepy_pb_description.linear_elastic import create_mesh_applied_loads
+from model.sfepy_pb_description.linear_elastic import *
 from .examples import ex1
 from model.requests_get_mesh import *
 from model.sfepy_pb_description.connectToSpeckle import get_client, get_globals_obj, get_transport
@@ -39,6 +39,9 @@ class TestAnalyzeMesh:
         assert floor_obj.speckMesh.vert_shear_walls == example_obj.vert_shear_walls
         assert floor_obj.speckMesh.horiz_shear_walls == example_obj.horiz_shear_walls
 
+    # def test_get_reactions_in_region(self, example_obj):
+    #     get_reactions_in_region(pb, state, regions, fixed_nodes)
+
     def test_reactions(self, example_obj):
         options = {
             'mesh_points' : example_obj.mesh.points,
@@ -48,8 +51,13 @@ class TestAnalyzeMesh:
             'plus_y_wind_load_point_ids' : example_obj.plus_y_wind_load_point_ids,
             'vert_shear_walls' : example_obj.vert_shear_walls.copy(),
             'horiz_shear_walls' : example_obj.horiz_shear_walls.copy(),
+            'fixed_nodes' : example_obj.fixed_nodes,
+            'wind_dir' : example_obj.wind_dir
         }
         f = create_mesh_applied_loads(**options)
+
         print(f, f.shape)
         assert f.shape == ( 2 * len(example_obj.mesh.points),) # if this doesn't pass then there are likely multiple nodes in almost an identical location
+        f= f.reshape((-1, 2))
+        assert f[example_obj.dofs].tolist() == example_obj.reactions
 

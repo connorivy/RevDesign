@@ -281,8 +281,6 @@
         loadData()
 
         v.on( 'select', objects => {
-            console.log( 'this works' , objects[0], v.interactions.selectedObjectsUserData[0])
-            console.log(v.gui)
             var type = null
             try {
                 type = objects[0]['speckle_type']

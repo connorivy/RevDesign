@@ -20,26 +20,21 @@ def analyze_mesh(request):
         floor_obj = DotMap(globals_obj[FLOOR_ID])
         # floor_obj = get_object(transport, FLOOR_ID)
 
-        print('plus y', floor_obj.speckMesh.plus_y_wind_load_point_ids)
-
         options = {
-                'mesh_points' : floor_obj.speckMesh.points,
-                'minus_x_wind_load_point_ids' : floor_obj.speckMesh.minus_x_wind_load_point_ids,
-                'plus_x_wind_load_point_ids': floor_obj.speckMesh.plus_x_wind_load_point_ids,
-                'minus_y_wind_load_point_ids' : floor_obj.speckMesh.minus_y_wind_load_point_ids,
-                'plus_y_wind_load_point_ids' : floor_obj.speckMesh.plus_y_wind_load_point_ids,
-                'vert_shear_walls' : floor_obj.speckMesh.vert_shear_walls.copy(),
-                'horiz_shear_walls' : floor_obj.speckMesh.horiz_shear_walls.copy(),
-                'fixed_nodes': FIXED_NODES,
-                'wind_dir' : WIND_DIR,
-            }
+            'mesh_points' : floor_obj.speckMesh.points,
+            'minus_x_wind_load_point_ids' : floor_obj.speckMesh.minus_x_wind_load_point_ids,
+            'plus_x_wind_load_point_ids': floor_obj.speckMesh.plus_x_wind_load_point_ids,
+            'minus_y_wind_load_point_ids' : floor_obj.speckMesh.minus_y_wind_load_point_ids,
+            'plus_y_wind_load_point_ids' : floor_obj.speckMesh.plus_y_wind_load_point_ids,
+            'vert_shear_walls' : floor_obj.speckMesh.vert_shear_walls.copy(),
+            'horiz_shear_walls' : floor_obj.speckMesh.horiz_shear_walls.copy(),
+            'fixed_nodes': FIXED_NODES,
+            'wind_dir' : WIND_DIR,
+        }
 
         # shear_wall_data = {}
         create_mesh_applied_loads(**options)
         pb, state = get_sfepy_pb(**options)
-
-        print(pb)
-        print(state)
 
         shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in floor_obj.speckMesh.vert_shear_walls] + \
             [row[-1] for row in floor_obj.speckMesh.horiz_shear_walls], options['fixed_nodes'])
