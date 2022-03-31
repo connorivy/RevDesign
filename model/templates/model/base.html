@@ -280,23 +280,25 @@
 
         loadData()
 
-        v.on( 'select', objects => {
+        v.on( 'select', info => {
+            console.log(info['userData'][0])
             var type = null
             try {
-                type = objects[0]['speckle_type']
+                type = info['userData'][0]['speckle_type']
+                console.log(type)
             } catch {
 
             }
 
             if (type != null) {
                 splitType= type.split('.').pop()
-                // document.getElementById('sidebar-header').innerHTML = objects[0]['speckle_type']
+                // document.getElementById('sidebar-header').innerHTML = info['userData']['speckle_type']
                 document.getElementById('sidebar-header').innerHTML = splitType
 
                 document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
                 
                 var str = ''
-                str = traverse(objects[0], str, -1)
+                str = traverse(info['userData'][0], str, -1)
                 var newrow = $(str)
                 newrow.insertBefore(document.getElementById('last-table-property'));
             } else {
@@ -405,13 +407,16 @@
             
             var str = ''
             str = traverse(v.floors, str, -1)
-            str = str + `
-                <li id="last-button">
-                    <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Discard Changes</a>
+            var newrow = $(str)
+            newrow.insertBefore(document.getElementById('last-table-property'));
+
+            str = `
+                <li>
+                    <a href="#" type="button" class="article">Add Level</a>
                 </li>
             `
             var newrow = $(str)
-            newrow.insertBefore(document.getElementById('last-table-property'));
+            newrow.insertBefore(document.getElementById('last-button'));
 
             const prevLoadUrl = localStorage.getItem( 'prevLoadUrl' )
             let segments = prevLoadUrl.split( '/' )

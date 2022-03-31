@@ -49,8 +49,6 @@ def get_floor_mesh(request):
         # print(coord_list_floor, coord_list_walls, request.POST)
 
         # This will be a huge job, but eventually I need to combine my Django and speckle servers
-        # then I wouldn't be passing the floor coord_list_floor into this function,
-        # I would just query those from the database
 
         mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
 
