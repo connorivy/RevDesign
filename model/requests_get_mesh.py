@@ -231,7 +231,8 @@ def get_point_ids_from_wind_line(curves_sorted, wind_line, dir):
         if is_nearly_perpendicular(curve, dir, .176): #.176 is the slope of a line a 10deg with the horizon
             continue
         for segment in wind_line:
-            if lines_overlap(segment, curve, dir):
+            # if lines_overlap(segment, curve, dir):
+            if lines_overlap(segment, [curve.points[0].x[dir], curve.points[1].x[dir]]):
                 curves.append(curve)
                 wind_line = adjust_wind_line(wind_line, segment, curve, dir)
                 break
@@ -261,9 +262,17 @@ def is_nearly_perpendicular(curve, dir, tol):
         # print('is_nearly_perpendicular', not dir)
         return not dir
 
-def lines_overlap(segment, curve, dir):
-    # print('lines overlap', wind_line, curve, dir)
-    if max(segment) <= min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(segment) >= max(curve.points[0].x[dir], curve.points[1].x[dir]):
+# def lines_overlap(segment, curve, dir):
+#     # print('lines overlap', wind_line, curve, dir)
+#     if max(segment) <= min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(segment) >= max(curve.points[0].x[dir], curve.points[1].x[dir]):
+#         # print('lines overlap', 'False')
+#         return False
+#     else:
+#         # print('lines overlap', 'True')
+#         return True
+
+def lines_overlap(l1, l2):
+    if max(l1[0], l1[1]) <= min(l2[0], l2[1]) or min(l1[0], l1[1]) >= max(l2[0], l2[1]):
         # print('lines overlap', 'False')
         return False
     else:
@@ -420,7 +429,7 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
                 stream(id:$stream_id){
                     object(id:$object_id){
-                        children(query: $myQuery select:["start.x","start.y","start.z","end.x","end.y","end.z"]){
+                        children(query: $myQuery select:["start.x","start.y","start.z","end.x","end.y","end.z","level.elevation","viewRange.topElevation","viewRange.bottomElevation"]){
                             objects{
                                 id
                                 data
@@ -444,7 +453,7 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
     }
 
     dict_from_server = client.httpclient.execute(query, variable_values=params)
-    print(dict_from_server)
+    # print(dict_from_server)
     coord_dict_walls = {}
     for wall in dict_from_server['stream']['object']['children']['objects']:
         coord_dict_walls[wall['id']] = (
@@ -452,9 +461,12 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
             round(wall['data']['start']['y'], num_decimals),
             round(wall['data']['end']['x'], num_decimals),
             round(wall['data']['end']['y'], num_decimals), 
+            round(wall['data']['level']['elevation'], num_decimals), 
+            round(wall['data']['viewRange']['topElevation'], num_decimals), 
+            round(wall['data']['viewRange']['bottomElevation'], num_decimals), 
         )
     
-    print('coord_dict_walls', coord_dict_walls)
+    # print('coord_dict_walls', coord_dict_walls)
     return coord_dict_walls
 
 

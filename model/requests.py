@@ -1,3 +1,4 @@
+from .requests_build_shearwalls import build_shearwalls
 from .requests_get_mesh import get_floor_mesh
 from .requests_analyze_mesh import analyze_mesh
 from .requests_send_to_stream import send_to_stream

@@ -140,6 +140,9 @@
                     <li class="nav-item">
                         <button onclick="showLevels()">Show Levels</button>
                     </li>
+                    <li class="nav-item">
+                        <button onclick="buildShearwalls()">Build Shearwalls</button>
+                    </li>
                     <form class="form-inline my-2 my-lg-0">
                         <!-- Distribution of different sized shear walls -->
                         <!-- <input id="objectUrlInput" class="form-control mr-sm-2" type="search" placeholder="Object URL" aria-label="Object URL" size="20" value="e6635866f1"> -->
@@ -223,6 +226,7 @@
         </div>
     </div>
 
+    {% block buildShearwalls %} {% endblock buildShearwalls %}
     {% block getMesh %} {% endblock getMesh %}
     {% block analyzeMesh %} {% endblock analyzeMesh %}
     {% block sendToStream %} {% endblock sendToStream %}
@@ -386,27 +390,27 @@
             document.getElementById('sidebar-header').innerHTML = 'Floor Elevations'
             document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
 
-            if (v.hasOwnProperty('floors')) {
+            if (v.hasOwnProperty('levels')) {
 
             } else {
-                v.floors = {}
+                v.levels = {}
                 floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {'userData.speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'})
                 for (var index in floor_objs) {
-                    var floor_ids = Object.keys(v.floors)
+                    var floor_ids = Object.keys(v.levels)
                     if (!floor_ids.includes(floor_objs[index].uuid)) {
-                        v.floors[floor_objs[index].userData.level.name] = {
+                        v.levels[floor_objs[index].userData.level.name] = {
                             'name' : floor_objs[index].userData.level.name,
-                            'elevation' : floor_objs[index].userData.level.elevation + ' ' + floor_objs[index].userData.level.units,
+                            'top_elevation' : floor_objs[index].userData.parameters.STRUCTURAL_ELEVATION_AT_TOP.value,
                             'stud length of walls above' : null,
                             'shear force at floor' : null
                         }
                     }
                 }
             }
-            console.log(v.floors)
+            console.log(v.levels)
             
             var str = ''
-            str = traverse(v.floors, str, -1)
+            str = traverse(v.levels, str, -1)
             var newrow = $(str)
             newrow.insertBefore(document.getElementById('last-table-property'));
 

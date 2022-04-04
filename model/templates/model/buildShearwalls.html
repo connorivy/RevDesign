@@ -1,0 +1,48 @@
+{% extends "model/sidebar.html" %}
+{% load static %}
+{% block buildShearwalls %}
+<script type="text/javascript">
+    function buildShearwalls() {
+        if (v.hasOwnProperty('floors')) {
+
+        } else {
+            v.floors = {}
+            floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {'userData.speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'})
+            for (var index in floor_objs) {
+                var floor_ids = Object.keys(v.floors)
+                if (!floor_ids.includes(floor_objs[index].uuid)) {
+                    v.floors[floor_objs[index].uuid] = {
+                        'name' : floor_objs[index].userData.level.name,
+                        'top_elevation' : floor_objs[index].userData.parameters.STRUCTURAL_ELEVATION_AT_TOP.value,
+                        'stud length of walls above' : null,
+                        'shear force at floor' : null,
+                        'outline' : floor_objs[index].userData.outline,
+                    }
+                }
+            }
+        }
+
+        console.log(v.floors)
+
+        // POST request
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'build_shearwalls' %}",
+            data: {
+              'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
+              'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
+              'OBJECT_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].objectId,
+              'floors' : JSON.stringify(v.floors),
+            },
+            success: function (response) {
+                console.log(response)
+                v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['data_to_change'])
+            },
+            error: function (response) {
+                console.log('error')
+                console.log(response)
+            }
+        })
+    }
+</script>
+{% endblock buildShearwalls %}

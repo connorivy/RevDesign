@@ -143,55 +143,57 @@ def test_lines_overlap():
          -4 -- 0                                        curve
             0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[-4,0]},{'x':[0,0]}]}), 0) == False # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,-4]},{'x':[0,0]}]}), 1) == False # y dir
+    assert lines_overlap([0,10],[-4,0]) == False
+    assert lines_overlap([0,10],[0,-4]) == False
 
     '''
     case 2:
              -4 ----- -1                                             curve
                          0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[-4,0]},{'x':[-1,0]}]}), 0) == False # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,-4]},{'x':[0,-1]}]}), 1) == False # y dir
+    assert lines_overlap([0,10], [-4,-1]) == False
+    assert lines_overlap([0,10], [-1,-4]) == False
+
     '''
     case 3:
                                                 14 -- 20  curve
             0 -----------------------------  10           segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[14,0]},{'x':[20,0]}]}), 0) == False # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,14]},{'x':[0,20]}]}), 1) == False # y dir
+    assert lines_overlap([0,10], [14,20]) == False 
+    assert lines_overlap([0,10], [20,14]) == False 
 
     '''
     case 4:
                                                      10 ----- 14     curve
                          0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[10,0]},{'x':[14,0]}]}), 0) == False # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,10]},{'x':[0,14]}]}), 1) == False # y dir
+    assert lines_overlap([0,10], [10,14]) == False
+    assert lines_overlap([0,10], [14,10]) == False
 
     '''
     case 5:
          -4 ---- 1                                      curve
             0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[-4,0]},{'x':[1,0]}]}), 0) == True # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,-4]},{'x':[0,1]}]}), 1) == True # y dir
+    assert lines_overlap([0,10], [-4,1]) == True 
+    assert lines_overlap([0,10], [1,-4]) == True 
 
     '''
     case 6:
                                 8 ------------- 11      curve
             0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[8,0]},{'x':[11,0]}]}), 0) == True # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,8]},{'x':[0,11]}]}), 1) == True # y dir
+    assert lines_overlap([0,10], [8,11]) == True
+    assert lines_overlap([0,10], [11,8]) == True
 
     '''
     case 7:
                     4 ------------- 7      curve
             0 -----------------------------  10         segment 
     '''
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[4,0]},{'x':[7,0]}]}), 0) == True # x dir
-    assert lines_overlap([0,10], DotMap({'points': [{'x':[0,4]},{'x':[0,7]}]}), 1) == True # y dir
+    assert lines_overlap([0,10], [4,7]) == True
+    assert lines_overlap([0,10], [7,4]) == True
+
 
 
 

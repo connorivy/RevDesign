@@ -27,6 +27,7 @@ urlpatterns = [
     path('', include('model.urls')),
 
     # AJAX requests
+    path('post/ajax/validate/build_shearwalls', model_requests.build_shearwalls, name = "build_shearwalls"),
     path('post/ajax/validate/get_floor_mesh', model_requests.get_floor_mesh, name = "get_floor_mesh"),
     path('post/ajax/validate/analyze_mesh', model_requests.analyze_mesh, name = "analyze_mesh"),
     path('post/ajax/validate/send_to_stream', model_requests.send_to_stream, name = "send_to_stream"),
