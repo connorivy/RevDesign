@@ -6,6 +6,8 @@ import numpy as np
 import json
 import math
 
+from .shear_walls.shear_wall_classes import ShearWall
+
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
 from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle
 
@@ -454,8 +456,10 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
 
     dict_from_server = client.httpclient.execute(query, variable_values=params)
     # print(dict_from_server)
+    shear_walls = []
     coord_dict_walls = {}
     for wall in dict_from_server['stream']['object']['children']['objects']:
+        # shear_walls.append(ShearWall())
         coord_dict_walls[wall['id']] = (
             round(wall['data']['start']['x'], num_decimals),
             round(wall['data']['start']['y'], num_decimals),
@@ -465,8 +469,6 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
             round(wall['data']['viewRange']['topElevation'], num_decimals), 
             round(wall['data']['viewRange']['bottomElevation'], num_decimals), 
         )
-    
-    # print('coord_dict_walls', coord_dict_walls)
     return coord_dict_walls
 
 

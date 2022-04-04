@@ -43,8 +43,9 @@ def build_shearwalls(request):
 
         stacked_walls = []
         data_to_change = update_shearwall_data(coord_dict_walls=coord_dict_walls, coord_dict_floor=coord_dict_floor)
-        
-        stacked_walls = get_stacked_walls()
+
+        stacked_walls = get_stacked_walls(coord_dict_walls, data_to_change)
+        # print(coord_dict_walls)
 
         return JsonResponse({'data_to_change': data_to_change}, status = 200)
     return JsonResponse({}, status = 400)
@@ -183,6 +184,11 @@ def assign_top_floor(sw_id, sw_start, sw_end, sw_base_elevation, floors):
 def Merge(dict1, dict2):
     res = {**dict1, **dict2}
     return res
+
+def get_stacked_walls(coord_dict_walls, data_to_change):
+    data_sorted = {}
+    for id in sorted(data_to_change, key=lambda x: (data_to_change[x]['level']['elevation'], data_to_change[x]['baseOffset'])):
+        data_sorted[id] = data_to_change[id]
 
 def walls_stack(w1x1, w1y1, w1x2, w1y2, w2x1, w2y1, w2x2, w2y2):
     # only supports vertical or horizontal walls

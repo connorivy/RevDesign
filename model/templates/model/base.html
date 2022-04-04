@@ -300,6 +300,9 @@
                 document.getElementById('sidebar-header').innerHTML = splitType
 
                 document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
+                document.getElementById('properties-table-buttons').innerHTML = `<li id="last-button">
+                                                                                <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Discard Changes</a>
+                                                                            </li>`
                 
                 var str = ''
                 str = traverse(info['userData'][0], str, -1)
@@ -389,6 +392,9 @@
         function showLevels() {
             document.getElementById('sidebar-header').innerHTML = 'Floor Elevations'
             document.getElementById('properties-table-body').innerHTML = '<tr id="last-table-property"></tr>'
+            document.getElementById('properties-table-buttons').innerHTML = `<li id="last-button">
+                                                                                <a href="https://bootstrapious.com/p/bootstrap-sidebar" class="article">Discard Changes</a>
+                                                                            </li>`
 
             if (v.hasOwnProperty('levels')) {
 
