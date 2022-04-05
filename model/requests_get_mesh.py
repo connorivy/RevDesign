@@ -32,13 +32,15 @@ def get_floor_mesh(request):
 
         # create an authenticated server transport from the client
         transport = ServerTransport(STREAM_ID, client)
+        globals_obj = get_globals_obj(client, transport, STREAM_ID)
 
         floor_obj = get_object(transport, FLOOR_ID)
         coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
-        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals = 1)
+        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals = 1)
         coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
-        print(coord_list_floor)
+        globals_obj = get_globals_obj(client, transport, STREAM_ID)
+
 
         mesh_size = 5
         # print('NEW_COORD_LIST', coord_list_floor)
@@ -425,7 +427,7 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
 
     return coord_list_floor
 
-def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
+def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals):
     query = gql(
         """
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
@@ -459,6 +461,11 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, num_decimals):
     shear_walls = []
     coord_dict_walls = {}
     for wall in dict_from_server['stream']['object']['children']['objects']:
+        try:
+            if globals_obj[wall['id']]['topFloorId'] != FLOOR_ID:
+                continue
+        except:
+            continue
         # shear_walls.append(ShearWall())
         coord_dict_walls[wall['id']] = (
             round(wall['data']['start']['x'], num_decimals),

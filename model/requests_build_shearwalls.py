@@ -32,13 +32,17 @@ def build_shearwalls(request):
         client = get_client(HOST)
         project_info = Project()
         shear_wall_objects = query_shearwall_objects(client, STREAM_ID, OBJECT_ID, project_info, 1)
-        print(len(shear_wall_objects), shear_wall_objects)
         coord_dict_floor = query_floors(client, STREAM_ID, OBJECT_ID, 1)
 
         # stacked_walls = []
         data_to_change = update_shearwall_data(shear_wall_objects = shear_wall_objects, coord_dict_floor=coord_dict_floor)
 
-        stacked_walls = get_stacked_walls(shear_wall_objects)
+        transport = get_transport(client, STREAM_ID)
+        globals = get_globals_obj(client, transport, STREAM_ID)
+        edit_data_in_obj(globals, data_to_change)
+        send_to_speckle(client, transport, STREAM_ID, globals, 'globals')
+
+        # stacked_walls = get_stacked_walls(shear_wall_objects)
         # print(coord_dict_walls)
 
         return JsonResponse({'data_to_change': data_to_change}, status = 200)
@@ -229,6 +233,7 @@ def assign_top_floor(sw_obj, sw_start, sw_end, sw_base_elevation, floors):
     data_to_change = {
         'topLevel' : None,
         'topOffset' : None,
+        'topFloorId' : None,
     }
     for floor_id in floors:
         if floors[floor_id]['elevation_at_top'] <= sw_base_elevation:
@@ -242,6 +247,7 @@ def assign_top_floor(sw_obj, sw_start, sw_end, sw_base_elevation, floors):
             data_to_change = {
                 'topLevel' : floors[floor_id]['level'],
                 'topOffset' : floors[floor_id]['elevation_at_top'] - floors[floor_id]['level']['elevation'],
+                'topFloorId' : floor_id,
             }
             break
 

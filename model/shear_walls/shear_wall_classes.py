@@ -1,4 +1,5 @@
 from .utils import ft_inches_to_decimal as ft2dec
+from specklepy.objects import Base
 import math
 
 class Project:
@@ -18,7 +19,7 @@ class Project:
         else:
             print(f'{type} is not a valid dead load type')
 
-class ShearWall:
+class ShearWall(Base):
     def __init__(self, projectInfo, id, length, studHeight, start, end, baseLevelElevation, topLevelElevation, baseOffset, topOffset, topViewElevation, \
                     bottomViewElevation, totalShear, floorTrib, floorLoadType, tieDistance = 1):
         
@@ -31,7 +32,7 @@ class ShearWall:
         self.base_level_elevation = baseLevelElevation
         self.top_level_elevation = topLevelElevation
         self.base_offset = baseOffset
-        self.topOffset = topOffset
+        self.top_offset = topOffset
         self.top_view_elevation = topViewElevation
         self.bottom_view_elevation = bottomViewElevation
         self.shear_point_load = totalShear
@@ -83,7 +84,7 @@ class ShearWall:
         self.chord_forces = self.total_moment / (self.length - self.tie_distance)
 
 
-class StackedShearWall():
+class StackedShearWall(Base):
     # stacked shear walls is expecting input that looks like this (project_info, [these are the args for a wall except project info], [these are a differnt wall args])
     def __init__(self, id):
         self.id = id
