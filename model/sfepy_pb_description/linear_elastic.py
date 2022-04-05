@@ -69,7 +69,7 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
                 total_shear += rxn
 
             shear_walls[region_name] = {
-                'totalReaction': max(abs(total_shear)),
+                'totalShear': max(abs(total_shear)),
             }
     else:
         for region_name in regions:
@@ -83,7 +83,7 @@ def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
             total_shear = np.fromiter(map(sum,zip(*reactions_list)),dtype='float64')
 
             shear_walls[region_name] = {
-                'totalReaction': max(abs(total_shear)),
+                'totalShear': max(abs(total_shear)),
             }
 
     return shear_walls

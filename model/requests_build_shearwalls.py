@@ -1,11 +1,12 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
+from graphql import value_from_ast
 import pygmsh
 import numpy as np
 import json
 import math
 
-from sympy import re
+from .shear_walls.shear_wall_classes import ShearWall, StackedShearWall, Project
 
 from .requests_get_mesh import point_in_poly, query_shearwalls, lines_overlap
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
@@ -29,26 +30,86 @@ def build_shearwalls(request):
         # floors = json.loads(request.POST.get('floors'))
 
         client = get_client(HOST)
-        
-        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, 1)
+        project_info = Project()
+        shear_wall_objects = query_shearwall_objects(client, STREAM_ID, OBJECT_ID, project_info, 1)
+        print(len(shear_wall_objects), shear_wall_objects)
         coord_dict_floor = query_floors(client, STREAM_ID, OBJECT_ID, 1)
 
-        # floors_sorted = sorted(coord_dict_floor.items(), key=lambda x: coord_dict_floor[x]['elevation_at_top'])
+        # stacked_walls = []
+        data_to_change = update_shearwall_data(shear_wall_objects = shear_wall_objects, coord_dict_floor=coord_dict_floor)
 
-        # floors_sorted = {}
-        # for id in sorted(coord_dict_floor, key=lambda x: coord_dict_floor[x]['elevation_at_top']):
-        #     floors_sorted[id] = coord_dict_floor[id]
-
-        # print(floors_sorted)
-
-        stacked_walls = []
-        data_to_change = update_shearwall_data(coord_dict_walls=coord_dict_walls, coord_dict_floor=coord_dict_floor)
-
-        stacked_walls = get_stacked_walls(coord_dict_walls, data_to_change)
+        stacked_walls = get_stacked_walls(shear_wall_objects)
         # print(coord_dict_walls)
 
         return JsonResponse({'data_to_change': data_to_change}, status = 200)
     return JsonResponse({}, status = 400)
+
+def query_shearwall_objects(client, STREAM_ID, OBJECT_ID, project_info, num_decimals):
+    query = gql(
+        """
+            query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
+                stream(id:$stream_id){
+                    object(id:$object_id){
+                        children(query: 
+                            $myQuery select:["length","studHeight","start.x","start.y","start.z","end.x","end.y","end.z","level.elevation","topLevel.elevation", 
+                            "baseOffset","topOffset","viewRange.topElevation","viewRange.bottomElevation","loadInfo.totalShear",
+                            "loadInfo.floorTrib","loadInfo.floorLoadType"]
+                        ){
+                            objects{
+                                id
+                                data
+                            }
+                        }
+                    }
+                }
+            }
+        """)
+
+    params = {
+        "myQuery": [
+            {
+                "field":"lineType",
+                "value":"shearWall",
+                "operator":"="
+            }
+        ],
+        "stream_id": STREAM_ID, 
+        "object_id": OBJECT_ID
+    }
+
+    dict_from_server = client.httpclient.execute(query, variable_values=params)
+    # print(dict_from_server)
+    shear_walls = []
+    for wall in dict_from_server['stream']['object']['children']['objects']:
+        shear_walls.append(ShearWall(
+            projectInfo = project_info,
+            id = wall['id'],
+            length = round(wall['data']['length'], num_decimals),
+            studHeight = try_except_from_server(wall,num_decimals,'data','studHeight'),
+            start = (round(wall['data']['start']['x'], num_decimals),round(wall['data']['start']['y'], num_decimals)),
+            end = (round(wall['data']['end']['x'], num_decimals),round(wall['data']['end']['y'], num_decimals)),
+            baseLevelElevation = round(wall['data']['level']['elevation'], num_decimals),
+            topLevelElevation = try_except_from_server(wall,num_decimals,'data','topLevel','elevation'),
+            baseOffset = try_except_from_server(wall,num_decimals,'data','baseOffset'),
+            topOffset = try_except_from_server(wall,num_decimals,'data','topOffset'),
+            topViewElevation = round(wall['data']['viewRange']['topElevation'], num_decimals), 
+            bottomViewElevation = round(wall['data']['viewRange']['bottomElevation'], num_decimals),
+            totalShear = try_except_from_server(wall,num_decimals,'data','loadInfo','totalShear'),
+            floorTrib = try_except_from_server(wall,num_decimals,'data','loadInfo','floorTrib'),
+            floorLoadType = try_except_from_server(wall,num_decimals,'data','loadInfo','floorLoadType'),
+        ))
+
+    return shear_walls
+
+def try_except_from_server(wall, num_decimals, path1, path2, path3=None):
+    try:
+        if not path3:
+            x = round(wall[path1][path2],num_decimals)
+        else:
+            x = round(wall[path1][path2][path3], num_decimals)
+        return x
+    except:
+        return -1
 
 def query_floors(client, STREAM_ID, OBJECT_ID, num_decimals):
     query = gql(
@@ -116,32 +177,32 @@ def query_floors(client, STREAM_ID, OBJECT_ID, num_decimals):
     print('coord_dict_floor', floor_dict_sorted)
     return floor_dict_sorted
 
-def update_shearwall_data(coord_dict_walls, coord_dict_floor):
+def update_shearwall_data(shear_wall_objects, coord_dict_floor):
     data_to_change = {}
-    for sw_id in coord_dict_walls:
+    for sw_obj in shear_wall_objects:
         floors_in_view = []
         for floor_id in coord_dict_floor:
-            if coord_dict_walls[sw_id][6] > coord_dict_floor[floor_id]['elevation_at_top']:
+            if sw_obj.bottom_view_elevation > coord_dict_floor[floor_id]['elevation_at_top']:
                 continue
-            if coord_dict_walls[sw_id][5] < coord_dict_floor[floor_id]['elevation_at_top']:
+            if sw_obj.top_view_elevation < coord_dict_floor[floor_id]['elevation_at_top']:
                 break
             floors_in_view.append(coord_dict_floor[floor_id])
 
-        bot_data = assign_bottom_floor(sw_id, (coord_dict_walls[sw_id][0], coord_dict_walls[sw_id][1]), \
-            (coord_dict_walls[sw_id][2], coord_dict_walls[sw_id][3]), coord_dict_walls[sw_id][4], floors_in_view)
+        bot_data = assign_bottom_floor(sw_obj, sw_obj.start, sw_obj.end, sw_obj.base_level_elevation, floors_in_view)
+        top_data = assign_top_floor(sw_obj, sw_obj.start, sw_obj.end, sw_obj.base_elevation, coord_dict_floor)
 
-        top_data = assign_top_floor(sw_id,(coord_dict_walls[sw_id][0], coord_dict_walls[sw_id][1]), \
-            (coord_dict_walls[sw_id][2], coord_dict_walls[sw_id][3]), coord_dict_walls[sw_id][4]+bot_data['baseOffset'], coord_dict_floor)
+        data_to_change[sw_obj.id] = Merge(top_data, bot_data)
 
-        data_to_change[sw_id] = Merge(top_data, bot_data)
     return data_to_change
 
 
-def assign_bottom_floor(sw_id, sw_start, sw_end, lvl_base_elevation, floors_in_view):
+def assign_bottom_floor(sw_obj, sw_start, sw_end, lvl_base_elevation, floors_in_view):
     data_to_change = None
     if len(floors_in_view) == 0:
         print('Could not find base floor, No floors present in shearwall view')
     elif len(floors_in_view) == 1:
+        sw_obj.base_offset = floors_in_view[0]['elevation_at_top'] - lvl_base_elevation
+        sw_obj.get_base_elevation()
         data_to_change = {
             'baseOffset' : floors_in_view[0]['elevation_at_top'] - lvl_base_elevation
         }
@@ -153,8 +214,10 @@ def assign_bottom_floor(sw_id, sw_start, sw_end, lvl_base_elevation, floors_in_v
             if p0_in_poly[0] != 0 and p1_in_poly[0] != 0:
                 floors_containing_sw.append(floor)
         if len(floors_containing_sw) == 0:
-            print(f'Shear wall is not inside floor, {sw_id}')
+            print(f'Shear wall is not inside floor, {sw_obj.id}')
         elif len(floors_containing_sw) == 1:
+            sw_obj.base_offset = floors_containing_sw[0]['elevation_at_top'] - lvl_base_elevation
+            sw_obj.get_base_elevation()
             data_to_change = {
                 'baseOffset' : floors_containing_sw[0]['elevation_at_top'] - lvl_base_elevation
             }
@@ -162,7 +225,7 @@ def assign_bottom_floor(sw_id, sw_start, sw_end, lvl_base_elevation, floors_in_v
             print('Shearwall line is contained within multiple floors in the same view')
     return data_to_change
 
-def assign_top_floor(sw_id, sw_start, sw_end, sw_base_elevation, floors):
+def assign_top_floor(sw_obj, sw_start, sw_end, sw_base_elevation, floors):
     data_to_change = {
         'topLevel' : None,
         'topOffset' : None,
@@ -173,6 +236,9 @@ def assign_top_floor(sw_id, sw_start, sw_end, sw_base_elevation, floors):
         p0_in_poly = point_in_poly(sw_start, (floors[floor_id]['polygon'],), 1)
         p1_in_poly = point_in_poly(sw_end, (floors[floor_id]['polygon'],), 1)
         if p0_in_poly[0] != 0 and p1_in_poly[0] != 0:
+            sw_obj.top_level_elevation = floors[floor_id]['level']['elevation']
+            sw_obj.top_offset = floors[floor_id]['elevation_at_top'] - floors[floor_id]['level']['elevation']
+            sw_obj.get_top_elevation()
             data_to_change = {
                 'topLevel' : floors[floor_id]['level'],
                 'topOffset' : floors[floor_id]['elevation_at_top'] - floors[floor_id]['level']['elevation'],
@@ -185,24 +251,61 @@ def Merge(dict1, dict2):
     res = {**dict1, **dict2}
     return res
 
-def get_stacked_walls(coord_dict_walls, data_to_change):
-    data_sorted = {}
-    for id in sorted(data_to_change, key=lambda x: (data_to_change[x]['level']['elevation'], data_to_change[x]['baseOffset'])):
-        data_sorted[id] = data_to_change[id]
+def get_stacked_walls(shear_wall_objects):
+    sw_objects_at_level = {}
+    stacked_walls = {}
 
-def walls_stack(w1x1, w1y1, w1x2, w1y2, w2x1, w2y1, w2x2, w2y2):
+    shear_wall_objects.sort(key=lambda x: x.base_elevation)
+
+    for sw_obj in shear_wall_objects:
+        if not sw_obj.base_elevation in sw_objects_at_level.keys():
+            sw_objects_at_level[sw_obj.base_elevation] = {}
+        sw_objects_at_level[sw_obj.base_elevation] = Merge(sw_objects_at_level[sw_obj.base_elevation], {sw_obj.id : sw_obj})
+
+    # print('\n\n\nKEYS\n\n\n', sw_objects_at_level.keys(), sw_objects_at_level)
+
+    for sw_obj in shear_wall_objects:
+        # sws with no floor above will be skipped for now
+        if not hasattr(sw_obj, 'top_elevation'):
+            continue
+
+        # no shear walls above this wall
+        if not sw_obj.top_elevation in sw_objects_at_level.keys():
+            break
+        for upper_sw_obj_id, upper_sw_obj in sw_objects_at_level[sw_obj.top_elevation].items():
+
+            if walls_stack(sw_obj.start, sw_obj.end, upper_sw_obj.start, upper_sw_obj.end):
+                # assign wall stack id to upper wall
+                if hasattr(sw_obj, 'wall_stack_id'):
+                    wall_stack_id = sw_obj['wall_stack_id']
+                else:
+                    wall_stack_id = f'SSW{sw_obj.id}'
+                    stacked_walls[wall_stack_id] = StackedShearWall(wall_stack_id)
+                    stacked_walls[wall_stack_id].add_shear_wall(sw_obj)
+                upper_sw_obj.wall_stack_id = wall_stack_id
+                stacked_walls[wall_stack_id].add_shear_wall(upper_sw_obj)
+
+                # remove sw from sw_at_level bc it has already been assigned
+                del sw_objects_at_level[sw_obj.top_elevation][upper_sw_obj_id]
+                break
+
+    print('STACKED WALLS', stacked_walls)
+    print('sw_at_level', sw_objects_at_level)
+    return stacked_walls
+
+def walls_stack(w1start, w1end, w2start, w2end):
     # only supports vertical or horizontal walls
-    if abs(w1x1 - w1x2) < 1e-1:
+    if abs(w1start[0] - w1end[0]) < 1e-1:
         w1_is_vert = True
-    elif abs(w1y1 - w1y2) < 1e-1:
+    elif abs(w1start[1] - w1end[1]) < 1e-1:
         w1_is_vert = False
     else:
         print('diagonal walls are not yet implemented')
         return False
 
-    if abs(w2x1 - w2x2) < 1e-1:
+    if abs(w2start[0] - w2end[0]) < 1e-1:
         w2_is_vert = True
-    elif abs(w2y1 - w2y2) < 1e-1:
+    elif abs(w2start[1] - w2end[1]) < 1e-1:
         w2_is_vert = False
     else:
         print('diagonal walls are not yet implemented')
@@ -211,6 +314,10 @@ def walls_stack(w1x1, w1y1, w1x2, w1y2, w2x1, w2y1, w2x2, w2y2):
     if w1_is_vert != w2_is_vert:
         return False
     elif w1_is_vert:
-        return lines_overlap([w1y1,w1y2],[w2y1,w2y2])
+        if not abs(w1start[0] - w2start[0]) < 1e-1:
+            return False
+        return lines_overlap([w1start[1],w1end[1]],[w2start[1],w2end[1]])
     elif not w1_is_vert:
-        return lines_overlap([w1x1,w1x2],[w2x1,w2x2])
+        if not abs(w1start[1] - w2start[1]) < 1e-1:
+            return False
+        return lines_overlap([w1start[0],w1end[0]],[w2start[0],w2end[0]])
