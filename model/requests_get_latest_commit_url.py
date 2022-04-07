@@ -1,7 +1,7 @@
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .sfepy_pb_description.linear_elastic import *
-from .sfepy_pb_description.connectToSpeckle import get_client, get_latest_commit
+from .sfepy_pb_description.connectToSpeckle import get_client, get_latest_commit_for_branch
 
 @csrf_exempt
 def get_latest_commit_url(request):
@@ -13,7 +13,7 @@ def get_latest_commit_url(request):
         
         
         client = get_client(HOST=HOST)
-        latest_commit = get_latest_commit(client, STREAM_ID)
+        latest_commit = get_latest_commit_for_branch(client, STREAM_ID, 'main')
 
         # example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
         url = f'{HOST}/streams/{STREAM_ID}/objects/{latest_commit.referencedObject}'

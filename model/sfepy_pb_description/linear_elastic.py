@@ -45,7 +45,45 @@ def create_mesh_applied_loads(**kwargs):
     out = variables.create_output()
     pb.save_state('mesh_applied_loads.vtk', out=out)
 
-    return f
+    return f.reshape((-1, 2))
+
+def create_mesh_reactions(pb, state, fixed_nodes):
+    # https://sfepy.org/doc-devel/primer.html#table-of-contents
+    variables = pb.get_variables()
+    u = variables.get_state_parts()['u']
+    pb.remove_bcs()
+    shear_walls = {}
+
+    f = pb.evaluator.eval_residual(u)
+    f = f.reshape(-1, 2)
+    spring = pb.get_materials()['spring']
+
+    variables = pb.get_variables()
+    u = variables.get_state_parts()['u'].reshape((-1, 2))
+
+    for region in pb.domain.regions:
+        region_name = region.name
+        if not region_name[:2] == 'id':
+            continue
+        reg = pb.domain.regions[f'{region_name}']
+        dofs = pb.fields['displacement'].get_dofs_in_region(reg, merge=True)
+        if not fixed_nodes:
+            f[dofs] = u[dofs] * spring.get_data('special', 'stiffness')
+        total_shear = np.fromiter(map(sum,zip(*f[dofs])),dtype='float64')
+        # print('SHEAR', max(abs(total_shear)), type(max(abs(total_shear))), type(region_name))
+        shear_walls[region_name[2:]] = {
+            'totalShear': max(abs(total_shear)),
+        }
+
+    f = f.ravel()
+    np.round_(f, decimals = 5)
+    pb.time_update()
+    fvars = variables.copy()
+    fvars.set_state(f, reduced=False)
+    out = variables.create_output()
+    pb.save_state('mesh_reactions.vtk', out=out)
+
+    return f.reshape((-1, 2)), u, shear_walls
 
 def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/

@@ -35,6 +35,20 @@ def get_object(transport, obj_id):
 def get_latest_commit(client, STREAM_ID):
     return client.commit.list(STREAM_ID, limit=1)[0]
 
+def get_latest_commit_for_branch(client, STREAM_ID, name):
+    branch = client.branch.get(STREAM_ID, name)
+
+    # get the latest commit if globals branch exists
+    try:
+        latest_commit = branch.commits.items[0]
+        return latest_commit
+    except:
+        print(f'No branch named {name}')
+        return Base()
+
+def create_branch(client, STREAM_ID, name, description = ''):
+    client.branch.create(STREAM_ID, name, description)
+
 def get_globals_obj(client, transport, STREAM_ID):
     # get the `globals` branch
     branch = client.branch.get(STREAM_ID, "globals")
@@ -44,13 +58,23 @@ def get_globals_obj(client, transport, STREAM_ID):
         latest_commit = branch.commits.items[0]
     # if the globlas branch doesn't exist, create it and return empty base object
     except:
-        client.branch.create(STREAM_ID, "globals", "Global Variables")
+        create_branch(client,STREAM_ID, "globals", "Global Variables")
         return Base()
 
     # receive the globals object
     return operations.receive(latest_commit.referencedObject, transport)
 
 def send_to_speckle(client, transport, STREAM_ID, obj, branch_name='main', commit_message=''):
+    # get the `globals` branch
+    branch = client.branch.get(STREAM_ID, branch_name)
+
+    # get the latest commit if globals branch exists
+    try:
+        latest_commit = branch.commits.items[0]
+    # if the globlas branch doesn't exist, create it and return empty base object
+    except:
+        create_branch(client,STREAM_ID, branch_name, "created automatically by RevDesign")
+
     # TODO this isn't recognizing that the data is already in the server so it's storing multiple copies
     obj_id = operations.send(obj, [transport])
 

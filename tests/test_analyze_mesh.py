@@ -57,7 +57,6 @@ class TestAnalyzeMesh:
         f = create_mesh_applied_loads(**options)
 
         print(f, f.shape)
-        assert f.shape == ( 2 * len(example_obj.mesh.points),) # if this doesn't pass then there are likely multiple nodes in almost an identical location
-        f= f.reshape((-1, 2))
+        assert f.shape == (len(example_obj.mesh.points), 2) # if this doesn't pass then there are likely multiple nodes in almost an identical location
         assert f[example_obj.dofs].tolist() == example_obj.reactions
 

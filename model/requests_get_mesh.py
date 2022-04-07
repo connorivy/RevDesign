@@ -9,7 +9,7 @@ import math
 from .shear_walls.shear_wall_classes import ShearWall
 
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
-from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle
+from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle, create_branch
 
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
@@ -60,10 +60,10 @@ def get_floor_mesh(request):
         mesh.remove_orphaned_nodes()
         mesh.remove_lower_dimensional_cells()
 
-        print(mesh.points.tolist())
+        # print(mesh.points.tolist())
         for x in mesh.cells:
             print(x, x[0])
-            if x[0] == 'triangle':
+            if x[0] == 'line' or x[0] == 'vertex':
                 for y in x[1]:
                     print(y)
 
@@ -71,6 +71,7 @@ def get_floor_mesh(request):
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
 
         options = {
+            'floor_id' : FLOOR_ID,
             'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
             'plus_x_wind_load_point_ids': wlc['plus_x_wind_load_point_ids'],
             'minus_y_wind_load_point_ids' : wlc['minus_y_wind_load_point_ids'],
@@ -111,6 +112,7 @@ def get_floor_mesh(request):
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
+        send_to_speckle(client, transport, STREAM_ID, speckMesh, branch_name='results', commit_message='SpeckMesh Results')
         send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         return JsonResponse({'success': 'yee'}, status = 200)

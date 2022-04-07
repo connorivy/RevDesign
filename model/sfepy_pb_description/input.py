@@ -65,7 +65,7 @@ def get_wind_region(coors, domain, point_ids_list, mesh_points):
                     flag = np.append(flag, int(index))
                     break
 
-    print('wind_flag', flag)
+    # print('wind_flag', flag)
 
     return flag
 
