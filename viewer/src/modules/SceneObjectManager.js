@@ -172,6 +172,17 @@ export default class SceneObjectManager {
         if (material.metalness > 0.8) material.color = new THREE.Color('#CDCDCD') // hack for rhino metal materials being black FFS
         return this.addSingleSolid(wrapper, material)
       }
+    } else if (wrapper.meta.speckle_type == 'SpeckMesh') {
+      // if the object is a speckmesh, render it as wiremesh - CI
+      let material = this.solidVertexMaterial.clone()
+      material.clippingPlanes = this.viewer.sectionBox.planes
+      material.wireframe = true
+      // add these two lines to fix the mesh flickering when in the same location as the revit floor
+      material.polygonOffset = true
+      material.polygonOffsetFactor = -0.2
+
+      return this.addSingleSolid(wrapper, material)
+
     } else if (wrapper.bufferGeometry.attributes.color) {
       return this.addSingleSolid(wrapper, this.solidVertexMaterial)
     } else {

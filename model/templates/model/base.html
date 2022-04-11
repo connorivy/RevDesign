@@ -275,11 +275,13 @@
             }
         }
         window.loadData = async function LoadData( ) {
-            var new_url = await getLatestCommitURL('main')
-            localStorage.setItem( 'prevLoadUrl', new_url['url'] )
+            var main_url = await getLatestCommitURL('main')
+            localStorage.setItem( 'prevLoadUrl', main_url['url'] )
+            var results_url = localStorage.getItem( 'resultsUrl' )
             let t0 = Date.now()
-            console.log(new_url)
-            await v.loadObject( new_url['url'] )
+            console.log(main_url, results_url)
+            await v.loadObject( main_url['url'] )
+            if (results_url) await v.loadObject(results_url)
             console.log(`Finished loading in: ${(Date.now() - t0) / 1000}`)
         } 
 

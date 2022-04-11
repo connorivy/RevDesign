@@ -1,6 +1,12 @@
+from fileinput import filename
 import numpy as np
 from sfepy.mechanics.matcoefs import stiffness_from_youngpoisson
 import math
+from sfepy.base.base import output
+from sfepy.discrete.fem.meshio import UserMeshIO
+from sfepy.discrete.fem.mesh import Mesh
+
+import meshio
 
 def is_equal(p1, p2):
     tol = 1e-2
@@ -73,8 +79,16 @@ def get_length_of_sw(curve):
     return math.sqrt((curve[0] - curve[2])**2 + (curve[1] - curve[3])**2)
 
 def define(**kwargs):
+
+    meshio_instance = meshio.Mesh(
+        points=kwargs['mesh_points'],
+        cells= kwargs['mesh_cells'],
+        # cell_data= kwargs['cell_data'],
+    )
     
-    filename_mesh = 'RevDesign.mesh'
+    # filename_mesh = 'RevDesign.mesh'
+    filename_mesh = get_sfepy_mesh_from_meshio(meshio_instance)
+
 
     options = {
         'output_dir' : '.',
@@ -192,3 +206,96 @@ def define(**kwargs):
     }
 
     return locals()
+
+def get_sfepy_mesh_from_meshio(m):
+    global_cell_types = {
+        ('hexahedron', 3): '3_8',
+        ('tetra', 3): '3_4',
+        ('triangle', 3): '2_3',
+        ('triangle', 2): '2_3',
+        ('quad', 3): '2_4',
+        ('quad', 2): '2_4',
+        ('line', 3): '1_2',
+        ('line', 2): '1_2',
+        ('line', 1): '1_2',
+    }
+
+    def mesh_hook(mesh, mode):
+        dim = np.sum(np.max(m.points, axis=0)
+                        - np.min(m.points, axis=0) > 1e-15)
+
+        ngkey = None
+        for k in m.point_data.keys():
+            if k == 'node_groups' or k.endswith(':ref'):
+                ngkey = k
+                break
+
+        if ngkey is not None:
+            ngroups = np.asarray(m.point_data[ngkey]).flatten()
+        elif hasattr(m, 'point_sets') and len(m.point_sets) > 0:
+            ngroups = np.zeros((len(m.points),), dtype=np.int32)
+            keys = list(m.point_sets.keys())
+            keys.sort()
+            try:
+                ngrps = [int(ii) for ii in keys]
+            except:
+                ngrps = np.arange(len(keys)) + 1
+
+            for ik, k in enumerate(keys):
+                ngroups[m.point_sets[k]] = ngrps[ik]
+        else:
+            ngroups = None
+
+        cells, cgroups, cell_types = [], [], []
+
+        # meshio.__version__ > 3.3.2
+        cgkey = None
+        for k in list(m.cell_data.keys()):
+            if k == 'mat_id' or k.endswith(':ref'):
+                cgkey = k
+                break
+
+        if cgkey is not None:
+            cgdata = m.cell_data[cgkey]
+        elif len(m.cell_sets) > 0:
+            cgdata = []
+            keys = list(m.cell_sets.keys())
+            keys.sort()
+            try:
+                cgrps = [int(ii) for ii in keys]
+            except:
+                cgrps = np.arange(len(keys)) + 1
+
+            for ic, c in enumerate(m.cells):
+                cgdata0 = np.zeros((len(c.data),), dtype=np.int32)
+                for ik, k in enumerate(keys):
+                    cgdata0[m.cell_sets[k][ic]] = cgrps[ik]
+                cgdata.append(cgdata0)
+        else:
+            cgdata = None
+
+        for ic, c in enumerate(m.cells):
+            if (c.type, dim) not in global_cell_types:
+                output('warning: unknown cell type %s with dimension %d' % (c.type, dim))
+                continue
+
+            cells.append(c.data)
+            cell_types.append(global_cell_types[(c.type, dim)])
+
+            if cgdata is not None:
+                cgroups.append(np.asarray(cgdata[ic]).flatten())
+            else:
+                cgroups.append(np.ones((len(c.data),), dtype=np.int32))
+
+        mesh = Mesh.from_data('mesh', m.points[:,:dim], ngroups, cells, cgroups, cell_types)
+        mesh.dim = dim
+
+        output('number of vertices: %d' % m.points.shape[0])
+        output('number of cells:')
+        for ii, k in enumerate(cell_types):
+            output('  %s: %d' % (k, cells[ii].shape[0]))
+
+        return mesh
+
+    mio = UserMeshIO(mesh_hook)
+    return mio

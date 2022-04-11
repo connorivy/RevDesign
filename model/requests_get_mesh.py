@@ -42,37 +42,14 @@ def get_floor_mesh(request):
         floor_obj = get_object(transport, FLOOR_ID)
         coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
         coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals = 1)
-
-        print(coord_dict_walls)
         coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
-        globals_obj = get_globals_obj(client, transport, STREAM_ID)
-
-
         mesh_size = 5
-        # print('NEW_COORD_LIST', coord_list_floor)
-
-        # print('NEW_DICT_WALLS', coord_dict_walls)
-
-        # get the floor coord_list from the client side.
-        # coord_list_floor = json.loads(request.POST.get('coord_list_floor'))
-        # coord_dict_walls = json.loads(request.POST.get('coord_dict_walls'))
-        # print(coord_list_floor, coord_list_walls, request.POST)
-
-        # This will be a huge job, but eventually I need to combine my Django and speckle servers
-
         mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
 
         # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
         mesh.remove_orphaned_nodes()
         mesh.remove_lower_dimensional_cells()
-
-        # print(mesh.points.tolist())
-        for x in mesh.cells:
-            print(x, x[0])
-            if x[0] == 'line' or x[0] == 'vertex':
-                for y in x[1]:
-                    print(y)
 
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
         mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
@@ -126,7 +103,7 @@ def get_floor_mesh(request):
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
         obj_id = send_to_speckle(client, transport, STREAM_ID, speckMesh, branch_name='results', commit_message='SpeckMesh Results')
-        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
+        send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         return JsonResponse({'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)

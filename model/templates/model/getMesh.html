@@ -15,7 +15,11 @@
           },
           success: function (response) {
               console.log(response)
-              v.loadObject( v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id'])
+              var results_url = localStorage.getItem( 'resultsUrl' )
+              if (results_url) v.unloadObject(results_url)
+              var new_results_url = v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id']
+              localStorage.setItem( 'resultsUrl', new_results_url )
+              v.loadObject(new_results_url)
           },
           error: function (response) {
               console.log('error')

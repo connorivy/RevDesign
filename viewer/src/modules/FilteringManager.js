@@ -170,6 +170,7 @@ export default class FilteringManager {
 
   colorFloorsByVertices(floorObj, colors) {
     let rainbow = new Rainbow()
+    if (!floorObj.userData.cell_data) return floorObj.material
 
     let objValue = this.getObjectProperty(floorObj.userData.cell_data, colors.property)
     if (typeof(floorObj.geometry.getAttribute('color')) === "undefined") {
@@ -182,9 +183,6 @@ export default class FilteringManager {
         )
       )
     }
-    floorObj.material.vertexColors = true;
-    if (colors.wireframe) floorObj.material.wireframe = true;
-    else floorObj.material.wireframe = false;
 
     var minVal = Infinity;
     var maxVal = -Infinity;
@@ -198,7 +196,6 @@ export default class FilteringManager {
     }
 
     if (dir == 0 || dir == 1) {
-      console.log(dir)
       for (var i = 0; i < objValue.length; i++) {
         val = objValue[i][dir]
         minVal = Math.min(minVal, val)
