@@ -43,6 +43,16 @@ export default class FilteringManager {
       } else if (filter.colorBy.type === 'gradient') {
         let newMaterial = this.colorWithGradient(obj, filter.colorBy)
         this.setMaterial(clone, newMaterial)
+      } else if (filter.colorBy.type === 'FEM') {
+        clone.geometry = clone.geometry.clone()
+        clone.material = clone.material.clone()
+        let newMaterial = this.colorFloorsByVertices(clone, filter.colorBy)
+        if (filter.showDeformed) { 
+          this.deformFloorsByVertices(clone, filter.showDeformed)
+          clone.geometry.computeBoundingBox();
+          clone.geometry.computeBoundingSphere();
+        }
+        this.setMaterial(clone, newMaterial)
       }
     }
     return clone
@@ -156,6 +166,72 @@ export default class FilteringManager {
     let material = this.ColoredMaterial.clone()
     material.color = new THREE.Color(`#${rainbow.colourAt(objValue)}`)
     return material
+  }
+
+  colorFloorsByVertices(floorObj, colors) {
+    let rainbow = new Rainbow()
+
+    let objValue = this.getObjectProperty(floorObj.userData.cell_data, colors.property)
+    if (typeof(floorObj.geometry.getAttribute('color')) === "undefined") {
+      console.log(floorObj)
+      floorObj.geometry.setAttribute(
+        'color',
+        new THREE.BufferAttribute(
+          new Float32Array(floorObj.geometry.getAttribute('position').count * 3),
+          3
+        )
+      )
+    }
+    floorObj.material.vertexColors = true;
+    if (colors.wireframe) floorObj.material.wireframe = true;
+    else floorObj.material.wireframe = false;
+
+    var minVal = Infinity;
+    var maxVal = -Infinity;
+    let val;
+
+    let dir;
+    try {
+      dir = parseInt(colors.direction)
+    } catch {
+      dir = 2
+    }
+
+    if (dir == 0 || dir == 1) {
+      console.log(dir)
+      for (var i = 0; i < objValue.length; i++) {
+        val = objValue[i][dir]
+        minVal = Math.min(minVal, val)
+        maxVal = Math.max(maxVal, val)
+      }
+      rainbow.setNumberRange(minVal, maxVal)
+      rainbow.setSpectrum(...['blue', 'gray', 'red'])
+      for (var i = 0; i < objValue.length; i++) {
+        let color = new THREE.Color(`#${rainbow.colourAt(objValue[i][dir])}`)
+        floorObj.geometry.attributes.color.setXYZ(i, color.r, color.g, color.b)
+      }
+    } else {
+      for (var i = 0; i < objValue.length; i++) {
+        val = Math.sqrt(objValue[i][0] ** 2 + objValue[i][1] ** 2)
+        minVal = Math.min(minVal, val)
+        maxVal = Math.max(maxVal, val)
+      }
+      rainbow.setNumberRange(minVal, maxVal)
+      rainbow.setSpectrum(...['blue', 'gray', 'red'])
+      for (var i = 0; i < objValue.length; i++) {
+        let color = new THREE.Color(`#${rainbow.colourAt(Math.sqrt(objValue[i][0] ** 2 + objValue[i][1] ** 2))}`)
+        floorObj.geometry.attributes.color.setXYZ(i, color.r, color.g, color.b)
+      }
+    }
+    return floorObj.material
+  }
+
+  deformFloorsByVertices(floorObj, multiplier) {
+    console.log(floorObj)
+    let displacements = this.getObjectProperty(floorObj.userData.cell_data, 'displacements')
+    for (var i = 0; i < displacements.length; i++) {
+      floorObj.geometry.getAttribute('position').setXYZ(i, floorObj.geometry.getAttribute('position').array[i*3] + displacements[i][0]*multiplier, floorObj.geometry.getAttribute('position').array[i*3+1] + displacements[i][1]*multiplier, floorObj.geometry.getAttribute('position').array[i*3+2])
+    }
   }
 
   passesFilter(obj, filterBy) {

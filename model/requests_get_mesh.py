@@ -1,3 +1,4 @@
+from glob import glob
 from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from .models import *
@@ -34,9 +35,15 @@ def get_floor_mesh(request):
         transport = ServerTransport(STREAM_ID, client)
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
 
+        # print('GLOBALS OBJ', globals_obj)
+        # for name in globals_obj.get_member_names():
+        #     print(name, globals_obj[name])
+
         floor_obj = get_object(transport, FLOOR_ID)
         coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
         coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals = 1)
+
+        print(coord_dict_walls)
         coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
@@ -81,6 +88,11 @@ def get_floor_mesh(request):
             'fixed_nodes': False,
         }
 
+        if hasattr(floor_obj, 'units'):
+            units = floor_obj.units
+        else:
+            units = 'ft'
+
         speckMesh = SpeckMesh(
             mesh.points.tolist(), 
             mesh.cells, 
@@ -91,6 +103,7 @@ def get_floor_mesh(request):
             mesh.cell_sets,
             mesh.gmsh_periodic,
             mesh.info,
+            units,
             **options
         )
 
@@ -112,10 +125,10 @@ def get_floor_mesh(request):
 
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
-        send_to_speckle(client, transport, STREAM_ID, speckMesh, branch_name='results', commit_message='SpeckMesh Results')
-        send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
+        obj_id = send_to_speckle(client, transport, STREAM_ID, speckMesh, branch_name='results', commit_message='SpeckMesh Results')
+        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
-        return JsonResponse({'success': 'yee'}, status = 200)
+        return JsonResponse({'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)
 
 def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
@@ -143,14 +156,14 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
         # someday maybe I can label the groups as I create them to be more efficient
         # geom.add_physical(surface, label='surface')
         # add points from shear walls
-        # for index in range(len(coord_list_walls)):
         for wall_id in coord_dict_walls:
             p0 = None
             p1 = None
-            x0 = coord_dict_walls[wall_id][0]
-            y0 = coord_dict_walls[wall_id][1]
-            x1 = coord_dict_walls[wall_id][2]
-            y1 = coord_dict_walls[wall_id][3]
+            x0 = coord_dict_walls[wall_id]['start']['x']
+            y0 = coord_dict_walls[wall_id]['start']['y']
+            x1 = coord_dict_walls[wall_id]['end']['x']
+            y1 = coord_dict_walls[wall_id]['end']['y']
+            z = coord_dict_walls[wall_id]['topLevel']['elevation'] + coord_dict_walls[wall_id]['topOffset']
 
             # create lists of shear wall objects 
             if abs(x1 - x0) < 1e-4:
@@ -178,9 +191,9 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
                         print('LINE', edge_line)
             else:    
                 if not p0:
-                    p0 = geom.add_point([x0, y0])
+                    p0 = geom.add_point([x0, y0, z])
                 if not p1:
-                    p1 = geom.add_point([x1, y1])
+                    p1 = geom.add_point([x1, y1, z])
                 line = geom.add_line(p0, p1)
 
                 # embed new line in surface
@@ -196,6 +209,13 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
             # geom.add_physical(line, label=f'SW{wall_id}')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
+        print(wlc)
+        # wlc = {
+        #     'minus_x_wind_load_point_ids' : 0,
+        #     'plus_x_wind_load_point_ids' : 0,
+        #     'minus_y_wind_load_point_ids' : 0,
+        #     'plus_y_wind_load_point_ids' : 0,
+        # }
         geom.set_background_mesh(boundary_layers, operator="Min")
         mesh = geom.generate_mesh()
 
@@ -209,8 +229,8 @@ def get_wind_load_point_ids(polygon, surface):
     curves_sorted_by_x = sorted(surface.curves, key=lambda x: (x.points[0].x[0] + x.points[1].x[0]) / 2, reverse=False)
     curves_sorted_by_y = sorted(surface.curves, key=lambda x: (x.points[0].x[1] + x.points[1].x[1]) / 2, reverse=False)
 
-    max_x, max_y = np_poly.max(axis=0)
-    min_x, min_y = np_poly.min(axis=0)
+    max_x, max_y, max_z = np_poly.max(axis=0)
+    min_x, min_y, min_z = np_poly.min(axis=0)
 
     wind_line_vert = [[min_y, max_y]]
     wind_line_horiz = [[min_x, max_x]]
@@ -332,14 +352,17 @@ def get_coords_list(floor_obj, num_decimals):
     for segment in floor_obj.outline.segments:
         x0 = round(segment.start.x, num_decimals)
         y0 = round(segment.start.y, num_decimals)
+        z0 = round(segment.start.z, num_decimals)
         x1 = round(segment.end.x, num_decimals)
         y1 = round(segment.end.y, num_decimals)
-        if (x0, y0) not in seen_coords:
-            seen_coords.add((x0, y0))
-            coords.append((x0, y0))
-        if (x1, y1) not in seen_coords:
-            seen_coords.add((x1, y1))
-            coords.append((x1, y1))
+        z1 = round(segment.end.z, num_decimals)
+        
+        if (x0, y0, z0) not in seen_coords:
+            seen_coords.add((x0, y0, z0))
+            coords.append((x0, y0, z0))
+        if (x1, y1, z1) not in seen_coords:
+            seen_coords.add((x1, y1, z1))
+            coords.append((x1, y1, z1))
 
     if len(coords) != len(floor_obj.outline.segments):
         print('WARNING: # of coords != # 0f segments')
@@ -351,10 +374,11 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
     coord_list_floor.append(coord_list_floor[0])
 
     for wall_id in coord_dict_walls:
-        x0 = coord_dict_walls[wall_id][0]
-        y0 = coord_dict_walls[wall_id][1]
-        x1 = coord_dict_walls[wall_id][2]
-        y1 = coord_dict_walls[wall_id][3]
+        x0 = coord_dict_walls[wall_id]['start']['x']
+        y0 = coord_dict_walls[wall_id]['start']['y']
+        x1 = coord_dict_walls[wall_id]['end']['x']
+        y1 = coord_dict_walls[wall_id]['end']['y']
+        z = coord_dict_walls[wall_id]['topLevel']['elevation'] + coord_dict_walls[wall_id]['topOffset']
 
         if distance_formula((x0, y0), (x1, y1)) < 1:
             print('short wall')
@@ -391,20 +415,20 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
                 print('both corners')
             elif p0IsCorner:
                 print('p0 is corner')
-                coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+                coord_list_floor.insert(p1inPoly[1]+1, (x1, y1, z))
             elif p1IsCorner:
                 print('p1 is corner')
-                coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
             # neither point is on a corner
             else:
                 print('no corners')
                 # find the point that has the largest index in the list, insert there, and then insert the new point into the smaller index
                 if p0inPoly[1] > p1inPoly[1]:
-                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
-                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
+                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1, z))
                 elif p0inPoly[1] < p1inPoly[1]:
-                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
-                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                    coord_list_floor.insert(p1inPoly[1]+1, (x1, y1, z))
+                    coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
                 # if the indicies are the same, then the points are on the same line. Find the one furthest away from the corner point and insert that right after the point,
                 # then insert the closer point right after the corner point in the coodArrayFloor
                 else:
@@ -412,17 +436,17 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
                     distOfP1 = distance_formula((x1, y1), coord_list_floor[p0inPoly[1]])
                     # if p0 is closer, insert p1 then p0
                     if distOfP0 < distOfP1:
-                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1))
-                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1, z))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
                     else:
-                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
-                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
+                        coord_list_floor.insert(p0inPoly[1]+1, (x1, y1, z))
         elif p0inPoly[0] == 2:
             #   print('p0 on perim')
-            coord_list_floor.insert(p0inPoly[1]+1, (x0, y0))
+            coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
         elif p1inPoly[0] == 2:
             #   print('p1 on perim')
-            coord_list_floor.insert(p1inPoly[1]+1, (x1, y1))
+            coord_list_floor.insert(p1inPoly[1]+1, (x1, y1, z))
 
     # remove the last item of the coord_list because pygmsh likes 'open' polygons
     coord_list_floor.pop()
@@ -435,7 +459,7 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_de
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
                 stream(id:$stream_id){
                     object(id:$object_id){
-                        children(query: $myQuery select:["start.x","start.y","start.z","end.x","end.y","end.z","level.elevation","viewRange.topElevation","viewRange.bottomElevation"]){
+                        children(query: $myQuery select:["start.x","start.y","end.x","end.y","level.elevation","topLevel.elevation","topOffset"]){
                             objects{
                                 id
                                 data
@@ -469,17 +493,29 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_de
         except:
             continue
         # shear_walls.append(ShearWall())
-        coord_dict_walls[wall['id']] = (
-            round(wall['data']['start']['x'], num_decimals),
-            round(wall['data']['start']['y'], num_decimals),
-            round(wall['data']['end']['x'], num_decimals),
-            round(wall['data']['end']['y'], num_decimals), 
-            round(wall['data']['level']['elevation'], num_decimals), 
-            round(wall['data']['viewRange']['topElevation'], num_decimals), 
-            round(wall['data']['viewRange']['bottomElevation'], num_decimals), 
-        )
+        coord_dict_walls[wall['id']] = {
+            'start' : {
+                'x' : round(wall['data']['start']['x'], num_decimals),
+                'y' : round(wall['data']['start']['y'], num_decimals),
+            },
+            'end' : {
+                'x' : round(wall['data']['end']['x'], num_decimals),
+                'y' : round(wall['data']['end']['y'], num_decimals), 
+            },
+            'level' : {
+                'elevation' : round(wall['data']['level']['elevation'], num_decimals),
+            },
+            'topLevel' : {
+                'elevation' : globals_obj[wall['id']]['topLevel']['elevation'],
+            },
+            'topOffset' : globals_obj[wall['id']]['topOffset'],
+            # 'bottomOffset' : round(wall['data']['bottomOffset'], num_decimals),
+            # 'viewRange' : {
+            #     'topElevation' : round(wall['data']['viewRange']['topElevation'], num_decimals), 
+            #     'bottomElevation' : round(wall['data']['viewRange']['bottomElevation'], num_decimals), 
+            # }
+        }
     return coord_dict_walls
-
 
 # https:#github.com/sasamil/PointInPolygon_Py/blob/master/pointInside.py
 # arguments:

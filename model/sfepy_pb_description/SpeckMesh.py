@@ -26,9 +26,11 @@ class SpeckMesh(Base):
         cell_sets=None,
         gmsh_periodic=None,
         info=None,
+        units=None,
         **kwargs
     ):
         super().__init__(**kwargs)
+        self.units = units # default value for units is 'ft'
         self.points = points
         if cells:
             self.cells = [
@@ -44,23 +46,24 @@ class SpeckMesh(Base):
         self.cell_sets = {} if cell_sets is None else cell_sets
         self.gmsh_periodic = gmsh_periodic
         self.info = info
+        self.units = units # default value for units is 'ft'
         for key, value in kwargs.items():
             self[key] = value
 
     def create_display_value(self):
         faces = []
-        colors = []
         i=0
         for cell in self.cells:
             if cell[0] == 'triangle':
                 for tri in cell[1]:
                     faces.extend([0, tri[0], tri[1], tri[2]])
-                    colors.extend([111*i/10, 111*i/10, 111*i/10, 111*i/10])
                     i += 1
 
         # print(faces)
         # print(colors)
-        self.displayValue = [Mesh.create(list(itertools.chain.from_iterable(self.points)), faces, colors)]
+        self.displayValue = [Mesh.create(list(itertools.chain.from_iterable(self.points)), faces)]
+        self.displayValue[0].units = self.units
+        print('display mesh units', type(self.displayValue[0]), self.units, self.displayValue[0].units)
 
     def get_polyline(self):
         lines = set()

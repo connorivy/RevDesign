@@ -17,6 +17,9 @@
             success: function (response) {
                 console.log(response)
                 v.addAttributesToObjects(v.sceneManager.sceneObjects.allLineObjects, response['shear_wall_data'])
+                console.log(v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id'])
+                v.loadObject( v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id'])
+                // v.applyFilter({filterBy: {'speckle_type': 'SpeckMesh'}, colorBy: {wireframe: true, property: 'displacements', direction: 1, type: 'FEM'}, showDeformed: 5000, ghostOthers: true })
             },
             error: function (response) {
                 console.log('error')

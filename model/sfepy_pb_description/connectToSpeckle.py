@@ -86,6 +86,8 @@ def send_to_speckle(client, transport, STREAM_ID, obj, branch_name='main', commi
         message=commit_message,
     )
 
+    return obj_id
+
 def edit_data_in_obj(obj, data_to_edit):
     '''
     This function expects a dictionary structured as,

@@ -1,414 +1,161 @@
 <!DOCTYPE html>
-<html lang="en">
-	<head>
-		<title>three.js webgl - buffergeometry - lines drawrange</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="main.css">
-	</head>
-	<body>
+<!-- https://discourse.threejs.org/t/assign-different-colors-to-different-parts-of-buffergeometry/6604/12 -->
+<head>
+	<title> ColorStripeChanging2 </title>
+	<meta charset="utf-8" />
+	<style>	body { margin: 0;} </style>
+</head>
+<body> 	
+  <button type="button" id="newcolors"> new colors </button> 
+</body>
 
-		<div id="container"></div>
-		<div id="info">
-			<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> webgl - buffergeometry drawrange<br/>
-			by <a href="https://twitter.com/fernandojsg">fernandojsg</a>
-		</div>
+<script type="module">
 
-		<!-- Import maps polyfill -->
-		<!-- Remove this when import maps will be widely supported -->
-		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
-
-		<script type="module">
-            import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
+// @author hofk
+import * as THREE from 'https://cdn.skypack.dev/three@0.130.1';
 			// import * as THREE from 'three';
 
-            import Stats from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
-			// import Stats from './jsm/libs/stats.module.js';
-            import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
-			// import { GUI } from './jsm/libs/lil-gui.module.min.js';
+import Stats from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/stats.module.js';
+// import Stats from './jsm/libs/stats.module.js';
+import { GUI } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/libs/dat.gui.module.js';
+// import { GUI } from './jsm/libs/lil-gui.module.min.js';
 
-            import { OrbitControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
-			// import { OrbitControls } from './jsm/controls/OrbitControls.js';
+import { OrbitControls } from 'https://cdn.skypack.dev/three@0.130.1/examples/jsm/controls/OrbitControls.js';
 
-			let group;
-			let container, stats;
-			const particlesData = [];
-			let camera, scene, renderer;
-			let positions, colors;
-            let meshPositions;
-			let particles;
-            let meshParticles;
-			let pointCloud;
-			let particlePositions;
-            let meshParticlePositions;
-			let linesMesh;
+document.getElementById( "newcolors" ).onclick = newcolors;
 
-            let meshLinesMesh;
-            let meshTriangles;
-            let meshPoints;
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 55, window.innerWidth / window.innerHeight, 0.1, 100 );
+camera.position.set( 5, -18, 30 );
+var renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setClearColor( 0x111111, 1 );	
+var container = document.createElement( 'div' );
+document.body.appendChild( container );
+container.appendChild( renderer.domElement ); 
+var controls = new OrbitControls( camera, renderer.domElement );
 
-			const maxParticleCount = 1000;
-			let particleCount = 500;
-			const r = 800;
-			const rHalf = r / 2;
+var clock = new THREE.Clock( );
 
-			const effectController = {
-				showDots: true,
-				showLines: true,
-				minDistance: 150,
-				limitConnections: false,
-				maxConnections: 20,
-				particleCount: 500
-			};
+var stripCount = 24;
 
-			init();
-			animate();
+var stripWidth = 1;
+var stripHeight = 12;
+var centerX = stripCount * stripWidth / 2;
+var centerY = stripHeight / 2;
 
-			function initGUI() {
+var faceCount = stripCount * 2;
 
-				const gui = new GUI();
+// use THREE.VertexColors
+var material = new THREE.MeshBasicMaterial( { side: THREE.DoubleSide,  vertexColors: THREE.VertexColors, wireframe: false } );
 
-				gui.add( effectController, 'showDots' ).onChange( function ( value ) {
+var g = new THREE.BufferGeometry( ); // non indexed BufferGeometry
 
-					pointCloud.visible = value;
+g.positions = new Float32Array( faceCount * 9 ); // 'triangle soup'
+g.addAttribute( 'position', new THREE.BufferAttribute( g.positions, 3 ) );
+g.colors = new Float32Array( faceCount * 9 );
+g.addAttribute( 'color', new THREE.BufferAttribute( g.colors, 3 ) );
 
-				} );
-				gui.add( effectController, 'showLines' ).onChange( function ( value ) {
+for ( var i = 0, j = 0; i < stripCount; i ++, j += 18 ) { 
 
-					linesMesh.visible = value;
+	// left face
+		
+	g.positions[ j ]     = i * stripWidth - centerX;
+	g.positions[ j + 1 ] = 0 - centerY;
+	g.positions[ j + 2 ] = 8 * Math.sin(  Math.PI * i / 25 );
+	
+	g.positions[ j + 3 ] = ( i + 1 ) * stripWidth - centerX;
+	g.positions[ j + 4 ] = stripHeight - centerY;
+	g.positions[ j + 5 ] = 8 * Math.sin(  Math.PI * ( i + 1 ) / 25 );
+	
+	g.positions[ j + 6 ] = i * stripWidth - centerX;
+	g.positions[ j + 7 ] = stripHeight - centerY;
+	g.positions[ j + 8 ] = 8 * Math.sin(  Math.PI * i / 25 );
+	
+	// right face
+	
+	g.positions[ j +  9 ] = i * stripWidth - centerX;
+	g.positions[ j + 10 ] = 0 - centerY;
+	g.positions[ j + 11 ] = 8 * Math.sin(  Math.PI * i / 25 );
+						   
+	g.positions[ j + 12 ] = ( i + 1 ) * stripWidth - centerX;
+	g.positions[ j + 13 ] = 0 - centerY;
+	g.positions[ j + 14 ] = 8 * Math.sin(  Math.PI * ( i + 1 ) / 25 );
+						   
+	g.positions[ j + 15 ] = ( i + 1 ) * stripWidth - centerX;
+	g.positions[ j + 16 ] = stripHeight - centerY;
+	g.positions[ j + 17 ] = 8 * Math.sin(  Math.PI * ( i + 1 ) / 25 );
+	
+}
 
-				} );
-				gui.add( effectController, 'minDistance', 10, 300 );
-				gui.add( effectController, 'limitConnections' );
-				gui.add( effectController, 'maxConnections', 0, 30, 1 );
-				gui.add( effectController, 'particleCount', 0, maxParticleCount, 1 ).onChange( function ( value ) {
+var group2 = new THREE.Group()
+var group = new THREE.Group()
+var mesh = new THREE.Mesh( g, material );
+group.add(mesh)
+group2.add(group)
+scene.add( group2 );
 
-					particleCount = parseInt( value );
-					particles.setDrawRange( 0, particleCount );
+var t1 = 0;
+var t2;
 
-				} );
+var c8;
+var c = [];
 
+newcolors( );
+
+animate();
+
+//..................................
+
+function animate() {
+	
+	t2 = clock.getElapsedTime ( ); 
+
+	requestAnimationFrame( animate );	
+	renderer.render( scene, camera );
+	
+	if ( t2 - t1 > 0.4 ) {
+		
+		for ( var i = 0, j = 0; i < stripCount; i ++, j += 18 ) {
+			
+			c8 = getRandomInt( 7 ) * 3;
+			
+			for (var k = 0; k < 18; k ++ ) {   // apply color
+				
+				g.colors[ j + k ] = c[ k % 3 + c8 ];
+				
 			}
 
-			function init() {
+		}
+		
+		t1 = t2;
+		
+	}
+	
+	g.attributes.color.needsUpdate = true;
+	// console.log(g.attributes.color)	
+	controls.update();
+	
+}
+
+function getRandomInt( max ) {
+
+  return Math.floor( Math.random( ) * Math.floor( max ) );
+  
+}
+
+function newcolors( ) {
+	
+	c = [];
+
+	for ( var i = 0; i < 8; i ++  ) {  // random colors
+	
+		c.push( Math.random( ), Math.random( ), Math.random( ) );
+		
+	}
+	
+}
+
+</script>
 
-				initGUI();
-
-				container = document.getElementById( 'container' );
-
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 4000 );
-				camera.position.z = 140;
-                // camera.position.y = 200;
-
-				const controls = new OrbitControls( camera, container );
-				controls.minDistance = 10;
-				controls.maxDistance = 3000;
-
-				scene = new THREE.Scene();
-
-
-				group = new THREE.Group();
-				scene.add( group );
-
-				const helper = new THREE.BoxHelper( new THREE.Mesh( new THREE.BoxGeometry( r, r, r ) ) );
-				helper.material.color.setHex( 0x101010 );
-				helper.material.blending = THREE.AdditiveBlending;
-				helper.material.transparent = true;
-				group.add( helper );
-
-
-
-                const meshPointMaterial = new THREE.PointsMaterial( {
-					color: 0xFFFFFF,
-					size: 3,
-					blending: THREE.AdditiveBlending,
-					transparent: true,
-					sizeAttenuation: false
-				} );
-                // mesh = DotMap({
-                //     'points': ,
-                //     'cells' : [(
-                //         'Cellblock', ['triangle', [[11,  1, 18],[ 4, 12, 18],[ 4, 18, 21],[18,  1, 21],[10, 13, 19],[12, 11, 18],[11, 12, 20],[13, 10, 20],[ 3,  4, 21],[ 1,  2, 21],[14,  9, 19],[ 2,  3, 21],[ 9, 10, 19],[10, 11, 20],[12, 13, 20],[13, 14, 19],[0, 6, 5],[ 6, 17, 5],[17,  6,  7],[16 , 7,  8],[16, 17,  7],[15,  8,  9],[15, 16,  8],[14, 15,  9]]]
-                //     )],
-                // })
-                meshPoints = [[14.7, 42.6, 0.0], [-5.1, 42.6, 0.0], [-5.3, 42.6, 0.0], [-5.3, 41.6, 0.0], [-5.1, 41.6, 0.0], [14.7, 41.6, 0.0], [10.127904226464409, 42.6, 0.0], [5.599509537111047, 42.6, 0.0], [1.967590007061883, 42.6, 0.0], [-0.6902142492345327, 42.6, 0.0], [-2.634780305805119, 42.6, 0.0], [-4.057593196910744, 42.6, 0.0], [-4.057593196916638, 41.6, 0.0], [-2.634780305816083, 41.6, 0.0], [-0.6902142492553782, 41.6, 0.0], [1.967590007026069, 41.6, 0.0], [5.599509537064472, 41.6, 0.0], [10.127904226442306, 41.6, 0.0], [-4.578796598458323, 42.10000000000002, 0.0], [-1.6624972775300504, 42.09999999999695, 0.0], [-3.346186751362146, 42.1, 0.0], [-5.079227892877834, 42.10000000000002, 0.0]];
-                meshTriangles = [[11,  1, 18],[ 4, 12, 18],[ 4, 18, 21],[18,  1, 21],[10, 13, 19],[12, 11, 18],[11, 12, 20],[13, 10, 20],[ 3,  4, 21],[ 1,  2, 21],[14,  9, 19],[ 2,  3, 21],[ 9, 10, 19],[10, 11, 20],[12, 13, 20],[13, 14, 19],[0, 6, 5],[ 6, 17, 5],[17,  6,  7],[16 , 7,  8],[16, 17,  7],[15,  8,  9],[15, 16,  8],[14, 15,  9]];
-
-                meshParticles = new THREE.BufferGeometry();
-				meshParticlePositions = new Float32Array( meshPoints.flat() );
-
-                meshParticles.setDrawRange( 0, meshPoints.length );
-				meshParticles.setAttribute( 'position', new THREE.BufferAttribute( meshParticlePositions, 3 ));
-
-                console.log(meshPoints)
-                console.log(meshParticlePositions)
-
-				// create the particle system
-				pointCloud = new THREE.Points( meshParticles, meshPointMaterial );
-				group.add( pointCloud );
-
-
-
-
-                const meshGeometry = new THREE.BufferGeometry();
-
-                meshPositions = new Float32Array( (meshPoints.length + meshTriangles.length - 1) * 10 );
-
-                var meshVertexPos = 0;
-                var meshNumConnected = 0;
-                for (let i = 0; i < meshTriangles.length; i ++ ) {
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][2]
-
-                    meshNumConnected ++
-                }
-
-				meshGeometry.setAttribute( 'position', new THREE.BufferAttribute( meshPositions, 3 ).setUsage( THREE.DynamicDrawUsage ) );
-				// meshGeometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ).setUsage( THREE.DynamicDrawUsage ) );
-
-				meshGeometry.computeBoundingSphere();
-
-				meshGeometry.setDrawRange( 0, meshNumConnected * 4 );
-
-				const meshLineMaterial = new THREE.LineBasicMaterial( {
-                    color: 0xFF0000,
-					// vertexColors: true,
-					// blending: THREE.AdditiveBlending,
-					// transparent: true
-				} );
-
-                console.log(meshPositions)
-
-				meshLinesMesh = new THREE.LineSegments( meshGeometry, meshLineMaterial );
-                group.add( meshLinesMesh );
-
-
-
-
-				const segments = maxParticleCount * maxParticleCount;
-
-				positions = new Float32Array( segments * 3 );
-				colors = new Float32Array( segments * 3 );
-
-				const pMaterial = new THREE.PointsMaterial( {
-					color: 0xFFFFFF,
-					size: 3,
-					blending: THREE.AdditiveBlending,
-					transparent: true,
-					sizeAttenuation: false
-				} );
-
-				particles = new THREE.BufferGeometry();
-				particlePositions = new Float32Array( maxParticleCount * 3 );
-
-				for ( let i = 0; i < maxParticleCount; i ++ ) {
-
-					const x = Math.random() * r - r / 2;
-					const y = Math.random() * r - r / 2;
-					const z = Math.random() * r - r / 2;
-
-					particlePositions[ i * 3 ] = x;
-					particlePositions[ i * 3 + 1 ] = y;
-					particlePositions[ i * 3 + 2 ] = z;
-
-					// add it to the geometry
-					particlesData.push( {
-						velocity: new THREE.Vector3( - 1 + Math.random() * 2, - 1 + Math.random() * 2, - 1 + Math.random() * 2 ),
-						numConnections: 0
-					} );
-
-				}
-
-				particles.setDrawRange( 0, particleCount );
-				particles.setAttribute( 'position', new THREE.BufferAttribute( particlePositions, 3 ));
-
-                console.log(particlePositions)
-
-				// create the particle system
-				pointCloud = new THREE.Points( particles, pMaterial );
-				// group.add( pointCloud );
-
-				const geometry = new THREE.BufferGeometry();
-
-				geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ).setUsage( THREE.DynamicDrawUsage ) );
-				geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ).setUsage( THREE.DynamicDrawUsage ) );
-
-				geometry.computeBoundingSphere();
-
-				geometry.setDrawRange( 0, 0 );
-
-				const material = new THREE.LineBasicMaterial( {
-					vertexColors: true,
-					blending: THREE.AdditiveBlending,
-					transparent: true
-				} );
-
-                console.log(positions)
-
-				linesMesh = new THREE.LineSegments( geometry, material );
-				// group.add( linesMesh );
-
-				//
-
-				renderer = new THREE.WebGLRenderer( { antialias: true } );
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.outputEncoding = THREE.sRGBEncoding;
-
-				container.appendChild( renderer.domElement );
-
-				//
-
-				stats = new Stats();
-				container.appendChild( stats.dom );
-
-				window.addEventListener( 'resize', onWindowResize );
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-
-			function animate() {
-				let vertexpos = 0;
-                let meshVertexPos = 0;
-				let colorpos = 0;
-				let numConnected = 0;
-                let meshNumConnected = 0;
-
-                for (let i = 0; i < meshTriangles.length; i ++ ) {
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][1]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][2]][2]
-
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][0]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][1]
-                    meshPositions[meshVertexPos ++] = meshPoints[meshTriangles[i][0]][2]
-
-                    meshNumConnected ++
-                }
-
-				for ( let i = 0; i < particleCount; i ++ )
-					particlesData[ i ].numConnections = 0;
-
-				for ( let i = 0; i < particleCount; i ++ ) {
-
-					// get the particle
-					const particleData = particlesData[ i ];
-
-					particlePositions[ i * 3 ] += particleData.velocity.x;
-					particlePositions[ i * 3 + 1 ] += particleData.velocity.y;
-					particlePositions[ i * 3 + 2 ] += particleData.velocity.z;
-
-					if ( particlePositions[ i * 3 + 1 ] < - rHalf || particlePositions[ i * 3 + 1 ] > rHalf )
-						particleData.velocity.y = - particleData.velocity.y;
-
-					if ( particlePositions[ i * 3 ] < - rHalf || particlePositions[ i * 3 ] > rHalf )
-						particleData.velocity.x = - particleData.velocity.x;
-
-					if ( particlePositions[ i * 3 + 2 ] < - rHalf || particlePositions[ i * 3 + 2 ] > rHalf )
-						particleData.velocity.z = - particleData.velocity.z;
-
-					if ( effectController.limitConnections && particleData.numConnections >= effectController.maxConnections )
-						continue;
-
-					// Check collision
-					for ( let j = i + 1; j < particleCount; j ++ ) {
-
-						const particleDataB = particlesData[ j ];
-						if ( effectController.limitConnections && particleDataB.numConnections >= effectController.maxConnections )
-							continue;
-
-						const dx = particlePositions[ i * 3 ] - particlePositions[ j * 3 ];
-						const dy = particlePositions[ i * 3 + 1 ] - particlePositions[ j * 3 + 1 ];
-						const dz = particlePositions[ i * 3 + 2 ] - particlePositions[ j * 3 + 2 ];
-						const dist = Math.sqrt( dx * dx + dy * dy + dz * dz );
-
-						if ( dist < effectController.minDistance ) {
-
-							particleData.numConnections ++;
-							particleDataB.numConnections ++;
-
-							const alpha = 1.0 - dist / effectController.minDistance;
-
-							positions[ vertexpos ++ ] = particlePositions[ i * 3 ];
-							positions[ vertexpos ++ ] = particlePositions[ i * 3 + 1 ];
-							positions[ vertexpos ++ ] = particlePositions[ i * 3 + 2 ];
-
-							positions[ vertexpos ++ ] = particlePositions[ j * 3 ];
-							positions[ vertexpos ++ ] = particlePositions[ j * 3 + 1 ];
-							positions[ vertexpos ++ ] = particlePositions[ j * 3 + 2 ];
-
-							colors[ colorpos ++ ] = alpha;
-							colors[ colorpos ++ ] = alpha;
-							colors[ colorpos ++ ] = alpha;
-
-							colors[ colorpos ++ ] = alpha;
-							colors[ colorpos ++ ] = alpha;
-							colors[ colorpos ++ ] = alpha;
-
-							numConnected ++;
-
-						}
-
-					}
-
-				}
-
-
-                // console.log(positions)
-				linesMesh.geometry.setDrawRange( 0, numConnected * 2 );
-				linesMesh.geometry.attributes.position.needsUpdate = true;
-				linesMesh.geometry.attributes.color.needsUpdate = true;
-
-                // meshLinesMesh.geometry.setDrawRange( 0, meshNumConnected * 2 );
-                meshLinesMesh.geometry.attributes.position.needsUpdate = true;
-
-				pointCloud.geometry.attributes.position.needsUpdate = true;
-
-				requestAnimationFrame( animate );
-
-				stats.update();
-				render();
-
-			}
-
-			function render() {
-
-				const time = Date.now() * 0.001;
-
-				// group.rotation.y = time * 0.1;
-				renderer.render( scene, camera );
-
-			}
-
-		</script>
-	</body>
 </html>

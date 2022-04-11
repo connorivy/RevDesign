@@ -251,6 +251,21 @@ export default class InteractionHandler {
         break
       }
       case 'Mesh':
+        if (objs[0].object.userData.speckle_type == 'SpeckMesh') {
+          this.viewer.sphereInter.geometry.parameters['radius'] = 1
+          this.viewer.sphereInter.geometry.needsUpdate = true
+          const position = objs[0].object.geometry.getAttribute('position')
+          const face = objs[0].face;
+          const points = [new THREE.Vector3().fromBufferAttribute(position, face.a), new THREE.Vector3().fromBufferAttribute(position, face.b), new THREE.Vector3().fromBufferAttribute(position, face.c)]
+          const distances = [objs[0].point.distanceToSquared(points[0]), objs[0].point.distanceToSquared(points[1]), objs[0].point.distanceToSquared(points[2])]
+          const min = Math.min(...distances)
+
+          this.viewer.sphereInter.geometry.dispose()
+          this.viewer.sphereInter.geometry = new THREE.SphereGeometry( 1 / 210 * objs[0].distance + 1 / 14);
+          this.viewer.sphereInter.position.copy( points[distances.indexOf(min)] );
+          this.viewer.sphereInter.visible = true
+        }
+        else this.viewer.sphereInter.visible = false
         this.hoveredObjects.add( new THREE.Mesh( objs[0].object.geometry, this.hoverMeshMaterial ) )
         break
       case 'Line':
@@ -361,6 +376,7 @@ export default class InteractionHandler {
   }
 
   dehoverObjects() {
+    this.viewer.sphereInter.visible = false
     this.hoveredObjects.clear()
     this.hoveredObjectsUserData = []
     this.viewer.needsRender = true

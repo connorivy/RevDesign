@@ -15,6 +15,7 @@
           },
           success: function (response) {
               console.log(response)
+              v.loadObject( v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id'])
           },
           error: function (response) {
               console.log('error')

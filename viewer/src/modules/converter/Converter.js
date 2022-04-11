@@ -409,7 +409,7 @@ export default class Coverter {
       if (colorsRaw && colorsRaw.length !== 0) {
         if (colorsRaw.length !== buffer.attributes.position.count) {
           console.warn(
-            `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
+            `Mesh (id ${obj.id}) colours are mismatched with vertice counts. The number of colours (currently ${colorsRaw.length}) must equal the number of vertices (currently ${buffer.attributes.position.count}).`
           )
         }
 

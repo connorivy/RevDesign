@@ -26,7 +26,10 @@ def get_sfepy_pb(**kwargs):
     # out = pb.get_variables().create_output()
     pb.save_state('mesh_displacements.vtk', state=state)
 
-    return pb, state
+    variables = pb.get_variables()
+    u = variables.get_state_parts()['u']
+
+    return pb, state, u.reshape(-1, 2)
 
 def create_mesh_applied_loads(**kwargs):
     conf = ProblemConf.from_dict(input_for_applied_loads.define(**kwargs), input_for_applied_loads)
@@ -47,19 +50,18 @@ def create_mesh_applied_loads(**kwargs):
 
     return f.reshape((-1, 2))
 
-def create_mesh_reactions(pb, state, fixed_nodes):
+def create_mesh_reactions(pb, state, u, fixed_nodes):
     # https://sfepy.org/doc-devel/primer.html#table-of-contents
     variables = pb.get_variables()
-    u = variables.get_state_parts()['u']
     pb.remove_bcs()
     shear_walls = {}
 
+    u = u.ravel()
     f = pb.evaluator.eval_residual(u)
     f = f.reshape(-1, 2)
-    spring = pb.get_materials()['spring']
-
-    variables = pb.get_variables()
-    u = variables.get_state_parts()['u'].reshape((-1, 2))
+    u = u.reshape(-1, 2)
+    if not fixed_nodes:
+        spring = pb.get_materials()['spring']
 
     for region in pb.domain.regions:
         region_name = region.name
@@ -83,7 +85,7 @@ def create_mesh_reactions(pb, state, fixed_nodes):
     out = variables.create_output()
     pb.save_state('mesh_reactions.vtk', out=out)
 
-    return f.reshape((-1, 2)), u, shear_walls
+    return f.reshape((-1, 2)), shear_walls
 
 def get_reactions_in_region(pb, state, regions, fixed_nodes, dim = 2):
     # https://mail.python.org/archives/list/sfepy@python.org/thread/P7BPSHZEHCMHEPUHLUQVRI7DGBOALRRS/

@@ -148,10 +148,12 @@ export default class SceneObjects {
   }
 
   async applyFilter(filter) {
+    console.log('apply filter')
     // eslint-disable-next-line no-param-reassign
     if (filter === undefined) filter = this.appliedFilter
 
     if (filter === null) {
+      console.log('remove filter')
       // Remove filters, use allObjects
       let newGoupedSolidObjects = await this.groupSolidObjects(this.allSolidObjects)
 

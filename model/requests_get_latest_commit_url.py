@@ -8,12 +8,13 @@ def get_latest_commit_url(request):
     if request.is_ajax and request.method == "POST":
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
+        BRANCH = request.POST.get('BRANCH')
 
         print('HOST URL', HOST, STREAM_ID)
         
         
         client = get_client(HOST=HOST)
-        latest_commit = get_latest_commit_for_branch(client, STREAM_ID, 'main')
+        latest_commit = get_latest_commit_for_branch(client, STREAM_ID, BRANCH)
 
         # example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
         url = f'{HOST}/streams/{STREAM_ID}/objects/{latest_commit.referencedObject}'

@@ -39,7 +39,7 @@ def build_shearwalls(request):
 
         transport = get_transport(client, STREAM_ID)
         globals = get_globals_obj(client, transport, STREAM_ID)
-        edit_data_in_obj(globals, data_to_change)
+        edit_data_in_obj(globals, data_to_change.copy())
         send_to_speckle(client, transport, STREAM_ID, globals, 'globals')
 
         # stacked_walls = get_stacked_walls(shear_wall_objects)
@@ -208,6 +208,12 @@ def assign_bottom_floor(sw_obj, sw_start, sw_end, lvl_base_elevation, floors_in_
         sw_obj.base_offset = floors_in_view[0]['elevation_at_top'] - lvl_base_elevation
         sw_obj.get_base_elevation()
         data_to_change = {
+            'start' : {
+                'z' : floors_in_view[0]['elevation_at_top']
+            },
+            'end' : {
+                'z' : floors_in_view[0]['elevation_at_top']
+            },
             'baseOffset' : floors_in_view[0]['elevation_at_top'] - lvl_base_elevation
         }
     else:
@@ -223,6 +229,12 @@ def assign_bottom_floor(sw_obj, sw_start, sw_end, lvl_base_elevation, floors_in_
             sw_obj.base_offset = floors_containing_sw[0]['elevation_at_top'] - lvl_base_elevation
             sw_obj.get_base_elevation()
             data_to_change = {
+                'start' : {
+                    'z' : floors_containing_sw[0]['elevation_at_top']
+                },
+                'end' : {
+                    'z' : floors_containing_sw[0]['elevation_at_top']
+                },
                 'baseOffset' : floors_containing_sw[0]['elevation_at_top'] - lvl_base_elevation
             }
         else:

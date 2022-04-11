@@ -65,6 +65,12 @@ export default class Viewer extends EventEmitter {
       this.mouseOverRenderer = false
     })
 
+    const geometry = new THREE.SphereGeometry( .5 );
+    const material = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+
+    this.sphereInter = new THREE.Mesh( geometry, material );
+    this.sphereInter.visible = false;
+
     this.loaders = {}
 
     this.sectionBox = new SectionBox(this)
@@ -144,6 +150,8 @@ export default class Viewer extends EventEmitter {
 
     let group = new THREE.Group()
     this.scene.add(group)
+
+    this.scene.add( this.sphereInter );
   }
 
   initGui() {
