@@ -3,6 +3,24 @@
 {% block analyzeMesh %}
 <script type="text/javascript">
     function analyzeMesh() {
+        if (v.hasOwnProperty('floors')) {
+
+        } else {
+            v.floors = {}
+            floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {filterBy : {'speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'}})
+            for (var index in floor_objs) {
+                var floor_ids = Object.keys(v.floors)
+                if (!floor_ids.includes(floor_objs[index].uuid)) {
+                    v.floors[floor_objs[index].uuid] = {
+                        'name' : floor_objs[index].userData.level.name,
+                        'top_elevation' : floor_objs[index].userData.parameters.STRUCTURAL_ELEVATION_AT_TOP.value,
+                        'stud length of walls above' : null,
+                        'shear force at floor' : null,
+                        'outline' : floor_objs[index].userData.outline,
+                    }
+                }
+            }
+        }
         // POST request
         $.ajax({
             type: 'POST',
@@ -10,7 +28,7 @@
             data: {
               'HOST': v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl,
               'STREAM_ID': v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId,
-              'FLOOR_ID': v.interactions.selectedObjectsUserData[0].id,
+              'floor_ids': JSON.stringify(Object.keys(v.floors)),
               'WIND_DIR': v.gui.children[0].object['wind direction'],
               'FIXED_NODES': v.gui.children[0].object['fixed nodes'],
           },

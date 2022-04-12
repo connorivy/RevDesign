@@ -7,7 +7,7 @@
 
         } else {
             v.floors = {}
-            floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {'userData.speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'})
+            floor_objs = v.sceneManager.sceneObjects.filteringManager.getObjsInGroupThatPassFilter(v.sceneManager.sceneObjects.allSolidObjects, {filterBy : {'speckle_type': 'Objects.BuiltElements.Floor:Objects.BuiltElements.Revit.RevitFloor'}})
             for (var index in floor_objs) {
                 var floor_ids = Object.keys(v.floors)
                 if (!floor_ids.includes(floor_objs[index].uuid)) {

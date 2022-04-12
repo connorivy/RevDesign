@@ -211,6 +211,7 @@ export default class InteractionHandler {
     let selectionCenter = new THREE.Vector3()
     box.getCenter(selectionCenter)
     let selectionInfo = {
+      object: objs[0],
       userData: this.selectedObjectsUserData,
       location: objs[0].point,
       selectionCenter: selectionCenter

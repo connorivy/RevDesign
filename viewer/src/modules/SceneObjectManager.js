@@ -44,6 +44,17 @@ export default class SceneObjectManager {
       clippingPlanes: this.viewer.sectionBox.planes
     })
 
+    this.femMeshMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      vertexColors: THREE.VertexColors,
+      wireframe: true,
+      side: THREE.DoubleSide,
+      reflectivity: 0,
+      clippingPlanes: this.viewer.sectionBox.planes,
+      polygonOffset : true,
+      polygonOffsetFactor : -0.2
+    })
+
     this.lineMaterial = new THREE.LineBasicMaterial({
       color: 0x7f7f7f,
       clippingPlanes: this.viewer.sectionBox.planes
@@ -177,7 +188,7 @@ export default class SceneObjectManager {
       let material = this.solidVertexMaterial.clone()
       material.clippingPlanes = this.viewer.sectionBox.planes
       material.wireframe = true
-      // add these two lines to fix the mesh flickering when in the same location as the revit floor
+      // add these two lines to fix the mesh flickering when in the same location as the revit floor - CI
       material.polygonOffset = true
       material.polygonOffsetFactor = -0.2
 
@@ -224,6 +235,7 @@ export default class SceneObjectManager {
   }
 
   addLine(wrapper, addToScene = true) {
+    // give dashe line type to shearwall - CI
     var line = null
     if (wrapper.meta.lineType == 'shearWall') {
       line = new THREE.Line( wrapper.bufferGeometry, this.lineDashedMaterial )

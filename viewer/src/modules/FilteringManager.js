@@ -36,6 +36,18 @@ export default class FilteringManager {
     }
 
     let clone = obj.clone()
+    if (filter.wireframe !== 'undefined') { 
+      this.toggleWireframe(obj, filter.wireframe)
+      obj.material.needsUpdate = true
+      clone = obj.clone()
+    }
+    if (filter.showDeformed) { 
+      clone.geometry = clone.geometry.clone()
+      clone.material = clone.material.clone()
+      this.deformFloorsByVertices(clone, filter.showDeformed)
+      clone.geometry.computeBoundingBox();
+      clone.geometry.computeBoundingSphere();
+    }
     if (filter.colorBy) {
       if (filter.colorBy.type === 'category') {
         let newMaterial = this.colorWithCategory(obj, filter.colorBy)
@@ -44,18 +56,27 @@ export default class FilteringManager {
         let newMaterial = this.colorWithGradient(obj, filter.colorBy)
         this.setMaterial(clone, newMaterial)
       } else if (filter.colorBy.type === 'FEM') {
-        clone.geometry = clone.geometry.clone()
-        clone.material = clone.material.clone()
-        let newMaterial = this.colorFloorsByVertices(clone, filter.colorBy)
-        if (filter.showDeformed) { 
-          this.deformFloorsByVertices(clone, filter.showDeformed)
-          clone.geometry.computeBoundingBox();
-          clone.geometry.computeBoundingSphere();
-        }
-        this.setMaterial(clone, newMaterial)
+        this.colorFloorsByVertices(obj, filter.colorBy)
+        clone = obj.clone()
       }
     }
+    console.log('CLONE WIREMESH', clone.material.wireframe)
     return clone
+  }
+
+  filterAndColorMeshObject(filter) {
+    var meshes = this.getObjsInGroupThatPassFilter(this.viewer.sceneManager.sceneObjects.allSolidObjects, filter)
+    console.log(meshes)
+    for (var mesh of meshes) {
+      console.log(mesh)
+      if (filter.wireframe !== 'undefined') { 
+        console.log('toggleWireframe')
+        if (filter.wireframe === true) mesh.material.wireframe = true;
+        else if (filter.wireframe === false) mesh.material.wireframe = false;
+      }
+      // mesh.material.needsUpdate = true;
+      this.viewer.needsRender = true
+    }
   }
 
   ghostObject(clone) {
@@ -102,7 +123,7 @@ export default class FilteringManager {
   getObjsInGroupThatPassFilter(group, filter) {
     var objsToReturn = []
     for ( let obj of group.children ) {
-      var passes = this.passesFilter(obj, filter)
+      var passes = this.passesFilter(obj.userData, filter.filterBy)
       if (passes) {
         objsToReturn.push(obj)
       }
@@ -168,9 +189,42 @@ export default class FilteringManager {
     return material
   }
 
+  toggleWireframe(floorObj, wireframe) {
+    if (wireframe === true) floorObj.material.wireframe = true;
+    else if (wireframe === false) floorObj.material.wireframe = false;
+  }
+
+  // toggleWireframe(floorObj, wireframe) {
+  //   if (wireframe === true) {
+  //     if (!floorObj.geometry.getAttribute('color')) {
+  //       console.log('wireframe no color')
+  //       floorObj.material = this.viewer.sceneManager.femMeshMaterial.clone()
+  //     }
+  //     floorObj.material.wireframe = true;
+  //   } else if (wireframe === false) {
+  //     if (!floorObj.geometry.getAttribute('color')) floorObj.material = this.viewer.sceneManager.solidMaterial.clone()
+  //     floorObj.material.wireframe = false;
+  //   }
+  //   return floorObj.material
+  // }
+
   colorFloorsByVertices(floorObj, colors) {
     let rainbow = new Rainbow()
     if (!floorObj.userData.cell_data) return floorObj.material
+
+    console.log(floorObj.material.wireframe)
+    const wireframe = floorObj.material.wireframe
+    if(!colors.property) {
+      floorObj.geometry.deleteAttribute('color')
+      if (wireframe) {
+      } else {
+        floorObj.material = this.viewer.sceneManager.solidMaterial.clone()
+      }
+      return
+    } else {
+      floorObj.material = this.viewer.sceneManager.femMeshMaterial.clone()
+      floorObj.material.wireframe = wireframe
+    }
 
     let objValue = this.getObjectProperty(floorObj.userData.cell_data, colors.property)
     if (typeof(floorObj.geometry.getAttribute('color')) === "undefined") {
@@ -224,7 +278,6 @@ export default class FilteringManager {
   }
 
   deformFloorsByVertices(floorObj, multiplier) {
-    console.log(floorObj)
     let displacements = this.getObjectProperty(floorObj.userData.cell_data, 'displacements')
     for (var i = 0; i < displacements.length; i++) {
       floorObj.geometry.getAttribute('position').setXYZ(i, floorObj.geometry.getAttribute('position').array[i*3] + displacements[i][0]*multiplier, floorObj.geometry.getAttribute('position').array[i*3+1] + displacements[i][1]*multiplier, floorObj.geometry.getAttribute('position').array[i*3+2])

@@ -26,7 +26,9 @@ def get_floor_mesh(request):
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
         OBJECT_ID = request.POST.get('OBJECT_ID')
-        FLOOR_ID = request.POST.get('FLOOR_ID')
+        floor_ids = json.loads(request.POST.get('floor_ids'))
+
+        print(request.POST, floor_ids)
 
         # create and authenticate a client
         client = get_client(HOST)
@@ -34,79 +36,86 @@ def get_floor_mesh(request):
         # create an authenticated server transport from the client
         transport = ServerTransport(STREAM_ID, client)
         globals_obj = get_globals_obj(client, transport, STREAM_ID)
+        results = Base()
+        results['@SpeckMeshes'] = []
+        data_to_edit = {}
 
         # print('GLOBALS OBJ', globals_obj)
         # for name in globals_obj.get_member_names():
         #     print(name, globals_obj[name])
+        for floor_id in floor_ids:
+            floor_obj = get_object(transport, floor_id)
+            coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
+            coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, floor_id, globals_obj, num_decimals = 1)
+            coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
-        floor_obj = get_object(transport, FLOOR_ID)
-        coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
-        coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals = 1)
-        coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
+            mesh_size = 5
+            mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
 
-        mesh_size = 5
-        mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
+            # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
+            mesh.remove_orphaned_nodes()
+            mesh.remove_lower_dimensional_cells()
 
-        # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
-        mesh.remove_orphaned_nodes()
-        mesh.remove_lower_dimensional_cells()
+            # mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
+            # mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
 
-        mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
-        mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
-
-        options = {
-            'floor_id' : FLOOR_ID,
-            'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
-            'plus_x_wind_load_point_ids': wlc['plus_x_wind_load_point_ids'],
-            'minus_y_wind_load_point_ids' : wlc['minus_y_wind_load_point_ids'],
-            'plus_y_wind_load_point_ids' : wlc['plus_y_wind_load_point_ids'],
-            'vert_shear_walls' : vert_shear_walls.copy(),
-            'horiz_shear_walls' : horiz_shear_walls.copy(),
-            'fixed_nodes': False,
-        }
-
-        if hasattr(floor_obj, 'units'):
-            units = floor_obj.units
-        else:
-            units = 'ft'
-
-        speckMesh = SpeckMesh(
-            mesh.points.tolist(), 
-            mesh.cells, 
-            mesh.point_data,
-            mesh.cell_data, 
-            mesh.field_data,
-            mesh.point_sets,
-            mesh.cell_sets,
-            mesh.gmsh_periodic,
-            mesh.info,
-            units,
-            **options
-        )
-
-        data_to_edit = {
-            FLOOR_ID: {
-                'speckMesh' : speckMesh
+            options = {
+                'floor_id' : floor_id,
+                'minus_x_wind_load_point_ids' : wlc['minus_x_wind_load_point_ids'],
+                'plus_x_wind_load_point_ids': wlc['plus_x_wind_load_point_ids'],
+                'minus_y_wind_load_point_ids' : wlc['minus_y_wind_load_point_ids'],
+                'plus_y_wind_load_point_ids' : wlc['plus_y_wind_load_point_ids'],
+                'vert_shear_walls' : vert_shear_walls.copy(),
+                'horiz_shear_walls' : horiz_shear_walls.copy(),
+                'fixed_nodes': False,
             }
-        }
 
-        # committing the data to edit to globals and then committing to that to the stream is sort of a band aid fix to the fact that objects ids
-        # are changed when I push those (unchanged) objects to speckle (specifically the id values change in floor_obj.speckMesh.vert_shear_walls)
-        # https://speckle.community/t/specklepy-storing-unchanged-objects-multiple-times/2533
+            if hasattr(floor_obj, 'units'):
+                units = floor_obj.units
+            else:
+                units = 'ft'
 
-        # this is the code I would use if the issue was fixed
-        # latest_commit = get_latest_commit(client, STREAM_ID)
-        # latest_commit_obj = get_object(transport, latest_commit.referencedObject)
-        # edit_data_in_obj(latest_commit_obj, data_to_replace)
-        # send_to_speckle(client, transport, STREAM_ID, latest_commit_obj, commit_message='Edit speckMesh for floor')
+            results['@SpeckMeshes'].append( SpeckMesh(
+                mesh.points.tolist(), 
+                mesh.cells, 
+                mesh.point_data,
+                mesh.cell_data, 
+                mesh.field_data,
+                mesh.point_sets,
+                mesh.cell_sets,
+                mesh.gmsh_periodic,
+                mesh.info,
+                units,
+                **options
+            ))
 
-        globals_obj = get_globals_obj(client, transport, STREAM_ID)
+            data_to_edit = Merge(data_to_edit, {
+                floor_id : {
+                    'speckMesh' : results['@SpeckMeshes'][-1]
+                }
+            })
+
+            # committing the data to edit to globals and then committing to that to the stream is sort of a band aid fix to the fact that objects ids
+            # are changed when I push those (unchanged) objects to speckle (specifically the id values change in floor_obj.speckMesh.vert_shear_walls)
+            # https://speckle.community/t/specklepy-storing-unchanged-objects-multiple-times/2533
+
+            # this is the code I would use if the issue was fixed
+            # latest_commit = get_latest_commit(client, STREAM_ID)
+            # latest_commit_obj = get_object(transport, latest_commit.referencedObject)
+            # edit_data_in_obj(latest_commit_obj, data_to_replace)
+            # send_to_speckle(client, transport, STREAM_ID, latest_commit_obj, commit_message='Edit speckMesh for floor')
+
+            # globals_obj = get_globals_obj(client, transport, STREAM_ID)
         edit_data_in_obj(globals_obj, data_to_edit)
-        obj_id = send_to_speckle(client, transport, STREAM_ID, speckMesh, branch_name='results', commit_message='SpeckMesh Results')
+        obj_id = send_to_speckle(client, transport, STREAM_ID, results, branch_name='results', commit_message='SpeckMesh Results')
         send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         return JsonResponse({'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)
+
+def Merge(dict1, dict2):
+    res = {**dict1, **dict2}
+    return res
 
 def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
     # Must run django without multithreading in order to do this (python manage.py runserver --nothreading --noreload). Who knows how we'll handle this in deployment
