@@ -4,17 +4,12 @@ from django.http.response import JsonResponse
 from sfepy.discrete.fem.meshio import MeshioLibIO
 from .sfepy_pb_description.linear_elastic import *
 from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_globals_obj, get_object, get_client, get_transport, send_to_speckle, get_latest_commit_for_branch
-from dotmap import DotMap
-import meshio
-import copy
-import json
 
 @csrf_exempt
 def analyze_mesh(request):
     if request.is_ajax and request.method == "POST":
         HOST = request.POST.get('HOST')
         STREAM_ID = request.POST.get('STREAM_ID')
-        floor_ids = json.loads(request.POST.get('floor_ids'))
         WIND_DIR = request.POST.get('WIND_DIR')
         FIXED_NODES = convert_bool(request.POST.get('FIXED_NODES'))
 
@@ -27,10 +22,6 @@ def analyze_mesh(request):
         latest_results_commit = get_latest_commit_for_branch(client, STREAM_ID, 'results')
         results = get_object(transport, latest_results_commit.referencedObject)
         for speckMesh in results['@SpeckMeshes']:
-        # for floor_id in floor_ids:
-            # floor_obj = DotMap(globals_obj[floor_id])
-            # floor_obj = get_object(transport, FLOOR_ID)
-
             options = {
                 'mesh_points' : speckMesh.points,
                 'mesh_cells' : speckMesh.cells,
@@ -43,6 +34,7 @@ def analyze_mesh(request):
                 'horiz_shear_walls' : speckMesh.horiz_shear_walls.copy(),
                 'fixed_nodes': FIXED_NODES,
                 'wind_dir' : WIND_DIR,
+                'mesh_id' : speckMesh.id,
             }
 
             # shear_wall_data = {}
@@ -50,16 +42,12 @@ def analyze_mesh(request):
             pb, state, displacements = get_sfepy_pb(**options)
 
             displacements_list = displacements.tolist()
-            # displacements_copy = copy.deepcopy(displacements)
-            reactions, shear_wall_data = create_mesh_reactions(pb, state, displacements, FIXED_NODES)
+            reactions, shear_wall_data = create_mesh_reactions(pb, displacements, FIXED_NODES, speckMesh.id)
             data_to_edit = Merge(data_to_edit, shear_wall_data)
 
             speckMesh.cell_data['applied_loads'] = applied_loads.tolist()
             speckMesh.cell_data['displacements'] = displacements_list
             speckMesh.cell_data['reactions'] = reactions.tolist()
-
-        # print(displacements_list, displacements)
-        # print(reactions)
 
         # shear_wall_data = get_reactions_in_region(pb, state, [row[-1] for row in floor_obj.speckMesh.vert_shear_walls] + \
         #     [row[-1] for row in floor_obj.speckMesh.horiz_shear_walls], options['fixed_nodes'])

@@ -40,13 +40,12 @@ def get_floor_mesh(request):
         results['@SpeckMeshes'] = []
         data_to_edit = {}
 
-        # print('GLOBALS OBJ', globals_obj)
-        # for name in globals_obj.get_member_names():
-        #     print(name, globals_obj[name])
         for floor_id in floor_ids:
+            coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, floor_id, globals_obj, num_decimals = 1)
+            if not coord_dict_walls:
+                continue
             floor_obj = get_object(transport, floor_id)
             coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
-            coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, floor_id, globals_obj, num_decimals = 1)
             coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
             mesh_size = 5
@@ -195,13 +194,6 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
             # geom.add_physical(line, label=f'SW{wall_id}')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
-        print(wlc)
-        # wlc = {
-        #     'minus_x_wind_load_point_ids' : 0,
-        #     'plus_x_wind_load_point_ids' : 0,
-        #     'minus_y_wind_load_point_ids' : 0,
-        #     'plus_y_wind_load_point_ids' : 0,
-        # }
         geom.set_background_mesh(boundary_layers, operator="Min")
         mesh = geom.generate_mesh()
 

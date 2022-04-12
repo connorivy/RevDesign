@@ -24,7 +24,7 @@ def get_sfepy_pb(**kwargs):
     # pb = Problem.from_conf(conf, init_solvers=False)
     pb, state = solve_pde(conf)
     # out = pb.get_variables().create_output()
-    pb.save_state('mesh_displacements.vtk', state=state)
+    # pb.save_state(f'mesh_displacements_{kwargs["mesh_id"]}.vtk', state=state)
 
     variables = pb.get_variables()
     u = variables.get_state_parts()['u']
@@ -46,11 +46,11 @@ def create_mesh_applied_loads(**kwargs):
     fvars = variables.copy()
     fvars.set_state(f, reduced=False)
     out = variables.create_output()
-    pb.save_state('mesh_applied_loads.vtk', out=out)
+    # pb.save_state(f'mesh_applied_loads_{kwargs["mesh_id"]}.vtk', state=state)
 
     return f.reshape((-1, 2))
 
-def create_mesh_reactions(pb, state, u, fixed_nodes):
+def create_mesh_reactions(pb, u, fixed_nodes, mesh_id):
     # https://sfepy.org/doc-devel/primer.html#table-of-contents
     variables = pb.get_variables()
     pb.remove_bcs()
@@ -83,7 +83,7 @@ def create_mesh_reactions(pb, state, u, fixed_nodes):
     fvars = variables.copy()
     fvars.set_state(f, reduced=False)
     out = variables.create_output()
-    pb.save_state('mesh_reactions.vtk', out=out)
+    # pb.save_state(f'mesh_reactions_{mesh_id}.vtk', out=out)
 
     return f.reshape((-1, 2)), shear_walls
 
