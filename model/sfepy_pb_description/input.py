@@ -292,8 +292,8 @@ def get_sfepy_mesh_from_meshio(m):
 
         output('number of vertices: %d' % m.points.shape[0])
         output('number of cells:')
-        for ii, k in enumerate(cell_types):
-            output('  %s: %d' % (k, cells[ii].shape[0]))
+        # for ii, k in enumerate(cell_types):
+        #     output('  %s: %d' % (k, cells[ii].shape[0]))
 
         return mesh
 

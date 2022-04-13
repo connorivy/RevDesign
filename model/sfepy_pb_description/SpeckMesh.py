@@ -7,9 +7,106 @@ import numpy as np
 from collections import deque
 import itertools
 
-class CellBlock(collections.namedtuple("CellBlock", ["type", "data"])):
+topological_dimension = {
+    "line": 1,
+    "polygon": 2,
+    "triangle": 2,
+    "quad": 2,
+    "tetra": 3,
+    "hexahedron": 3,
+    "wedge": 3,
+    "pyramid": 3,
+    "line3": 1,
+    "triangle6": 2,
+    "quad9": 2,
+    "tetra10": 3,
+    "hexahedron27": 3,
+    "wedge18": 3,
+    "pyramid14": 3,
+    "vertex": 0,
+    "quad8": 2,
+    "hexahedron20": 3,
+    "triangle10": 2,
+    "triangle15": 2,
+    "triangle21": 2,
+    "line4": 1,
+    "line5": 1,
+    "line6": 1,
+    "tetra20": 3,
+    "tetra35": 3,
+    "tetra56": 3,
+    "quad16": 2,
+    "quad25": 2,
+    "quad36": 2,
+    "triangle28": 2,
+    "triangle36": 2,
+    "triangle45": 2,
+    "triangle55": 2,
+    "triangle66": 2,
+    "quad49": 2,
+    "quad64": 2,
+    "quad81": 2,
+    "quad100": 2,
+    "quad121": 2,
+    "line7": 1,
+    "line8": 1,
+    "line9": 1,
+    "line10": 1,
+    "line11": 1,
+    "tetra84": 3,
+    "tetra120": 3,
+    "tetra165": 3,
+    "tetra220": 3,
+    "tetra286": 3,
+    "wedge40": 3,
+    "wedge75": 3,
+    "hexahedron64": 3,
+    "hexahedron125": 3,
+    "hexahedron216": 3,
+    "hexahedron343": 3,
+    "hexahedron512": 3,
+    "hexahedron729": 3,
+    "hexahedron1000": 3,
+    "wedge126": 3,
+    "wedge196": 3,
+    "wedge288": 3,
+    "wedge405": 3,
+    "wedge550": 3,
+    "VTK_LAGRANGE_CURVE": 1,
+    "VTK_LAGRANGE_TRIANGLE": 2,
+    "VTK_LAGRANGE_QUADRILATERAL": 2,
+    "VTK_LAGRANGE_TETRAHEDRON": 3,
+    "VTK_LAGRANGE_HEXAHEDRON": 3,
+    "VTK_LAGRANGE_WEDGE": 3,
+    "VTK_LAGRANGE_PYRAMID": 3,
+    None : None,
+}
+class CellBlock(Base):
+    def __init__(
+        self,
+        cell_type = None,
+        data = None,
+        # tags: list[str] | None = None,
+    ):
+        self.type = cell_type
+        self.data = data
+
+        # if cell_type.startswith("polyhedron"):
+        #     self.dim = 3
+        # else:
+        self.data = self.data
+        self.dim = topological_dimension[cell_type]
+
+        # self.tags = [] if tags is None else tags
+
     def __repr__(self):
-        return f"<meshio CellBlock, type: {self.type}, num cells: {len(self.data)}>"
+        items = [
+            "meshio CellBlock",
+            f"type: {self.type}",
+            f"num cells: {len(self.data)}",
+            f"tags: {self.tags}",
+        ]
+        return "<" + ", ".join(items) + ">"
 
     def __len__(self):
         return len(self.data)
@@ -34,16 +131,28 @@ class SpeckMesh(Base):
         self.points = points
         if cells:
             self.cells = [
-                CellBlock(cell_type, data.tolist()) for cell_type, data in cells
+                CellBlock(cells[index].type, cells[index].data.tolist()) for index in range(len(cells))
             ]
             self.create_display_value()
         else:
             self.cells = cells
+
+        if cell_sets:
+            for key in cell_sets:
+                new_list = []
+                # remove None values
+                cell_sets[key] = [i for i in cell_sets[key] if i is not None]
+                for index in range(len(cell_sets[key])):
+                    if isinstance(cell_sets[key][index], np.ndarray):
+                        new_list.extend(cell_sets[key][index].tolist())
+                cell_sets[key] = new_list
+            self.cell_sets = cell_sets
+        else:
+            self.cell_sets = {}
         self.point_data = {} if point_data is None else point_data
         self.cell_data = {} if cell_data is None else cell_data
         self.field_data = {} if field_data is None else field_data
         self.point_sets = {} if point_sets is None else point_sets
-        self.cell_sets = {} if cell_sets is None else cell_sets
         self.gmsh_periodic = gmsh_periodic
         self.info = info
         self.units = units # default value for units is 'ft'
@@ -52,12 +161,10 @@ class SpeckMesh(Base):
 
     def create_display_value(self):
         faces = []
-        i=0
         for cell in self.cells:
-            if cell[0] == 'triangle':
-                for tri in cell[1]:
+            if cell.type == 'triangle':
+                for tri in cell.data:
                     faces.extend([0, tri[0], tri[1], tri[2]])
-                    i += 1
 
         # print(faces)
         # print(colors)
@@ -68,8 +175,8 @@ class SpeckMesh(Base):
     def get_polyline(self):
         lines = set()
         for cell in self.cells:
-            if cell[0] == 'triangle':
-                for tri in cell[1]:
+            if cell.type == 'triangle':
+                for tri in cell.data:
                     l1, l2, l3 = self.get_lines_from_triangle(tri)
                     lines.add(l1)
                     lines.add(l2)

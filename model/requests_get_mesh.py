@@ -52,10 +52,10 @@ def get_floor_mesh(request):
             mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
 
             # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
-            mesh.remove_orphaned_nodes()
-            mesh.remove_lower_dimensional_cells()
+            # mesh.remove_orphaned_nodes()
+            # mesh.remove_lower_dimensional_cells()
 
-            # mesh.write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
+            # mesh.copy().write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
             # mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
 
             options = {
@@ -73,6 +73,23 @@ def get_floor_mesh(request):
                 units = floor_obj.units
             else:
                 units = 'ft'
+
+            # print(mesh.point_data, type(mesh.point_data))
+            # print(mesh.point_sets, type(mesh.point_sets))
+            # print(mesh.cell_sets, type(mesh.cell_sets))
+            # print(mesh.field_data, type(mesh.field_data))
+            # print(mesh.cell_data, type(mesh.cell_data))
+            # print(mesh.gmsh_periodic, type(mesh.gmsh_periodic))
+            # print(mesh.info, type(mesh.info))
+
+            for index in range(len(mesh.cells)):
+                try:
+                    if mesh.cells[index].type == 'line':
+                        mesh.cells.pop(index)
+                    elif mesh.cells[index].type == 'vertex':
+                        mesh.cells.pop(index)
+                except:
+                    break
 
             results['@SpeckMeshes'].append( SpeckMesh(
                 mesh.points.tolist(), 
@@ -173,7 +190,6 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
                 for edge_line in surface.lines:
                     if p0._id in [edge_line.points[0]._id, edge_line.points[1]._id] and p1._id in [edge_line.points[0]._id, edge_line.points[1]._id]:
                         line = edge_line
-                        print('LINE', edge_line)
             else:    
                 if not p0:
                     p0 = geom.add_point([x0, y0, z])
@@ -191,6 +207,7 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
                 distmin = .1,
                 distmax = mesh_size / 1
             ))
+            # print(wall_id, line, line.points[0].x[0], line.points[0].x[1])
             # geom.add_physical(line, label=f'SW{wall_id}')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
