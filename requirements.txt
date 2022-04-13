@@ -1,6 +1,6 @@
 django == 3.2.5
 django-crispy-forms == 1.12.0
-meshio == 4.4.6
+meshio == 5.3.4
 pygmsh == 7.1.17
 cython == 0.29.28
 scipy == 1.8.0

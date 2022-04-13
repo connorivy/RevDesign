@@ -130,11 +130,21 @@ def define(**kwargs):
         wind_region = 'minus_y_wind_region'
         load_val = [[0],[1]]
 
+    # make sure each node only belongs to one SW region
+    # TODO - if vert wind is being analyzed, make sure vert shear walls stay in tact
+    used_vertices = set()
+    for key in kwargs['mesh_cell_sets']:
+        verts_to_add = ''
+        for vertex in kwargs['mesh_cell_sets'][key]:
+            if not vertex in used_vertices:
+                verts_to_add += f'{vertex},'
+                used_vertices.add(vertex)
+        regions[key] = 'vertex ' + verts_to_add[:-1], 'facet'
+
     materials = {
         'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
         'load' : ({'val' : load_val},),
-        # 'load' : (None, 'linear_tension'),
     }
 
     fields = {
@@ -152,40 +162,21 @@ def define(**kwargs):
 
     ebcs = {}
 
-    # having a hard time mixing ebcs and lcbcs
-    # also unable to make 
-    lcbcs = {
-        # 'rigid' : ('vert_shear_wall0', {'u.all' : None}, None, 'rigid'),
-    }
+
+    lcbcs = {}
 
     rhs = ''
-    region_type = 'facet'
-    # region_type = 'vertex'
     for index in range(len(kwargs['horiz_shear_walls'])):
-        functions[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
-                                                    horiz_shear_walls(coors, domain, coords_2d_list=kwargs['horiz_shear_walls']),
-                                                )
-        # if get_length_of_sw(kwargs['horiz_shear_walls'][index]) < 1:
-        #     # print(f'f{kwargs["horiz_shear_walls"][index][-1]}', 'vertex')
-        #     region_type = 'vertex'
-        regions[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'vertices by id{kwargs["horiz_shear_walls"][index][-1]}', region_type
-        ebcs[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'id{kwargs["horiz_shear_walls"][index][-1]}', {'u.0' : 0.0}
-        # if kwargs['fixed_nodes']:
-        #     ebcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.0' : 0.0}
-        # else:
-        #     rhs += f'dw_point_lspring.2.horiz_shear_wall{index}(spring.stiffness, v, u) + '
-        #     lcbcs[f'horiz_shear_wall{index}'] = f'horiz_shear_wall{index}', {'u.all' : None}, None, 'rigid'
+        # if wind is blowing in vertical direction or fixed_nodes == true
+        if int(kwargs['wind_dir']) % 2 == 1 or kwargs['fixed_nodes']:
+            ebcs[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'id{kwargs["horiz_shear_walls"][index][-1]}', {'u.0' : 0}
+        else:
+            rhs += f'dw_point_lspring.2.id{kwargs["horiz_shear_walls"][index][-1]}(spring.stiffness, v, u) + '
+            lcbcs[f'id{kwargs["horiz_shear_walls"][index][-1]}'] = f'id{kwargs["horiz_shear_walls"][index][-1]}', {'u.all' : None}, None, 'rigid',
 
-    region_type = 'facet'
     for index in range(len(kwargs['vert_shear_walls'])):
-        functions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = (lambda coors, domain=None, **kwargsv:
-                                                    vert_shear_walls(coors, domain, coords_2d_list=kwargs['vert_shear_walls']),
-                                                )
-        # if get_length_of_sw(kwargs['vert_shear_walls'][index]) < 2:
-            # print(kwargs["vert_shear_walls"][index][-1], 'vertex')
-            # region_type = 'vertex'
-        regions[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'vertices by id{kwargs["vert_shear_walls"][index][-1]}', region_type
-        if kwargs['fixed_nodes']:
+        # if wind is blowing in horizontal direction or fixed_nodes == true
+        if int(kwargs['wind_dir']) % 2 == 0 or kwargs['fixed_nodes']:
             ebcs[f'id{kwargs["vert_shear_walls"][index][-1]}'] = f'id{kwargs["vert_shear_walls"][index][-1]}', {'u.1' : 0}
         else:
             rhs += f'dw_point_lspring.2.id{kwargs["vert_shear_walls"][index][-1]}(spring.stiffness, v, u) + '

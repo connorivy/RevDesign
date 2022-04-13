@@ -74,13 +74,6 @@ def get_floor_mesh(request):
             else:
                 units = 'ft'
 
-            # print(mesh.point_data, type(mesh.point_data))
-            # print(mesh.point_sets, type(mesh.point_sets))
-            # print(mesh.cell_sets, type(mesh.cell_sets))
-            # print(mesh.field_data, type(mesh.field_data))
-            # print(mesh.cell_data, type(mesh.cell_data))
-            # print(mesh.gmsh_periodic, type(mesh.gmsh_periodic))
-            # print(mesh.info, type(mesh.info))
 
             for index in range(len(mesh.cells)):
                 try:
@@ -122,9 +115,9 @@ def get_floor_mesh(request):
             # send_to_speckle(client, transport, STREAM_ID, latest_commit_obj, commit_message='Edit speckMesh for floor')
 
             # globals_obj = get_globals_obj(client, transport, STREAM_ID)
-        edit_data_in_obj(globals_obj, data_to_edit)
+        # edit_data_in_obj(globals_obj, data_to_edit)
         obj_id = send_to_speckle(client, transport, STREAM_ID, results, branch_name='results', commit_message='SpeckMesh Results')
-        send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
+        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
         return JsonResponse({'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)
@@ -207,8 +200,8 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
                 distmin = .1,
                 distmax = mesh_size / 1
             ))
-            # print(wall_id, line, line.points[0].x[0], line.points[0].x[1])
-            # geom.add_physical(line, label=f'SW{wall_id}')
+            print(wall_id, line)
+            geom.add_physical(line, label=f'id{wall_id}')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
         geom.set_background_mesh(boundary_layers, operator="Min")
@@ -282,15 +275,6 @@ def is_nearly_perpendicular(curve, dir, tol):
     else:
         # print('is_nearly_perpendicular', not dir)
         return not dir
-
-# def lines_overlap(segment, curve, dir):
-#     # print('lines overlap', wind_line, curve, dir)
-#     if max(segment) <= min(curve.points[0].x[dir], curve.points[1].x[dir]) or min(segment) >= max(curve.points[0].x[dir], curve.points[1].x[dir]):
-#         # print('lines overlap', 'False')
-#         return False
-#     else:
-#         # print('lines overlap', 'True')
-#         return True
 
 def lines_overlap(l1, l2):
     if max(l1[0], l1[1]) <= min(l2[0], l2[1]) or min(l1[0], l1[1]) >= max(l2[0], l2[1]):

@@ -8,6 +8,7 @@ frontend/dist
 viewer/dist
 
 sfepy/
+pygmsh/
 
 *.env
 *.crt

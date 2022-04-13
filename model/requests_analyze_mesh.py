@@ -25,6 +25,7 @@ def analyze_mesh(request):
             options = {
                 'mesh_points' : speckMesh.points,
                 'mesh_cells' : speckMesh.cells,
+                'mesh_cell_sets' : speckMesh.cell_sets,
                 # 'mesh_cell_data' : speckMesh.cell_data,
                 'minus_x_wind_load_point_ids' : speckMesh.minus_x_wind_load_point_ids,
                 'plus_x_wind_load_point_ids': speckMesh.plus_x_wind_load_point_ids,
