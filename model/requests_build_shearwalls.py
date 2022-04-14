@@ -10,7 +10,7 @@ from .shear_walls.shear_wall_classes import ShearWall, StackedShearWall, Project
 
 from .requests_get_mesh import point_in_poly, query_shearwalls, lines_overlap
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
-from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle
+from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_latest_obj, get_transport, send_to_speckle
 
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
@@ -38,9 +38,10 @@ def build_shearwalls(request):
         data_to_change = update_shearwall_data(shear_wall_objects = shear_wall_objects, coord_dict_floor=coord_dict_floor)
 
         transport = get_transport(client, STREAM_ID)
-        globals = get_globals_obj(client, transport, STREAM_ID)
-        edit_data_in_obj(globals, data_to_change.copy())
-        send_to_speckle(client, transport, STREAM_ID, globals, 'globals')
+        user_branch_obj = get_latest_obj(client,STREAM_ID,'user_branch')
+
+        edit_data_in_obj(user_branch_obj, data_to_change.copy())
+        send_to_speckle(client, transport, STREAM_ID, user_branch_obj, 'user_branch')
 
         # stacked_walls = get_stacked_walls(shear_wall_objects)
         # print(coord_dict_walls)
@@ -121,7 +122,7 @@ def query_floors(client, STREAM_ID, OBJECT_ID, num_decimals):
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
                 stream(id:$stream_id){
                     object(id:$object_id){
-                        children(query: $myQuery select:["outline.segments", "parameters.STRUCTURAL_ELEVATION_AT_TOP.value", "level"]){
+                        children(query: $myQuery select:["outline.segments", "parameters.STRUCTURAL_ELEVATION_AT_TOP.value", "level.elevation", "level.projectElevation"]){
                             objects{
                                 id
                                 data
@@ -165,8 +166,13 @@ def query_floors(client, STREAM_ID, OBJECT_ID, num_decimals):
                     coords.append((x1, y1))
         floor_dict[floor['id']] = {
             'polygon' : coords,
+            # 'elevation_at_top':  floor['data']['outline']['segments'][0]['start']['z'],
+            # for some reason, the elevation at the top parameter is not the same as the elevation z value??
             'elevation_at_top': floor['data']['parameters']['STRUCTURAL_ELEVATION_AT_TOP']['value'],
-            'level': floor['data']['level']
+            'level': {
+                'elevation': floor['data']['level']['elevation'],
+                'projectElevation' : floor['data']['level']['projectElevation'],
+            }
         }
 
         if len(coords) != len(floor['data']['outline']['segments']):
@@ -257,7 +263,10 @@ def assign_top_floor(sw_obj, sw_start, sw_end, sw_base_elevation, floors):
             sw_obj.top_offset = floors[floor_id]['elevation_at_top'] - floors[floor_id]['level']['elevation']
             sw_obj.get_top_elevation()
             data_to_change = {
-                'topLevel' : floors[floor_id]['level'],
+                'topLevel' : {
+                    'elevation' : floors[floor_id]['level']['elevation'],
+                    'projectElevation' : floors[floor_id]['level']['projectElevation']
+                },
                 'topOffset' : floors[floor_id]['elevation_at_top'] - floors[floor_id]['level']['elevation'],
                 'topFloorId' : floor_id,
             }
@@ -272,6 +281,7 @@ def Merge(dict1, dict2):
 def get_stacked_walls(shear_wall_objects):
     sw_objects_at_level = {}
     stacked_walls = {}
+    data_to_change = {}
 
     shear_wall_objects.sort(key=lambda x: x.base_elevation)
 

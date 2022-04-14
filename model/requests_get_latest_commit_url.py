@@ -14,12 +14,17 @@ def get_latest_commit_url(request):
         
         
         client = get_client(HOST=HOST)
-        latest_commit = get_latest_commit_for_branch(client, STREAM_ID, BRANCH)
+        main_latest_commit = get_latest_commit_for_branch(client, STREAM_ID, BRANCH)
+        results_latest_commit = get_latest_commit_for_branch(client, STREAM_ID, 'results')
 
         # example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
-        url = f'{HOST}/streams/{STREAM_ID}/objects/{latest_commit.referencedObject}'
+        main_url = f'{HOST}/streams/{STREAM_ID}/objects/{main_latest_commit.referencedObject}'
+        if hasattr(results_latest_commit, 'referencedObject'):
+            results_url = f'{HOST}/streams/{STREAM_ID}/objects/{results_latest_commit.referencedObject}'
+        else:
+            results_url = ''
 
-        print('URL', url)
+        print('URL', main_url, results_url)
 
-        return JsonResponse({'url': url}, status = 200)
+        return JsonResponse({'main_url': main_url, 'results_url': results_url}, status = 200)
     return JsonResponse({}, status = 400)

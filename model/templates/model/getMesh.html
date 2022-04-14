@@ -35,6 +35,7 @@
           success: function (response) {
               console.log(response)
               var results_url = localStorage.getItem( 'resultsUrl' )
+              console.log('results url', results_url)
               if (results_url) v.unloadObject(results_url)
               var new_results_url = v.loaders[localStorage.getItem( 'prevLoadUrl' )].serverUrl + '/streams/' + v.loaders[localStorage.getItem( 'prevLoadUrl' )].streamId + '/objects/' + response['obj_id']
               localStorage.setItem( 'resultsUrl', new_results_url )

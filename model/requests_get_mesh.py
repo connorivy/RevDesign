@@ -10,7 +10,7 @@ import math
 from .shear_walls.shear_wall_classes import ShearWall
 
 from .sfepy_pb_description.SpeckMesh import SpeckMesh
-from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_client, get_globals_obj, get_latest_commit, get_transport, get_object, send_to_speckle, create_branch
+from .sfepy_pb_description.connectToSpeckle import get_client, get_latest_obj, get_object, send_to_speckle
 
 from specklepy.api import operations
 from specklepy.api.client import SpeckleClient
@@ -35,7 +35,7 @@ def get_floor_mesh(request):
 
         # create an authenticated server transport from the client
         transport = ServerTransport(STREAM_ID, client)
-        globals_obj = get_globals_obj(client, transport, STREAM_ID)
+        globals_obj = get_latest_obj(client, transport, STREAM_ID, 'user_branch')
         results = Base()
         results['@SpeckMeshes'] = []
         data_to_edit = {}
@@ -43,13 +43,16 @@ def get_floor_mesh(request):
         for floor_id in floor_ids:
             coord_dict_walls = query_shearwalls(client, STREAM_ID, OBJECT_ID, floor_id, globals_obj, num_decimals = 1)
             if not coord_dict_walls:
+                print('coord_dict_walls', coord_dict_walls)
                 continue
             floor_obj = get_object(transport, floor_id)
             coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
             coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
 
-            mesh_size = 5
+            mesh_size = 10
+            print('try generate mesh')
             mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
+            print('mesh generated')
 
             # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
             # mesh.remove_orphaned_nodes()
@@ -116,9 +119,11 @@ def get_floor_mesh(request):
 
             # globals_obj = get_globals_obj(client, transport, STREAM_ID)
         # edit_data_in_obj(globals_obj, data_to_edit)
-        obj_id = send_to_speckle(client, transport, STREAM_ID, results, branch_name='results', commit_message='SpeckMesh Results')
-        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
 
+        # obj_id = 0
+        obj_id = send_to_speckle(client, transport, STREAM_ID, results, branch_name='results', commit_message='SpeckMesh Results')
+
+        # send_to_speckle(client, transport, STREAM_ID, globals_obj, branch_name='globals', commit_message='Edit speckMesh for floor')
         return JsonResponse({'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)
 
@@ -151,6 +156,7 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
         # someday maybe I can label the groups as I create them to be more efficient
         # geom.add_physical(surface, label='surface')
         # add points from shear walls
+        print('add points for shear walls')
         for wall_id in coord_dict_walls:
             p0 = None
             p1 = None
@@ -158,7 +164,7 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
             y0 = coord_dict_walls[wall_id]['start']['y']
             x1 = coord_dict_walls[wall_id]['end']['x']
             y1 = coord_dict_walls[wall_id]['end']['y']
-            z = coord_dict_walls[wall_id]['topLevel']['elevation'] + coord_dict_walls[wall_id]['topOffset']
+            z = coord_dict_walls[wall_id]['topLevel']['projectElevation'] + coord_dict_walls[wall_id]['topOffset']
 
             # create lists of shear wall objects 
             if abs(x1 - x0) < 1e-4:
@@ -195,17 +201,19 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
 
             boundary_layers.append(geom.add_boundary_layer(
                 edges_list = [line],
-                lcmin = mesh_size / 5,
+                lcmin = mesh_size / 3,
                 lcmax = mesh_size / 1,
-                distmin = .1,
+                distmin = mesh_size / 10,
                 distmax = mesh_size / 1
             ))
-            print(wall_id, line)
             geom.add_physical(line, label=f'id{wall_id}')
+        print('points for shear walls added')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
+        print('wind load point ids generated')
         geom.set_background_mesh(boundary_layers, operator="Min")
         mesh = geom.generate_mesh()
+        print('mesh generated')
 
     return mesh, wlc, vert_shear_walls, horiz_shear_walls
 
@@ -357,7 +365,8 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
         y0 = coord_dict_walls[wall_id]['start']['y']
         x1 = coord_dict_walls[wall_id]['end']['x']
         y1 = coord_dict_walls[wall_id]['end']['y']
-        z = coord_dict_walls[wall_id]['topLevel']['elevation'] + coord_dict_walls[wall_id]['topOffset']
+        z = coord_dict_walls[wall_id]['topLevel']['projectElevation'] + coord_dict_walls[wall_id]['topOffset']
+        # print(z,coord_dict_walls[wall_id]['topLevel']['elevation'], coord_dict_walls[wall_id]['topOffset'] )
 
         if distance_formula((x0, y0), (x1, y1)) < 1:
             print('short wall')
@@ -381,7 +390,7 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
             print('inside slab')
         # both points are on the border of the polygon
         elif p0inPoly[0] == 2 and p1inPoly[0] == 2:
-            print('on perim')
+            print('on perim', wall_id)
             print(f'comparing {coord_list_floor[p0inPoly[1]]} and {coord_list_floor[p0inPoly[1]+1]} to {(x0, y0)}')
             print(f'comparing {coord_list_floor[p1inPoly[1]]} and {coord_list_floor[p1inPoly[1]+1]} to {(x1, y1)}')
             print('len of wall', distance_formula((x0, y0), (x1, y1)))
@@ -421,15 +430,16 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
                         coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
                         coord_list_floor.insert(p0inPoly[1]+1, (x1, y1, z))
         elif p0inPoly[0] == 2:
-            #   print('p0 on perim')
+            print('p0 on perim', wall_id)
             coord_list_floor.insert(p0inPoly[1]+1, (x0, y0, z))
         elif p1inPoly[0] == 2:
-            #   print('p1 on perim')
+            print('p1 on perim', wall_id)
             coord_list_floor.insert(p1inPoly[1]+1, (x1, y1, z))
 
     # remove the last item of the coord_list because pygmsh likes 'open' polygons
     coord_list_floor.pop()
 
+    print('done adding coords')
     return coord_list_floor
 
 def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_decimals):
@@ -438,7 +448,7 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_de
             query($myQuery:[JSONObject!], $stream_id: String!, $object_id: String!){
                 stream(id:$stream_id){
                     object(id:$object_id){
-                        children(query: $myQuery select:["start.x","start.y","end.x","end.y","level.elevation","topLevel.elevation","topOffset"]){
+                        children(query: $myQuery select:["start.x","start.y","end.x","end.y","level.elevation","level.projectElevation","topLevel.elevation","topOffset"]){
                             objects{
                                 id
                                 data
@@ -483,11 +493,13 @@ def query_shearwalls(client, STREAM_ID, OBJECT_ID, FLOOR_ID, globals_obj, num_de
             },
             'level' : {
                 'elevation' : round(wall['data']['level']['elevation'], num_decimals),
+                'projectElevation' : round(wall['data']['level']['projectElevation'], num_decimals),
             },
             'topLevel' : {
-                'elevation' : globals_obj[wall['id']]['topLevel']['elevation'],
+                'elevation' : round(globals_obj[wall['id']]['topLevel']['elevation'], num_decimals),
+                'projectElevation' : round(globals_obj[wall['id']]['topLevel']['projectElevation'], num_decimals),
             },
-            'topOffset' : globals_obj[wall['id']]['topOffset'],
+            'topOffset' : round(globals_obj[wall['id']]['topOffset'], num_decimals),
             # 'bottomOffset' : round(wall['data']['bottomOffset'], num_decimals),
             # 'viewRange' : {
             #     'topElevation' : round(wall['data']['viewRange']['topElevation'], num_decimals), 

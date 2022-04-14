@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http.response import JsonResponse
 from sfepy.discrete.fem.meshio import MeshioLibIO
 from .sfepy_pb_description.linear_elastic import *
-from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_globals_obj, get_object, get_client, get_transport, send_to_speckle, get_latest_commit_for_branch
+from .sfepy_pb_description.connectToSpeckle import edit_data_in_obj, get_latest_obj, get_client, get_transport, send_to_speckle
 
 @csrf_exempt
 def analyze_mesh(request):
@@ -18,9 +18,10 @@ def analyze_mesh(request):
         client = get_client(HOST=HOST)
         transport = get_transport(client, STREAM_ID)
 
-        # globals_obj = get_globals_obj(client, transport, STREAM_ID)
-        latest_results_commit = get_latest_commit_for_branch(client, STREAM_ID, 'results')
-        results = get_object(transport, latest_results_commit.referencedObject)
+        # # globals_obj = get_globals_obj(client, transport, STREAM_ID)
+        # latest_results_commit = get_latest_commit_for_branch(client, STREAM_ID, 'results')
+        # results = get_object(transport, latest_results_commit.referencedObject)
+        results = get_latest_obj(client, transport, STREAM_ID, 'results')
         for speckMesh in results['@SpeckMeshes']:
             options = {
                 'mesh_points' : speckMesh.points,
