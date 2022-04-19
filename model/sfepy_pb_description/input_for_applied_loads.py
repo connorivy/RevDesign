@@ -44,8 +44,9 @@ def linear_tension(ts, coor, mode=None, **kwargs):
 def define(**kwargs):
     
     # filename_mesh = 'RevDesign.mesh'
+    points = [ele[:-1] for ele in kwargs['mesh_points']]
     meshio_instance = meshio.Mesh(
-        points=kwargs['mesh_points'],
+        points=points,
         cells= kwargs['mesh_cells'],
         # cell_data= kwargs['cell_data'],
     )

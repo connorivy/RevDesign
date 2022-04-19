@@ -80,13 +80,16 @@ def get_length_of_sw(curve):
 
 def define(**kwargs):
 
+    # filename_mesh = 'optimesh.vtk'
+
+    # add this line to get rid of z values when analyzing the meshes
+    points = [ele[:-1] for ele in kwargs['mesh_points']]
     meshio_instance = meshio.Mesh(
-        points=kwargs['mesh_points'],
+        points=points,
         cells= kwargs['mesh_cells'],
         # cell_data= kwargs['cell_data'],
     )
     
-    # filename_mesh = 'RevDesign.mesh'
     filename_mesh = get_sfepy_mesh_from_meshio(meshio_instance)
 
 
@@ -135,14 +138,21 @@ def define(**kwargs):
     used_vertices = set()
     for key in kwargs['mesh_cell_sets']:
         verts_to_add = ''
+        num_verts = 0
         for vertex in kwargs['mesh_cell_sets'][key]:
             if not vertex in used_vertices:
+                num_verts += 1
                 verts_to_add += f'{vertex},'
                 used_vertices.add(vertex)
-        regions[key] = 'vertex ' + verts_to_add[:-1], 'facet'
+        if num_verts == 0:
+            continue
+        elif num_verts == 1:
+            regions[key] = 'vertex ' + verts_to_add[:-1], 'vertex'
+        else:
+            regions[key] = 'vertex ' + verts_to_add[:-1], 'facet'
 
     materials = {
-        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=1280*144 * 1/12, poisson=.2, plane='strain')},),
+        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=29000*144 * 5/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
         'load' : ({'val' : load_val},),
     }
@@ -283,8 +293,9 @@ def get_sfepy_mesh_from_meshio(m):
 
         output('number of vertices: %d' % m.points.shape[0])
         output('number of cells:')
-        # for ii, k in enumerate(cell_types):
-        #     output('  %s: %d' % (k, cells[ii].shape[0]))
+        for ii, k in enumerate(cell_types):
+            output(f'{cell_types, ii, k, type(cells)}')
+            # output('  %s: %d' % (k, cells[ii].shape[0]))
 
         return mesh
 

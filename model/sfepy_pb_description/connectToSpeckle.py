@@ -48,10 +48,12 @@ def get_latest_commit_for_branch(client, STREAM_ID, name):
 
 def get_latest_obj(client, transport, STREAM_ID, branch_name='main'):
     branch = client.branch.get(STREAM_ID, branch_name)
+    print('branch', branch, branch_name, STREAM_ID)
 
-    # get the latest commit if globals branch exists
+    # get the latest commit if branch exists
     try:
         latest_commit = branch.commits.items[0]
+        print('latest_commit', latest_commit, latest_commit.referencedObject)
         return operations.receive(obj_id=latest_commit.referencedObject, remote_transport=transport)
     except:
         print(f'No branch named {branch_name}')

@@ -9,6 +9,7 @@ viewer/dist
 
 sfepy/
 pygmsh/
+optimesh/
 
 *.env
 *.crt

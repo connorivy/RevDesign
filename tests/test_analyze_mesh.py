@@ -5,7 +5,7 @@ import pytest
 from model.sfepy_pb_description.linear_elastic import *
 from .examples import ex1
 from model.requests_get_mesh import *
-from model.sfepy_pb_description.connectToSpeckle import get_client, get_globals_obj, get_transport
+from model.sfepy_pb_description.connectToSpeckle import get_client, get_transport, get_latest_obj
 
 class Example:
     def __init__(self, **kwargs) -> None:
@@ -28,8 +28,8 @@ class TestAnalyzeMesh:
         return get_transport(client, example_obj.STREAM_ID)
 
     def test_floor_obj(self, example_obj, client, transport):
-        globals_obj = get_globals_obj(client, transport, example_obj.STREAM_ID)
-        floor_obj = DotMap(globals_obj[example_obj.FLOOR_ID])
+        user_branch_obj = get_latest_obj(client, transport, example_obj.STREAM_ID, 'user_branch')
+        floor_obj = DotMap(user_branch_obj[example_obj.FLOOR_ID])
 
         assert floor_obj.speckMesh.points == example_obj.mesh.points
         assert floor_obj.speckMesh.minus_x_wind_load_point_ids == example_obj.minus_x_wind_load_point_ids

@@ -38,7 +38,7 @@ def build_shearwalls(request):
         data_to_change = update_shearwall_data(shear_wall_objects = shear_wall_objects, coord_dict_floor=coord_dict_floor)
 
         transport = get_transport(client, STREAM_ID)
-        user_branch_obj = get_latest_obj(client,STREAM_ID,'user_branch')
+        user_branch_obj = get_latest_obj(client, transport, STREAM_ID,'user_branch')
 
         edit_data_in_obj(user_branch_obj, data_to_change.copy())
         send_to_speckle(client, transport, STREAM_ID, user_branch_obj, 'user_branch')

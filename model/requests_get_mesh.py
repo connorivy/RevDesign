@@ -19,6 +19,8 @@ from specklepy.transports.server import ServerTransport
 from specklepy.objects import Base
 from gql.gql import gql
 
+import optimesh
+from pygmsh.helpers import extract_to_meshio
 
 @csrf_exempt
 def get_floor_mesh(request):
@@ -27,6 +29,7 @@ def get_floor_mesh(request):
         STREAM_ID = request.POST.get('STREAM_ID')
         OBJECT_ID = request.POST.get('OBJECT_ID')
         floor_ids = json.loads(request.POST.get('floor_ids'))
+        mesh_size = 10
 
         print(request.POST, floor_ids)
 
@@ -46,20 +49,24 @@ def get_floor_mesh(request):
                 print('coord_dict_walls', coord_dict_walls)
                 continue
             floor_obj = get_object(transport, floor_id)
-            coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals=1)
-            coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor)
+            coord_list_floor = get_coords_list(floor_obj=floor_obj, num_decimals = 1)
+            coord_list_floor = add_coords_for_shear_walls(coord_dict_walls, coord_list_floor, num_decimals=1)
 
-            mesh_size = 10
+            # mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, {}, mesh_size)
+            # mesh.cell_sets = {}
+            # print(mesh.points)
+            # mesh.points = mesh.points[:, :-1]
+            # print(mesh.points)
+            # mesh.copy().write('.\\model\\sfepy_pb_description\\RevDesignPreSWs.vtk')
+
+            # print('floor list', coord_list_floor)
+            # print(coord_dict_walls)
+
+            # mesh2 = gmsh_version(coord_list_floor, coord_dict_walls, num_decimals = 1)
+
             print('try generate mesh')
             mesh, wlc, vert_shear_walls, horiz_shear_walls = generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size)
             print('mesh generated')
-
-            # get rid of edges and 'vertex' cells (whatever that is) so the mesh can be read as vtk
-            # mesh.remove_orphaned_nodes()
-            # mesh.remove_lower_dimensional_cells()
-
-            # mesh.copy().write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
-            # mesh.write('.\\model\\sfepy_pb_description\\RevDesign.mesh')
 
             options = {
                 'floor_id' : floor_id,
@@ -87,6 +94,12 @@ def get_floor_mesh(request):
                 except:
                     break
 
+            # print(mesh.points)
+            # print(mesh.cells[0].data.dtype)
+            # mesh.points, mesh.cells = optimesh.optimize_points_cells(mesh.points, mesh.cells[0].data, "CPT (quasi-newton)", 1.0e-2, 100)
+            # mesh.cells = [meshio.CellBlock("triangle", mesh.get_cells_type("triangle"))]
+            # prune(mesh)
+
             results['@SpeckMeshes'].append( SpeckMesh(
                 mesh.points.tolist(), 
                 mesh.cells, 
@@ -100,6 +113,12 @@ def get_floor_mesh(request):
                 units,
                 **options
             ))
+
+            mesh.cell_sets = {}
+            print(mesh.points)
+            mesh.points = mesh.points[:, :-1]
+            print(mesh.points)
+            mesh.copy().write('.\\model\\sfepy_pb_description\\RevDesign.vtk')
 
             data_to_edit = Merge(data_to_edit, {
                 floor_id : {
@@ -191,27 +210,29 @@ def generate_mesh_for_user(coord_list_floor, coord_dict_walls, mesh_size):
                         line = edge_line
             else:    
                 if not p0:
-                    p0 = geom.add_point([x0, y0, z])
+                    print('point', [x0, y0, z])
+                    p0 = geom.add_point([x0, y0, z], mesh_size)
                 if not p1:
-                    p1 = geom.add_point([x1, y1, z])
+                    print('point', [x1, y1, z])
+                    p1 = geom.add_point([x1, y1, z], mesh_size)
                 line = geom.add_line(p0, p1)
 
                 # embed new line in surface
                 geom.in_surface(line,surface)
 
-            boundary_layers.append(geom.add_boundary_layer(
-                edges_list = [line],
-                lcmin = mesh_size / 3,
-                lcmax = mesh_size / 1,
-                distmin = mesh_size / 10,
-                distmax = mesh_size / 1
-            ))
+            # boundary_layers.append(geom.add_boundary_layer(
+            #     edges_list = [line],
+            #     lcmin = mesh_size / 3,
+            #     lcmax = mesh_size / 1,
+            #     distmin = mesh_size / 10,
+            #     distmax = mesh_size / 1
+            # ))
             geom.add_physical(line, label=f'id{wall_id}')
         print('points for shear walls added')
 
         wlc = get_wind_load_point_ids(coord_list_floor, surface)
         print('wind load point ids generated')
-        geom.set_background_mesh(boundary_layers, operator="Min")
+        # geom.set_background_mesh(boundary_layers, operator="Min")
         mesh = geom.generate_mesh()
         print('mesh generated')
 
@@ -356,25 +377,25 @@ def get_coords_list(floor_obj, num_decimals):
 
     return coords
 
-def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
+def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor, num_decimals):
     # we have to 'close' the polygon for the function to work
     coord_list_floor.append(coord_list_floor[0])
 
     for wall_id in coord_dict_walls:
-        x0 = coord_dict_walls[wall_id]['start']['x']
-        y0 = coord_dict_walls[wall_id]['start']['y']
-        x1 = coord_dict_walls[wall_id]['end']['x']
-        y1 = coord_dict_walls[wall_id]['end']['y']
-        z = coord_dict_walls[wall_id]['topLevel']['projectElevation'] + coord_dict_walls[wall_id]['topOffset']
+        x0 = round(coord_dict_walls[wall_id]['start']['x'], num_decimals)
+        y0 = round(coord_dict_walls[wall_id]['start']['y'], num_decimals)
+        x1 = round(coord_dict_walls[wall_id]['end']['x'], num_decimals)
+        y1 = round(coord_dict_walls[wall_id]['end']['y'], num_decimals)
+        z = round(coord_dict_walls[wall_id]['topLevel']['projectElevation'] + coord_dict_walls[wall_id]['topOffset'], num_decimals)
         # print(z,coord_dict_walls[wall_id]['topLevel']['elevation'], coord_dict_walls[wall_id]['topOffset'] )
 
-        if distance_formula((x0, y0), (x1, y1)) < 1:
-            print('short wall')
-            tol = 4.16e-2
-            num_decimals = 1
-        else:
-            tol = 3.33e-1
-            num_decimals = 1
+        # if distance_formula((x0, y0), (x1, y1)) < 1:
+        #     print('short wall')
+        #     tol = 4.16e-2
+        #     num_decimals = 0
+        # else:
+        #     tol = 3.33e-1
+        #     num_decimals = 0
 
         p0inPoly = point_in_poly((x0, y0), (coord_list_floor,), num_decimals)
         p1inPoly = point_in_poly((x1, y1), (coord_list_floor,), num_decimals)
@@ -395,8 +416,8 @@ def add_coords_for_shear_walls(coord_dict_walls, coord_list_floor):
             print(f'comparing {coord_list_floor[p1inPoly[1]]} and {coord_list_floor[p1inPoly[1]+1]} to {(x1, y1)}')
             print('len of wall', distance_formula((x0, y0), (x1, y1)))
 
-            p0IsCorner = is_equal_2d_list(coord_list_floor[p0inPoly[1]],(x0, y0), tol) or is_equal_2d_list(coord_list_floor[p0inPoly[1]+1],(x0, y0), tol)
-            p1IsCorner = is_equal_2d_list(coord_list_floor[p1inPoly[1]],(x1, y1), tol) or is_equal_2d_list(coord_list_floor[p1inPoly[1]+1],(x1, y1), tol)
+            p0IsCorner = is_equal_2d_list(coord_list_floor[p0inPoly[1]],(x0, y0), 4.16e-2) or is_equal_2d_list(coord_list_floor[p0inPoly[1]+1],(x0, y0), 4.16e-2)
+            p1IsCorner = is_equal_2d_list(coord_list_floor[p1inPoly[1]],(x1, y1), 4.16e-2) or is_equal_2d_list(coord_list_floor[p1inPoly[1]+1],(x1, y1), 4.16e-2)
 
             # if both are corners, just add to coord array walls
             if p0IsCorner and p1IsCorner:
@@ -636,3 +657,66 @@ def point_in_poly(p, polygon, num_decimals=1):
 
 def distance_formula(p0, p1):
     return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+
+# def gmsh_version(coord_list_floor, coord_dict_walls, num_decimals = 1):
+#     # I was going to switch from pygmsh to normal gmsh, but then I figured out my problemm was that I was adding nodes to the boundary and making it all out of order
+#     # here is the code that I made anyways
+#     import gmsh
+#     gmsh.initialize()
+#     model_name = "RevDesign"
+#     gmsh.model.add(model_name)
+#     geo = gmsh.model.geo
+#     mesh = gmsh.model.mesh
+#     field = gmsh.model.mesh.field
+
+#     points = []
+#     lines = []
+#     points.append(geo.addPoint(coord_list_floor[0][0], coord_list_floor[0][1], coord_list_floor[0][2]))
+
+#     for index in range(1, len(coord_list_floor)):
+#         points.append(geo.addPoint(coord_list_floor[index][0], coord_list_floor[index][1], coord_list_floor[index][2]))
+#         lines.append(geo.addLine(points[index-1], points[index]))
+#         print(dir(points[index]))
+
+#     lines.append(geo.addLine(points[len(coord_list_floor)-1], points[0]))
+
+#     floor_loop = geo.addCurveLoop(lines)
+#     surface = geo.addPlaneSurface([floor_loop])
+
+#     # add points from shear walls
+#     sw_points = []
+#     sw_lines = []
+#     for wall_id in coord_dict_walls:
+#         x0 = round(coord_dict_walls[wall_id]['start']['x'], num_decimals)
+#         y0 = round(coord_dict_walls[wall_id]['start']['y'], num_decimals)
+#         x1 = round(coord_dict_walls[wall_id]['end']['x'], num_decimals)
+#         y1 = round(coord_dict_walls[wall_id]['end']['y'], num_decimals)
+#         z = round(coord_dict_walls[wall_id]['topLevel']['projectElevation'] + coord_dict_walls[wall_id]['topOffset'], num_decimals)
+
+#         # maybe make this loop a little more clever
+#         for point in surface.points:
+#             if is_equal_2d_list([point.x[0], point.x[1]], [x0, y0]):
+#                 p0 = point
+#                 if p0 and p1:
+#                     break
+
+#             elif is_equal_2d_list([point.x[0], point.x[1]], [x1, y1]):
+#                 p1 = point
+#                 if p0 and p1:
+#                     break
+
+#         p0 = geo.addPoint(x0,y0,z)
+#         p1 = geo.addPoint(x1,y1,z)
+#         line = geo.addLine(p0,p1)
+
+#         geo.synchronize()
+#         mesh.embed(1, [line], 2, surface)
+
+#     geo.synchronize()
+#     mesh.generate(2)
+#     outmesh = extract_to_meshio()
+#     outmesh.write('.\model\sfepy_pb_description\RevDesign55.vtk')
+#     # gmsh.write(model_name + ".msh")
+#     gmsh.finalize()
+
+#     return geo

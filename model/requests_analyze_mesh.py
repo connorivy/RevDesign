@@ -23,6 +23,7 @@ def analyze_mesh(request):
         # results = get_object(transport, latest_results_commit.referencedObject)
         results = get_latest_obj(client, transport, STREAM_ID, 'results')
         for speckMesh in results['@SpeckMeshes']:
+            # points = [ele[:-1] for ele in speckMesh.points]
             options = {
                 'mesh_points' : speckMesh.points,
                 'mesh_cells' : speckMesh.cells,
