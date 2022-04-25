@@ -5,8 +5,8 @@
 @import "https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700";
 
 :root {
-    --navbar-height: 110px;
-    --left-sidebar-width: 350px;
+    --navbar-height: 0px;
+    --left-sidebar-width: 400px;
     --right-sidebar-width: 0px;
     --tab-navbar-height: 56px;
 }
@@ -157,6 +157,11 @@ li.active a {
 #sidebar tr {
     background-color: #eff2f5;
     border-radius: 10px;
+}
+
+#sidebar td {
+    word-wrap: break-word;
+    max-width: 200px;
 }
 
 #sidebar ul li a {

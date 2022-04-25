@@ -152,7 +152,7 @@ def define(**kwargs):
             regions[key] = 'vertex ' + verts_to_add[:-1], 'facet'
 
     materials = {
-        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=29000*144 * 5/12, poisson=.2, plane='strain')},),
+        'solid' : ({'D': stiffness_from_youngpoisson(dim=2, young=2800*144 * 1/12, poisson=.2, plane='strain')},),
         'spring': ({'.stiffness' : 100000}, ),
         'load' : ({'val' : load_val},),
     }
