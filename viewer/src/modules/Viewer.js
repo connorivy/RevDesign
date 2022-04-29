@@ -238,7 +238,7 @@ export default class Viewer extends EventEmitter {
       // and then finally update the cubemap camera.
       this.scene.background = new THREE.Color('#F8F9FA')
       this.cubeCamera.update(this.renderer, this.scene)
-      // this.scene.background = null
+      this.scene.background = null
 
       // Finally, re-set the env maps of all materials
       for (let obj of this.sceneManager.filteredObjects) {

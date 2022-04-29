@@ -1,19 +1,19 @@
  /* eslint-disable */
 import Viewer from '../../viewer/src/modules/Viewer'
 
-setInterval(() => {
-  document.getElementById('info-mem').innerText = '' + Math.round(performance.memory.usedJSHeapSize / 1024 / 1024)
-}, 100 )
+// setInterval(() => {
+//   document.getElementById('info-mem').innerText = '' + Math.round(performance.memory.usedJSHeapSize / 1024 / 1024)
+// }, 100 )
 
 let v = new Viewer( { container: document.getElementById( 'threejs-container' ), showStats: false } )
-v.on( 'load-progress', args => {
-  document.getElementById('info-progress').innerText = `${Math.round(1000 * args.progress) / 1000 }`
-} )
+// v.on( 'load-progress', args => {
+//   document.getElementById('info-progress').innerText = `${Math.round(1000 * args.progress) / 1000 }`
+// } )
 
-v.on( 'busy', isBusy => {
-  document.getElementById('info-busy').innerText = isBusy ? 'BUSY' : 'idle'
-  document.body.style.cursor = isBusy ? 'progress' : 'default'
-} )
+// v.on( 'busy', isBusy => {
+//   document.getElementById('info-busy').innerText = isBusy ? 'BUSY' : 'idle'
+//   document.body.style.cursor = isBusy ? 'progress' : 'default'
+// } )
 
 window.v = v
 window.addEventListener( 'load', () => {

@@ -86,10 +86,10 @@ li.active a {
     left: 0;
     z-index: 999;
     overflow-y: scroll;
-    background: #fafafa;
+    background: #F5F5F5;
     color: #fff;
     transition: all 0.3s;
-    border-top: 3px solid #97282C;
+    border-top: 3px solid #047EFB;
 }
 
 #right-sidebar {
@@ -155,7 +155,7 @@ li.active a {
 }
 
 #sidebar tr {
-    background-color: #eff2f5;
+    background-color: #F5F5F5;
     border-radius: 10px;
 }
 
@@ -171,14 +171,14 @@ li.active a {
 }
 
 #sidebar ul li a:hover {
-    color: #973437;
-    background: #fff;
+    color: #047EFB;
+    background: #F5F5F5;
 }
 
 #sidebar ul li.active>a,
 a[aria-expanded="true"] {
     color: #54565B;
-    background: #fafafa;
+    background: #F5F5F5;
 }
 
 a[data-toggle="collapse"] {
@@ -192,7 +192,7 @@ a[data-toggle="collapse"] {
 ul ul a {
     font-size: 0.9em !important;
     padding-left: 30px !important;
-    background: #fafafa;
+    background: #F5F5F5;
 }
 
 ul.CTAs {
@@ -209,12 +209,12 @@ ul.CTAs a {
 
 a.download {
     background: #fff;
-    color: #97282C;
+    color: #047EFB;
 }
 
 a.article,
 a.article:hover {
-    background: #97282C !important;
+    background: #047EFB !important;
     color: #fff !important;
 }
 
@@ -253,9 +253,13 @@ a.article:hover {
     top: var(--navbar-height);
     height: calc(100% - var(--navbar-height));
     left: var(--left-sidebar-width);
-    display: inline;
+    display: block;
+    background-color: #e6f1ff;
 }
 
+#tabNavBar {
+    background-color: #e6f1ff;
+}
 #content.active {
     width: 100%;
     margin-left: calc(-1 * var(--left-sidebar-width));
