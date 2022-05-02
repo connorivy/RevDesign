@@ -58,6 +58,11 @@ def analyze_mesh(request):
         # edit_data_in_obj(globals_obj, shear_wall_data.copy())
         obj_id = send_to_speckle(client, transport, STREAM_ID, obj=results, branch_name='results', commit_message='shearwall analysis results')
 
+        # local_stream_id = "85838e1609"
+        # local_client = get_client('localhost:3000')
+        # local_transport = get_transport(local_client, local_stream_id)
+        # obj_id = send_to_speckle(local_client, local_transport, local_stream_id, obj=results, branch_name='results', commit_message='shearwall analysis results')
+
         return JsonResponse({'shear_wall_data': data_to_edit, 'obj_id': obj_id}, status = 200)
     return JsonResponse({}, status = 400)
 

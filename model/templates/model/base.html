@@ -193,7 +193,6 @@
 
                         <button type="button" id="sidebarCollapse" class="btn btn-primary">
                             <i class="fas fa-align-left"></i>
-                            <!-- <span>Toggle Sidebar</span> -->
                         </button>
                         <button class="btn btn-dark d-inline-block d-lg-none ml-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                             <i class="fas fa-align-justify"></i>
@@ -216,6 +215,12 @@
                         </form>
 
                         <button class="btn btn-outline-secondary my-2 my-sm-0" type="button" onclick="v.unloadAll()">Dispose</button>
+
+                        <button class="btn btn-outline-warning my-2 my-sm-0" type="button" onclick="buildShearwalls()">Build Shearwalls</button>
+
+                        <button class="btn btn-outline-info my-2 my-sm-0" type="button" onclick="getFloorMesh()">Get Mesh</button>
+
+                        <button class="btn btn-outline-success my-2 my-sm-0" type="button" onclick="analyzeMesh()">Analyze Mesh</button>
 
 
                         <div class="collapse navbar-collapse" id="navbarSupportedContent">
@@ -281,6 +286,7 @@
                     url: "{% url 'get_latest_commit_url' %}",
                     data: {
                     'HOST': 'https://speckle.xyz',
+                    // 'HOST': 'localhost:3000',
                     'STREAM_ID': document.getElementById( 'objectUrlInput' ).value,
                     'BRANCH' : BRANCH,
                     },
@@ -294,10 +300,11 @@
         }
         window.loadData = async function LoadData( ) {
             var urls = await getLatestCommitURL('main')
+            console.log('URLZZZZZZ', urls)
             localStorage.setItem( 'prevLoadUrl', urls['main_url'] )
             // var results_url = localStorage.getItem( 'resultsUrl' )
             let t0 = Date.now()
-            console.log(urls)
+            console.log(urls['main_url'])
             await v.loadObject( urls['main_url'] )
             if (urls['results_url'] !== '') {
                 localStorage.setItem( 'resultsUrl', urls['results_url'] )

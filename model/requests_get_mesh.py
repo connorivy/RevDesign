@@ -29,7 +29,7 @@ def get_floor_mesh(request):
         STREAM_ID = request.POST.get('STREAM_ID')
         OBJECT_ID = request.POST.get('OBJECT_ID')
         floor_ids = json.loads(request.POST.get('floor_ids'))
-        mesh_size = 10
+        mesh_size = 3
 
         print(request.POST, floor_ids)
 

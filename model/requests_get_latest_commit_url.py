@@ -10,7 +10,7 @@ def get_latest_commit_url(request):
         STREAM_ID = request.POST.get('STREAM_ID')
         BRANCH = request.POST.get('BRANCH')
 
-        print('HOST URL', HOST, STREAM_ID)
+        print('HOST URL BRANCH', HOST, STREAM_ID, BRANCH)
         
         
         client = get_client(HOST=HOST)
@@ -18,7 +18,10 @@ def get_latest_commit_url(request):
         results_latest_commit = get_latest_commit_for_branch(client, STREAM_ID, 'results')
 
         # example url: `https://staging.speckle.dev/streams/a75ab4f10f/objects/f33645dc9a702de8af0af16bd5f655b0`
-        main_url = f'{HOST}/streams/{STREAM_ID}/objects/{main_latest_commit.referencedObject}'
+        prefix = ''
+        if HOST == 'localhost:3000':
+            prefix = 'http://'
+        main_url = f'{prefix}{HOST}/streams/{STREAM_ID}/objects/{main_latest_commit.referencedObject}'
         if hasattr(results_latest_commit, 'referencedObject'):
             results_url = f'{HOST}/streams/{STREAM_ID}/objects/{results_latest_commit.referencedObject}'
         else:
